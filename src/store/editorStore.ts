@@ -33,6 +33,9 @@ interface EditorState {
     changes: Partial<ControlPoint>
   ) => void;
   removeControlPoint: (trajectoryId: string, pointId: string) => void;
+
+  seedDemo: () => void;
+
 }
 
 export const useEditorStore = create<EditorState>((set) => ({
@@ -101,4 +104,47 @@ export const useEditorStore = create<EditorState>((set) => ({
           : t
       ),
     })),
+
+    seedDemo: () =>
+    set({
+        trajectories: [
+        {
+            id: "t1",
+            name: "Demo",
+            color: "#4ea1ff",
+            isLocked: false,
+            isVisible: true,
+            controlPoints: [
+            {
+                id: "p1",
+                x: 100, y: 120,
+                splineType: "CubicBezier",
+                symmetry: "broken",
+                handleIn:  { dx: -30, dy: 0 },
+                handleOut: { dx:  30, dy: 0 },
+                isLocked: false, isVisible: true,
+            },
+            {
+                id: "p2",
+                x: 260, y: 220,
+                splineType: "Line",
+                symmetry: "mirrored",
+                handleIn:  { dx: -30, dy: 0 },
+                handleOut: { dx:  30, dy: 0 },
+                isLocked: false, isVisible: true,
+            },
+            {
+                id: "p3",
+                x: 420, y: 160,
+                splineType: "Clothoid",
+                symmetry: "broken",
+                handleIn:  { dx: -30, dy: 0 },
+                handleOut: { dx:  30, dy: 0 },
+                isLocked: false, isVisible: true,
+            },
+            ],
+        },
+        ],
+    }),
+
 }));
