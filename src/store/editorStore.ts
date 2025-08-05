@@ -24,8 +24,17 @@ interface EditorState {
 
   // Trajectories
   trajectories: Trajectory[];
+  selectedTrajectoryId: string | null;
   addTrajectory: (traj: Trajectory) => void;
   removeTrajectory: (id: string) => void;
+  renameTrajectory: (id: string, name: string) => void;
+  setTrajectoryVisibility: (id: string, visible: boolean) => void;
+  setTrajectoryLock: (id: string, locked: boolean) => void;
+  toggleTrajectoryVisibility: (id: string) => void;
+  toggleTrajectoryLock: (id: string) => void;
+  setSelectedTrajectoryId: (id: string | null) => void;
+
+  // Control Points
   addControlPoint: (trajectoryId: string, point: ControlPoint) => void;
   updateControlPoint: (
     trajectoryId: string,
@@ -34,8 +43,8 @@ interface EditorState {
   ) => void;
   removeControlPoint: (trajectoryId: string, pointId: string) => void;
 
+  // Demo
   seedDemo: () => void;
-
 }
 
 export const useEditorStore = create<EditorState>((set) => ({
@@ -59,6 +68,7 @@ export const useEditorStore = create<EditorState>((set) => ({
 
   // Trajectories
   trajectories: [],
+  selectedTrajectoryId: null,
 
   addTrajectory: (traj) =>
     set((state) => ({
@@ -69,6 +79,43 @@ export const useEditorStore = create<EditorState>((set) => ({
     set((state) => ({
       trajectories: state.trajectories.filter((t) => t.id !== id),
     })),
+
+  renameTrajectory: (id, name) =>
+    set((state) => ({
+      trajectories: state.trajectories.map((t) =>
+        t.id === id ? { ...t, name } : t
+      ),
+    })),
+
+  setTrajectoryVisibility: (id, visible) =>
+    set((state) => ({
+      trajectories: state.trajectories.map((t) =>
+        t.id === id ? { ...t, isVisible: visible } : t
+      ),
+    })),
+
+  setTrajectoryLock: (id, locked) =>
+    set((state) => ({
+      trajectories: state.trajectories.map((t) =>
+        t.id === id ? { ...t, isLocked: locked } : t
+      ),
+    })),
+
+  toggleTrajectoryVisibility: (id) =>
+    set((state) => ({
+      trajectories: state.trajectories.map((t) =>
+        t.id === id ? { ...t, isVisible: !t.isVisible } : t
+      ),
+    })),
+
+  toggleTrajectoryLock: (id) =>
+    set((state) => ({
+      trajectories: state.trajectories.map((t) =>
+        t.id === id ? { ...t, isLocked: !t.isLocked } : t
+      ),
+    })),
+
+  setSelectedTrajectoryId: (id) => set({ selectedTrajectoryId: id }),
 
   addControlPoint: (trajectoryId, point) =>
     set((state) => ({
@@ -105,46 +152,168 @@ export const useEditorStore = create<EditorState>((set) => ({
       ),
     })),
 
-    seedDemo: () =>
+  seedDemo: () =>
     set({
-        trajectories: [
+      trajectories: [
         {
-            id: "t1",
-            name: "Demo",
-            color: "#4ea1ff",
-            isLocked: false,
-            isVisible: true,
-            controlPoints: [
+          id: "t1",
+          name: "Broken Symmetry",
+          color: "#4ea1ff",
+          isLocked: false,
+          isVisible: true,
+          controlPoints: [
             {
-                id: "p1",
-                x: 100, y: 120,
-                splineType: "CubicBezier",
-                symmetry: "broken",
-                handleIn:  { dx: -30, dy: 0 },
-                handleOut: { dx:  30, dy: 0 },
-                isLocked: false, isVisible: true,
+              id: "p1",
+              x: 100,
+              y: 100,
+              splineType: "CubicBezier",
+              symmetry: "broken",
+              handleIn: { dx: -30, dy: 0 },
+              handleOut: { dx: 30, dy: 0 },
+              isLocked: false,
+              isVisible: true,
             },
             {
-                id: "p2",
-                x: 260, y: 220,
-                splineType: "Line",
-                symmetry: "mirrored",
-                handleIn:  { dx: -30, dy: 0 },
-                handleOut: { dx:  30, dy: 0 },
-                isLocked: false, isVisible: true,
+              id: "p2",
+              x: 200,
+              y: 200,
+              splineType: "CubicBezier",
+              symmetry: "broken",
+              handleIn: { dx: -20, dy: -20 },
+              handleOut: { dx: 20, dy: 20 },
+              isLocked: false,
+              isVisible: true,
             },
             {
-                id: "p3",
-                x: 420, y: 160,
-                splineType: "Clothoid",
-                symmetry: "broken",
-                handleIn:  { dx: -30, dy: 0 },
-                handleOut: { dx:  30, dy: 0 },
-                isLocked: false, isVisible: true,
+              id: "p3",
+              x: 300,
+              y: 100,
+              splineType: "CubicBezier",
+              symmetry: "broken",
+              handleIn: { dx: -30, dy: 0 },
+              handleOut: { dx: 30, dy: 0 },
+              isLocked: false,
+              isVisible: true,
             },
-            ],
+            {
+              id: "p4",
+              x: 400,
+              y: 200,
+              splineType: "Line",
+              symmetry: "broken",
+              handleIn: { dx: -20, dy: -20 },
+              handleOut: { dx: 20, dy: 20 },
+              isLocked: false,
+              isVisible: true,
+            },
+          ],
         },
-        ],
+        {
+          id: "t2",
+          name: "Aligned Symmetry",
+          color: "#2ecc71",
+          isLocked: false,
+          isVisible: true,
+          controlPoints: [
+            {
+              id: "p5",
+              x: 100,
+              y: 300,
+              splineType: "CubicBezier",
+              symmetry: "aligned",
+              handleIn: { dx: -30, dy: -10 },
+              handleOut: { dx: 30, dy: 10 },
+              isLocked: false,
+              isVisible: true,
+            },
+            {
+              id: "p6",
+              x: 200,
+              y: 400,
+              splineType: "CubicBezier",
+              symmetry: "aligned",
+              handleIn: { dx: -25, dy: -15 },
+              handleOut: { dx: 25, dy: 15 },
+              isLocked: false,
+              isVisible: true,
+            },
+            {
+              id: "p7",
+              x: 300,
+              y: 300,
+              splineType: "CubicBezier",
+              symmetry: "aligned",
+              handleIn: { dx: -30, dy: 0 },
+              handleOut: { dx: 30, dy: 0 },
+              isLocked: false,
+              isVisible: true,
+            },
+            {
+              id: "p8",
+              x: 400,
+              y: 400,
+              splineType: "Line",
+              symmetry: "aligned",
+              handleIn: { dx: -20, dy: -20 },
+              handleOut: { dx: 20, dy: 20 },
+              isLocked: false,
+              isVisible: true,
+            },
+          ],
+        },
+        {
+          id: "t3",
+          name: "Mirrored Symmetry",
+          color: "#e74c3c",
+          isLocked: false,
+          isVisible: true,
+          controlPoints: [
+            {
+              id: "p9",
+              x: 100,
+              y: 500,
+              splineType: "CubicBezier",
+              symmetry: "mirrored",
+              handleIn: { dx: -30, dy: 10 },
+              handleOut: { dx: 30, dy: -10 },
+              isLocked: false,
+              isVisible: true,
+            },
+            {
+              id: "p10",
+              x: 200,
+              y: 600,
+              splineType: "CubicBezier",
+              symmetry: "mirrored",
+              handleIn: { dx: -25, dy: 15 },
+              handleOut: { dx: 25, dy: -15 },
+              isLocked: false,
+              isVisible: true,
+            },
+            {
+              id: "p11",
+              x: 300,
+              y: 500,
+              splineType: "CubicBezier",
+              symmetry: "mirrored",
+              handleIn: { dx: -30, dy: 0 },
+              handleOut: { dx: 30, dy: 0 },
+              isLocked: false,
+              isVisible: true,
+            },
+            {
+              id: "p12",
+              x: 400,
+              y: 600,
+              splineType: "Line",
+              symmetry: "mirrored",
+              handleIn: { dx: -20, dy: 20 },
+              handleOut: { dx: 20, dy: -20 },
+              isLocked: false,
+              isVisible: true,
+            },
+          ],
+        },
+      ],
     }),
-
 }));

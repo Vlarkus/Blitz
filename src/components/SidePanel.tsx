@@ -1,8 +1,9 @@
+import TrajectoriesPanel from "./TrajectoriesPanel";
+
 export default function SidePanel() {
   return (
-    <div style={{ width: "320px", backgroundColor: "#ddd" }}>
-      {/* Layer and info panels go here */}
-      Side
+    <div className="side-panel bg-dark p-0">
+      <TrajectoriesPanel />
     </div>
   );
 }

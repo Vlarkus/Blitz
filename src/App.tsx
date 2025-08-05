@@ -7,9 +7,9 @@ import ToolBar from "./components/ToolBar";
 
 function App() {
   return (
-    <div className="d-flex flex-column vh-100">
+    <div className="d-flex bg-dark flex-column vh-100">
       <TopBar />
-      <div className="d-flex flex-grow-1 overflow-hidden">
+      <div className="d-flex bg-dark flex-grow-1 overflow-hidden">
         <ToolBar />
         <CentralPanel />
         <SidePanel />
