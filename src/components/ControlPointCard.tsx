@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { ControlPoint } from "../types/editorTypes";
 import { useEditorStore } from "../store/editorStore";
 import { FaLock, FaLockOpen } from "react-icons/fa";
@@ -16,10 +17,21 @@ export default function ControlPointCard({ trajId, point, index }: Props) {
     selectedControlPointId,
   } = useEditorStore();
 
+  const [editing, setEditing] = useState(false);
+  const [nameDraft, setNameDraft] = useState(point.name);
+
   const toggleLocked = () =>
     updateControlPoint(trajId, point.id, { isLocked: !point.isLocked });
 
   const isSelected = point.id === selectedControlPointId;
+
+  const commitName = () => {
+    const next = nameDraft.trim();
+    updateControlPoint(trajId, point.id, {
+      name: next.length ? next : point.name,
+    });
+    setEditing(false);
+  };
 
   return (
     <div
@@ -34,12 +46,34 @@ export default function ControlPointCard({ trajId, point, index }: Props) {
     >
       <div className="d-flex align-items-center gap-2 flex-grow-1">
         <span className="control-point-index-badge">{index + 1}</span>
-        <span
-          className="text-truncate control-point-index"
-          title={`Point ${index + 1}`}
-        >
-          Point {index + 1}
-        </span>
+        {editing ? (
+          <input
+            type="text"
+            className="name-edit-input"
+            value={nameDraft}
+            onChange={(e) => setNameDraft(e.target.value)}
+            onBlur={commitName}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitName();
+              else if (e.key === "Escape") {
+                setNameDraft(point.name);
+                setEditing(false);
+              }
+            }}
+            autoFocus
+          />
+        ) : (
+          <span
+            className="control-point-name text-truncate"
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              setEditing(true);
+            }}
+            title={point.name}
+          >
+            {point.name}
+          </span>
+        )}
       </div>
 
       <div className="d-flex align-items-center gap-2">

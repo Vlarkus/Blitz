@@ -21,11 +21,9 @@ interface Props {
 
 export default function TrajectoryCard({ traj }: Props) {
   const {
-    setTrajectoryVisibility,
-    setTrajectoryLock,
     setSelectedTrajectoryId,
     selectedTrajectoryId,
-    renameTrajectory,
+    updateTrajectory, // <-- use this from the store
   } = useEditorStore();
 
   // dnd-kit sortable
@@ -36,9 +34,8 @@ export default function TrajectoryCard({ traj }: Props) {
     transform,
     transition,
     isDragging,
-  } = useSortable({
-    id: traj.id,
-  });
+  } = useSortable({ id: traj.id });
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -53,7 +50,7 @@ export default function TrajectoryCard({ traj }: Props) {
 
   const commitName = () => {
     const next = nameDraft.trim();
-    renameTrajectory(traj.id, next || traj.name);
+    updateTrajectory(traj.id, { name: next.length ? next : traj.name });
     setEditing(false);
   };
 
@@ -64,7 +61,6 @@ export default function TrajectoryCard({ traj }: Props) {
       style={style}
       {...attributes}
     >
-      {/* Main trajectory row */}
       <div
         className={`trajectory-card d-flex justify-content-between align-items-center px-2 py-1 ${
           isSelected ? "selected" : ""
@@ -72,9 +68,8 @@ export default function TrajectoryCard({ traj }: Props) {
         onClick={() => setSelectedTrajectoryId(traj.id)}
         style={{ cursor: "pointer", userSelect: "none" }}
       >
-        {/* LEFT: name */}
+        {/* LEFT: name + toggle */}
         <div className="d-flex align-items-center gap-2 flex-grow-1">
-          {/* Caret (expand/collapse) */}
           <button
             className="toggle-btn btn btn-sm"
             onClick={(e) => {
@@ -85,6 +80,7 @@ export default function TrajectoryCard({ traj }: Props) {
           >
             {expanded ? <FaChevronDown /> : <FaChevronRight />}
           </button>
+
           {editing ? (
             <input
               type="text"
@@ -115,33 +111,30 @@ export default function TrajectoryCard({ traj }: Props) {
           )}
         </div>
 
-        {/* RIGHT: lock, eye, DRAG HANDLE, caret */}
+        {/* RIGHT: eye, lock, drag */}
         <div className="d-flex align-items-center gap-2">
-          {/* Eye */}
           <span
             className={`icon-btn eye ${traj.isVisible ? "open" : "closed"}`}
             onClick={(e) => {
               e.stopPropagation();
-              setTrajectoryVisibility(traj.id, !traj.isVisible);
+              updateTrajectory(traj.id, { isVisible: !traj.isVisible });
             }}
             title={traj.isVisible ? "Hide" : "Show"}
           >
             {traj.isVisible ? <FaEye /> : <FaEyeSlash />}
           </span>
 
-          {/* Lock */}
           <span
             className={`icon-btn lock ${traj.isLocked ? "locked" : "unlocked"}`}
             onClick={(e) => {
               e.stopPropagation();
-              setTrajectoryLock(traj.id, !traj.isLocked);
+              updateTrajectory(traj.id, { isLocked: !traj.isLocked });
             }}
             title={traj.isLocked ? "Unlock" : "Lock"}
           >
             {traj.isLocked ? <FaLock /> : <FaLockOpen />}
           </span>
 
-          {/* Drag handle (moved to RIGHT, BEFORE caret) */}
           <span
             className="drag-handle icon-btn"
             {...listeners}
@@ -153,7 +146,7 @@ export default function TrajectoryCard({ traj }: Props) {
         </div>
       </div>
 
-      {/* Drop-down area: ControlPoint cards */}
+      {/* Control Points */}
       {expanded && (
         <div className="control-point-list">
           {traj.controlPoints.map((p, i) => (

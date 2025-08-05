@@ -210,6 +210,15 @@ html, body, #root
   margin: 2px 0
   transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease
 
+  .name-edit-input
+    background: transparent
+    border: none
+    outline: none
+    font: inherit
+    width: 100%
+    padding: 0
+    margin: 0
+
   &.selected
     background: $light
     color: $card-selected
@@ -226,8 +235,7 @@ html, body, #root
 .info-panel
   position: relative // ensures absolute children are positioned correctly
   overflow: visible // allows color picker to extend outside
-
-.info-panel
+  margin-bottom: 10px
   display: flex
   flex-direction: column
   align-items: stretch
@@ -235,11 +243,16 @@ html, body, #root
   gap: 12px
   color: $light
 
-  .info-panel-title
-    margin-bottom: 6px
-    font-weight: bold
-    font-size: 16px
-    color: $light
+  .info-panel-title-wrapper
+    display: flex
+    align-items: center
+    justify-content: center
+
+    .info-panel-title
+      margin-bottom: 6px
+      font-weight: bold
+      font-size: 16px
+      color: $light
 
   .row-group
     display: flex
@@ -248,7 +261,7 @@ html, body, #root
 
   .divider
     border: none
-    height: 1px
+    height: 2px
     background-color: $light
     opacity: 0.2
     margin: 4px 0
@@ -262,9 +275,13 @@ html, body, #root
   width: 28px
   height: 28px
   border: 1px solid #ccc
-  border-radius: 4px
+  border-radius: 6px
   cursor: pointer
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.3)
+  transition: transform 0.1s ease, box-shadow 0.1s ease, border-radius 0.1s ease
+
+  &:hover
+    transform: scale(1.05)
 
 .twitter-picker-popup
   position: absolute
@@ -275,10 +292,19 @@ html, body, #root
 .small-dropdown
   font-size: 14px
   padding: 4px 8px
-  background-color: $dark
+  background-color: $dark !important
   color: $light
   border: 1px solid $light
   border-radius: 4px
+  transition: border-color 0.2s ease, transform 0.1s ease
+
+  &:disabled
+    border-color: $secondary
+    color: $dark
+
+  &:hover
+    transform: scale(1.025)
+    background-color: $dark
 
 // ==============================
 // Generic square button (if needed outside footer)

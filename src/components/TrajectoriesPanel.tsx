@@ -69,11 +69,7 @@ export default function TrajectoriesPanel() {
         </DndContext>
       </div>
 
-      <div className="trajectory-panel-footer bg-dark justify-content-end align-items-center gap-2 px-2 py-1">
-        <button className="btn square-btn" title="Change Color">
-          <FaPaintBrush />
-        </button>
-
+      <div className="trajectory-panel-footer bg-dark justify-content-center align-items-center gap-2 px-2 py-1">
         <button
           className="btn square-btn"
           title="Add Trajectory"
