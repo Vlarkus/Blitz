@@ -153,7 +153,7 @@ export default function CanvasViewport() {
             .filter((t) => t.isVisible)
             .map((t) => {
               const pts = t.controlPoints.filter((p) => p.isVisible !== false);
-              const invScale = 1 / Math.max(zoom, 0.0001);
+              const invScale = 1 / Math.max(zoom, 0.001);
               const strokeW = 2 * invScale;
               const anchorR = 4 * invScale;
               const handleR = 3 * invScale;
@@ -214,7 +214,7 @@ export default function CanvasViewport() {
                       );
                     })}
 
-                  {/* Handles & Anchors */}
+                  {/* Handles & ControlPoints */}
                   {pts.map((p) => {
                     const hIn = absHandleIn(p);
                     const hOut = absHandleOut(p);
@@ -239,7 +239,7 @@ export default function CanvasViewport() {
                         .updateControlPoint(t.id, p.id, updates);
                     };
 
-                    const onDragAnchorMove = (e: any) => {
+                    const onDragControlPointMove = (e: any) => {
                       if (locked) return;
                       const nx = e.target.x();
                       const ny = e.target.y();
@@ -303,7 +303,7 @@ export default function CanvasViewport() {
                           stroke="#000"
                           strokeWidth={handleStroke}
                           draggable={!locked}
-                          onDragMove={onDragAnchorMove}
+                          onDragMove={onDragControlPointMove}
                           onDragEnd={(e) => {
                             const nx = e.target.x();
                             const ny = e.target.y();

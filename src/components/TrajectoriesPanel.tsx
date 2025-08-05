@@ -17,9 +17,19 @@ import {
 } from "@dnd-kit/sortable";
 
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import { FaPaintBrush, FaPlus, FaTrash } from "react-icons/fa";
 
 export default function TrajectoriesPanel() {
-  const { trajectories, reorderTrajectories } = useEditorStore();
+  const {
+    trajectories,
+    reorderTrajectories,
+    selectedTrajectoryId,
+    selectedControlPointId,
+    removeTrajectory,
+    removeControlPoint,
+    addTrajectory,
+    setSelectedTrajectoryId,
+  } = useEditorStore();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
@@ -41,8 +51,10 @@ export default function TrajectoriesPanel() {
   return (
     <div className="trajectories-panel d-flex bg-dark flex-column h-100">
       <div
-        className="trajectories-list flex-grow-1 bg-dark rounded-border overflow-auto p-2"
-        style={{ minHeight: 0 }}
+        className="trajectories-list flex-grow-1 bg-dark min-height-0 rounded-border overflow-auto p-2"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setSelectedTrajectoryId(null);
+        }}
       >
         <DndContext
           sensors={sensors}
@@ -57,12 +69,44 @@ export default function TrajectoriesPanel() {
         </DndContext>
       </div>
 
-      <div
-        className="trajectory-panel-footer bg-dark d-flex justify-content-center align-items-center gap-2"
-        style={{ height: 40 }}
-      >
-        <button className="btn btn-outline-dark square-btn">1</button>
-        <button className="btn btn-outline-dark square-btn">2</button>
+      <div className="trajectory-panel-footer bg-dark justify-content-end align-items-center gap-2 px-2 py-1">
+        <button className="btn square-btn" title="Change Color">
+          <FaPaintBrush />
+        </button>
+
+        <button
+          className="btn square-btn"
+          title="Add Trajectory"
+          onClick={() =>
+            addTrajectory({
+              id: crypto.randomUUID(),
+              name: "New Trajectory",
+              color: "#ffffff",
+              isLocked: false,
+              isVisible: true,
+              controlPoints: [],
+            })
+          }
+        >
+          <FaPlus />
+        </button>
+
+        <button
+          className={`btn square-btn ${
+            !selectedTrajectoryId ? "disabled" : ""
+          }`}
+          title="Delete Selected"
+          onClick={() => {
+            if (selectedControlPointId && selectedTrajectoryId) {
+              removeControlPoint(selectedTrajectoryId, selectedControlPointId);
+            } else if (selectedTrajectoryId) {
+              removeTrajectory(selectedTrajectoryId);
+            }
+          }}
+          disabled={!selectedTrajectoryId}
+        >
+          <FaTrash />
+        </button>
       </div>
     </div>
   );

@@ -12,7 +12,7 @@ import {
 } from "react-icons/fa";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import AnchorCard from "./AnchorCard";
+import ControlPointCard from "./ControlPointCard";
 
 interface Props {
   traj: Trajectory;
@@ -68,7 +68,7 @@ export default function TrajectoryCard({ traj }: Props) {
       <div
         className={`trajectory-card d-flex justify-content-between align-items-center px-2 py-1 ${
           isSelected ? "selected" : ""
-        }`}
+        } ${!expanded ? "collapsed" : ""}`}
         onClick={() => setSelectedTrajectoryId(traj.id)}
         style={{ cursor: "pointer", userSelect: "none" }}
       >
@@ -153,11 +153,11 @@ export default function TrajectoryCard({ traj }: Props) {
         </div>
       </div>
 
-      {/* Drop-down area: Anchor cards */}
+      {/* Drop-down area: ControlPoint cards */}
       {expanded && (
-        <div className="anchor-list">
+        <div className="control-point-list">
           {traj.controlPoints.map((p, i) => (
-            <AnchorCard key={p.id} trajId={traj.id} point={p} index={i} />
+            <ControlPointCard key={p.id} trajId={traj.id} point={p} index={i} />
           ))}
         </div>
       )}

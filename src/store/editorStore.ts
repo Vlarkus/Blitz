@@ -34,7 +34,7 @@ interface EditorState {
   toggleTrajectoryLock: (id: string) => void;
   setSelectedTrajectoryId: (id: string | null) => void;
 
-  // Control Points
+  // Achor Points
   addControlPoint: (trajectoryId: string, point: ControlPoint) => void;
   updateControlPoint: (
     trajectoryId: string,
@@ -44,6 +44,9 @@ interface EditorState {
   removeControlPoint: (trajectoryId: string, pointId: string) => void;
 
   reorderTrajectories: (newOrderIds: string[]) => void;
+
+  selectedControlPointId: string | null;
+  setSelectedControlPointId: (id: string | null) => void;
 
   // Demo
   seedDemo: () => void;
@@ -78,9 +81,16 @@ export const useEditorStore = create<EditorState>((set) => ({
     })),
 
   removeTrajectory: (id) =>
-    set((state) => ({
-      trajectories: state.trajectories.filter((t) => t.id !== id),
-    })),
+    set((state) => {
+      const isSelected = state.selectedTrajectoryId === id;
+      return {
+        trajectories: state.trajectories.filter((t) => t.id !== id),
+        selectedTrajectoryId: isSelected ? null : state.selectedTrajectoryId,
+        selectedControlPointId: isSelected
+          ? null
+          : state.selectedControlPointId,
+      };
+    }),
 
   renameTrajectory: (id, name) =>
     set((state) => ({
@@ -117,7 +127,11 @@ export const useEditorStore = create<EditorState>((set) => ({
       ),
     })),
 
-  setSelectedTrajectoryId: (id) => set({ selectedTrajectoryId: id }),
+  setSelectedTrajectoryId: (id) =>
+    set((state) => ({
+      selectedTrajectoryId: id,
+      selectedControlPointId: id === null ? null : state.selectedControlPointId,
+    })),
 
   addControlPoint: (trajectoryId, point) =>
     set((state) => ({
@@ -143,16 +157,22 @@ export const useEditorStore = create<EditorState>((set) => ({
     })),
 
   removeControlPoint: (trajectoryId, pointId) =>
-    set((state) => ({
-      trajectories: state.trajectories.map((t) =>
-        t.id === trajectoryId
-          ? {
-              ...t,
-              controlPoints: t.controlPoints.filter((p) => p.id !== pointId),
-            }
-          : t
-      ),
-    })),
+    set((state) => {
+      const isSelected = state.selectedControlPointId === pointId;
+      return {
+        trajectories: state.trajectories.map((t) =>
+          t.id === trajectoryId
+            ? {
+                ...t,
+                controlPoints: t.controlPoints.filter((p) => p.id !== pointId),
+              }
+            : t
+        ),
+        selectedControlPointId: isSelected
+          ? null
+          : state.selectedControlPointId,
+      };
+    }),
 
   reorderTrajectories: (newOrderIds) =>
     set((state) => {
@@ -161,6 +181,11 @@ export const useEditorStore = create<EditorState>((set) => ({
         trajectories: newOrderIds.map((id) => byId.get(id)!).filter(Boolean),
       };
     }),
+
+  selectedControlPointId: null,
+  setSelectedControlPointId: (id) => set({ selectedControlPointId: id }),
+
+  // Demo data
 
   seedDemo: () =>
     set({
