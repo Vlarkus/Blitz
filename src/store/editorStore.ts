@@ -43,6 +43,8 @@ interface EditorState {
   ) => void;
   removeControlPoint: (trajectoryId: string, pointId: string) => void;
 
+  reorderTrajectories: (newOrderIds: string[]) => void;
+
   // Demo
   seedDemo: () => void;
 }
@@ -151,6 +153,14 @@ export const useEditorStore = create<EditorState>((set) => ({
           : t
       ),
     })),
+
+  reorderTrajectories: (newOrderIds) =>
+    set((state) => {
+      const byId = new Map(state.trajectories.map((t) => [t.id, t]));
+      return {
+        trajectories: newOrderIds.map((id) => byId.get(id)!).filter(Boolean),
+      };
+    }),
 
   seedDemo: () =>
     set({

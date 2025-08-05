@@ -1,9 +1,15 @@
+// ==============================
+// Global
+// ==============================
 html, body, #root
   margin: 0
   padding: 0
   height: 100%
   width: 100%
 
+// ==============================
+// Navbar (dropdowns look like text)
+// ==============================
 .navbar
   .custom-dropdown
     .dropdown-toggle
@@ -30,6 +36,9 @@ html, body, #root
     &:hover
       border-color: #888
 
+// ==============================
+// Reusable rounded container
+// ==============================
 .rounded-border
   overflow: hidden
   border: 2px solid #aaa
@@ -37,6 +46,9 @@ html, body, #root
   background-clip: padding-box
   background-color: #1e1e1e
 
+// ==============================
+// Panels layout
+// ==============================
 .side-panel
   width: 400px
   margin-left: 10px
@@ -46,16 +58,28 @@ html, body, #root
     display: flex
     flex-direction: column
 
+    .trajectories-list
+      // allow the list to actually shrink inside flex column
+      min-height: 0
+      overflow: auto
+      padding: 8px
+
     .trajectory-panel-footer
       padding: 1px
-      height: 32px
+      height: 30px
+      margin: none
+      display: flex
+      justify-content: center
+      align-items: center
+      gap: 8px
 
-      .btn
+      .btn, .square-btn
         height: 28px
         width: 28px
         display: flex
         align-items: center
         justify-content: center
+        padding: 0
 
 .central-panel
   flex-grow: 1
@@ -72,16 +96,45 @@ html, body, #root
     padding: 5px
     height: 32px
 
+// ==============================
+// Keyframes (global so they can be reused)
+// ==============================
+@keyframes fade-toggle
+  0%
+    transform: scale(1)
+    opacity: 1
+  50%
+    transform: scale(1.2)
+    opacity: 0.4
+  100%
+    transform: scale(1)
+    opacity: 1
+
+// ==============================
+// Trajectory card
+// ==============================
+.trajectory-card:first-child
+  margin: 0
+
 .trajectory-card
-  background: #dee2e6
-  border: 1px solid #cdd1d5ff
+  background: #c8cacbff
+  border: 1px solid #dbdcdeff
+  margin: 4px 0
+
   border-radius: 4px
   margin-bottom: 4px
   cursor: pointer
   transition: background 0.2s
 
+  .drag-handle
+    cursor: grab
+  .drag-handle:active
+    cursor: grabbing
+
   &.selected
     background: #e8eef2ff
+    box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25) // Bootstrap primary outline
+    border-color: #86b7fe
 
   .trajectory-name
     font-weight: 500
@@ -99,8 +152,6 @@ html, body, #root
     display: flex
     align-items: center
     justify-content: center
-    width: 24px
-    height: 24px
 
   .icon-btn
     cursor: pointer
@@ -110,6 +161,7 @@ html, body, #root
     width: 24px
     height: 24px
     border: none
+    transition: color 0.2s ease, opacity 0.2s ease
 
   .drag-handle
     cursor: grab
@@ -124,30 +176,45 @@ html, body, #root
     padding: 0
     margin: 0
 
-  @keyframes fade-toggle
-    0%
-      transform: scale(1)
-      opacity: 1
-    50%
-      transform: scale(1.2)
-      opacity: 0.4
-    100%
-      transform: scale(1)
-      opacity: 1
-
-  .eye, .lock
-    transition: color 0.2s ease, opacity 0.2s ease
-    animation: none
-
-  .eye.closed
+  // Eye/Lock animation hooks
+  .eye.open, .eye.closed, .lock.locked, .lock.unlocked
     animation: fade-toggle 0.3s ease
 
-  .lock.locked
-    animation: fade-toggle 0.3s ease
+// ==============================
+// Anchor (control-point) list & cards
+// ==============================
+.anchor-list
+  margin-left: 22px // slight indent so text aligns visually with trajectory title
 
+.anchor-card
+  background: #ffffff
+  border: 1px solid #e9ecef
+  border-radius: 4px
+  margin: 2px 0
+  padding: 0 8px
+  display: flex
+  align-items: center
+  justify-content: space-between
+
+  .anchor-index-badge
+    display: inline-flex
+    align-items: center
+    justify-content: center
+    width: 18px
+    height: 18px
+    border-radius: 3px
+    border: 1px solid #ced4da
+    font-size: 10px
+    font-weight: 800
+    background: none
+    color: #000000ff
+
+// ==============================
+// Generic square button (if needed outside footer)
+// ==============================
 .square-btn
-  width: 32px
-  height: 32px
+  width: 26px
+  height: px
   display: flex
   align-items: center
   justify-content: center
