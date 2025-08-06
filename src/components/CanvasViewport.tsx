@@ -22,6 +22,27 @@ const wrapPi = (theta: number) =>
 
 type WhichHandle = "in" | "out";
 
+function pointToSegmentDistance(
+  px: number,
+  py: number,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number
+): number {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  if (dx === 0 && dy === 0) return Math.hypot(px - x1, py - y1);
+
+  const t = Math.max(
+    0,
+    Math.min(1, ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy))
+  );
+  const projX = x1 + t * dx;
+  const projY = y1 + t * dy;
+  return Math.hypot(px - projX, py - projY);
+}
+
 function applySymmetry(
   cp: {
     symmetry: "broken" | "aligned" | "mirrored";
@@ -70,6 +91,21 @@ function applySymmetry(
 }
 
 export default function CanvasViewport() {
+  const {
+    activeTool,
+    removeControlPoint,
+    selectedTrajectoryId,
+    addControlPoint,
+    insertControlPoint,
+  } = useEditorStore();
+
+  const setSelectedTrajectoryId = useEditorStore(
+    (s) => s.setSelectedTrajectoryId
+  );
+  const setSelectedControlPointId = useEditorStore(
+    (s) => s.setSelectedControlPointId
+  );
+
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<any>(null);
 
@@ -118,7 +154,95 @@ export default function CanvasViewport() {
       setIsPanning(true);
       e.evt.preventDefault();
     }
+    if (activeTool === "add" && selectedTrajectoryId && e.evt.button === 0) {
+      const pointer = stageRef.current?.getPointerPosition();
+      if (pointer) {
+        const worldX = (pointer.x - pan.x) / zoom;
+        const worldY = (pointer.y - pan.y) / zoom;
+
+        addControlPoint(selectedTrajectoryId, {
+          x: worldX,
+          y: worldY,
+          theta: 0,
+          symmetry: "mirrored", // or your default
+          splineType: "CubicBezier",
+          id: "",
+          name: "",
+          handleIn: { dx: -20, dy: 0 },
+          handleOut: { dx: 20, dy: 0 },
+        });
+      }
+      return;
+    } else if (activeTool === "insert") {
+      const stage = e.target.getStage();
+      const pointer = stage?.getPointerPosition();
+      if (!pointer) return;
+
+      const { x: canvasX, y: canvasY } = pointer;
+      const worldX = (canvasX - pan.x) / zoom;
+      const worldY = (canvasY - pan.y) / zoom;
+
+      let closestDist = Infinity;
+      let closestTrajId: string | null = null;
+      let bestIdx = -1;
+
+      trajectories.forEach((traj) => {
+        if (!traj.isVisible) return;
+
+        const pts = traj.controlPoints.filter((p) => p.isVisible !== false);
+        for (let i = 0; i < pts.length - 1; i++) {
+          const p0 = pts[i];
+          const p1 = pts[i + 1];
+          const dist = pointToSegmentDistance(
+            worldX,
+            worldY,
+            p0.x,
+            p0.y,
+            p1.x,
+            p1.y
+          );
+          if (dist < closestDist) {
+            closestDist = dist;
+            closestTrajId = traj.id;
+            bestIdx = i;
+          }
+        }
+      });
+
+      const threshold = 10 / zoom;
+      if (
+        closestDist <= threshold &&
+        closestTrajId !== null &&
+        bestIdx !== -1
+      ) {
+        const splineType =
+          trajectories.find((t) => t.id === closestTrajId)?.controlPoints[
+            bestIdx
+          ]?.splineType ?? "CubicBezier";
+
+        const newPoint = {
+          id: "", // ignored by store
+          name: "",
+          x: worldX,
+          y: worldY,
+          theta: 0,
+          symmetry: "mirrored" as const,
+          splineType,
+          handleIn: { dx: -20, dy: 0 },
+          handleOut: { dx: 20, dy: 0 },
+          isLocked: false,
+          isVisible: true,
+        };
+
+        insertControlPoint(closestTrajId, bestIdx + 1, newPoint);
+        setSelectedTrajectoryId(closestTrajId);
+        setSelectedControlPointId(newPoint.id);
+      }
+
+      return;
+    }
   };
+
   const onMouseUp = () => setIsPanning(false);
   const onMouseMove = (e: any) => {
     if (!isPanning) return;
@@ -155,7 +279,7 @@ export default function CanvasViewport() {
               const pts = t.controlPoints.filter((p) => p.isVisible !== false);
               const invScale = 1 / Math.max(zoom, 0.001);
               const strokeW = 2 * invScale;
-              const anchorR = 4 * invScale;
+              const anchorR = 6 * invScale;
               const handleR = 3 * invScale;
               const handleStroke = 1.2 * invScale;
 
@@ -184,7 +308,7 @@ export default function CanvasViewport() {
                       data={d}
                       stroke={t.color}
                       strokeWidth={strokeW}
-                      listening={false}
+                      hitStrokeWidth={2 * strokeW}
                     />
                   );
                 }
@@ -194,7 +318,7 @@ export default function CanvasViewport() {
                     points={[p0.x, p0.y, p1.x, p1.y]}
                     stroke={t.color}
                     strokeWidth={strokeW}
-                    listening={false}
+                    hitStrokeWidth={strokeW * 2}
                   />
                 );
               };
@@ -278,7 +402,7 @@ export default function CanvasViewport() {
                           fill="#bbb"
                           stroke="#666"
                           strokeWidth={handleStroke}
-                          draggable={!locked}
+                          draggable={!locked && activeTool === "move"}
                           onDragMove={onDragHandle("in")}
                           onDragEnd={onDragHandle("in")}
                         />
@@ -289,7 +413,7 @@ export default function CanvasViewport() {
                           fill="#bbb"
                           stroke="#666"
                           strokeWidth={handleStroke}
-                          draggable={!locked}
+                          draggable={!locked && activeTool === "move"}
                           onDragMove={onDragHandle("out")}
                           onDragEnd={onDragHandle("out")}
                         />
@@ -302,7 +426,7 @@ export default function CanvasViewport() {
                           fill={t.color}
                           stroke="#000"
                           strokeWidth={handleStroke}
-                          draggable={!locked}
+                          draggable={!locked && activeTool === "move"}
                           onDragMove={onDragControlPointMove}
                           onDragEnd={(e) => {
                             const nx = e.target.x();
@@ -310,6 +434,18 @@ export default function CanvasViewport() {
                             useEditorStore
                               .getState()
                               .updateControlPoint(t.id, p.id, { x: nx, y: ny });
+                          }}
+                          onClick={() => {
+                            if (
+                              ["move", "insert", "simulate"].includes(
+                                activeTool
+                              )
+                            ) {
+                              setSelectedTrajectoryId(t.id);
+                              setSelectedControlPointId(p.id);
+                            } else if (activeTool === "delete") {
+                              removeControlPoint(t.id, p.id);
+                            }
                           }}
                         />
                       </Group>

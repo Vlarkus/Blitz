@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { nanoid } from "nanoid";
 import type {
   Vec2,
   ToolID,
@@ -42,6 +43,12 @@ interface EditorState {
   setSelectedTrajectoryId: (id: string | null) => void;
   setSelectedControlPointId: (id: string | null) => void;
 
+  insertControlPoint: (
+    trajectoryId: string,
+    index: number,
+    point: Omit<ControlPoint, "id">
+  ) => void;
+
   // Trajectories
   trajectories: Trajectory[];
   addTrajectory: (traj: Trajectory) => void;
@@ -67,7 +74,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   zoom: 1,
   setPanZoom: (p, z) => set({ pan: p, zoom: z }),
 
-  activeTool: "select",
+  activeTool: "move",
   setActiveTool: (tool) => set({ activeTool: tool }),
 
   unit: "m",
@@ -118,7 +125,17 @@ export const useEditorStore = create<EditorState>((set) => ({
     set((state) => ({
       trajectories: state.trajectories.map((t) =>
         t.id === trajectoryId
-          ? { ...t, controlPoints: [...t.controlPoints, point] }
+          ? {
+              ...t,
+              controlPoints: [
+                ...t.controlPoints,
+                {
+                  ...point,
+                  id: nanoid(),
+                  name: point.name || `P${t.controlPoints.length + 1}`,
+                },
+              ],
+            }
           : t
       ),
     })),
@@ -155,6 +172,22 @@ export const useEditorStore = create<EditorState>((set) => ({
       };
     }),
 
+  insertControlPoint: (trajectoryId, index, point) =>
+    set((state) => ({
+      trajectories: state.trajectories.map((t) =>
+        t.id === trajectoryId
+          ? {
+              ...t,
+              controlPoints: [
+                ...t.controlPoints.slice(0, index),
+                { ...point, id: crypto.randomUUID() },
+                ...t.controlPoints.slice(index),
+              ],
+            }
+          : t
+      ),
+    })),
+
   seedDemo: () =>
     set({
       trajectories: [
@@ -174,34 +207,171 @@ export const useEditorStore = create<EditorState>((set) => ({
               theta: null,
               splineType: "CubicBezier",
               symmetry: "broken",
-              handleIn: { dx: -30, dy: 0 },
-              handleOut: { dx: 30, dy: 0 },
+              handleIn: { dx: -30, dy: -20 },
+              handleOut: { dx: 30, dy: 10 },
               isLocked: false,
               isVisible: true,
             },
             {
               id: "p2",
-              name: "p2",
-              x: 100,
+              name: "Mid1",
+              x: 200,
+              y: 120,
+              theta: null,
+              splineType: "CubicBezier",
+              symmetry: "broken",
+              handleIn: { dx: -20, dy: -30 },
+              handleOut: { dx: 20, dy: 10 },
+              isLocked: false,
+              isVisible: true,
+            },
+            {
+              id: "p3",
+              name: "Mid2",
+              x: 300,
               y: 100,
               theta: null,
               splineType: "CubicBezier",
               symmetry: "broken",
+              handleIn: { dx: -20, dy: 20 },
+              handleOut: { dx: 30, dy: -10 },
+              isLocked: false,
+              isVisible: true,
+            },
+            {
+              id: "p4",
+              name: "End",
+              x: 400,
+              y: 120,
+              theta: null,
+              splineType: "CubicBezier",
+              symmetry: "broken",
+              handleIn: { dx: -40, dy: 0 },
+              handleOut: { dx: 20, dy: 20 },
+              isLocked: false,
+              isVisible: true,
+            },
+          ],
+        },
+        {
+          id: "t2",
+          name: "Aligned Symmetry",
+          color: "#52d273",
+          isLocked: false,
+          isVisible: true,
+          interpolationType: "Equidistant",
+          controlPoints: [
+            {
+              id: "a1",
+              name: "Start",
+              x: 100,
+              y: 300,
+              theta: null,
+              splineType: "CubicBezier",
+              symmetry: "aligned",
               handleIn: { dx: -30, dy: 0 },
               handleOut: { dx: 30, dy: 0 },
               isLocked: false,
               isVisible: true,
             },
             {
-              id: "p3",
-              name: "End",
-              x: 100,
-              y: 100,
+              id: "a2",
+              name: "Mid1",
+              x: 200,
+              y: 280,
               theta: null,
               splineType: "CubicBezier",
-              symmetry: "broken",
-              handleIn: { dx: -30, dy: 0 },
-              handleOut: { dx: 30, dy: 0 },
+              symmetry: "aligned",
+              handleIn: { dx: -25, dy: 5 },
+              handleOut: { dx: 25, dy: -5 },
+              isLocked: false,
+              isVisible: true,
+            },
+            {
+              id: "a3",
+              name: "Mid2",
+              x: 300,
+              y: 320,
+              theta: null,
+              splineType: "CubicBezier",
+              symmetry: "aligned",
+              handleIn: { dx: -20, dy: 10 },
+              handleOut: { dx: 20, dy: -10 },
+              isLocked: false,
+              isVisible: true,
+            },
+            {
+              id: "a4",
+              name: "End",
+              x: 400,
+              y: 300,
+              theta: null,
+              splineType: "CubicBezier",
+              symmetry: "aligned",
+              handleIn: { dx: -40, dy: 0 },
+              handleOut: { dx: 40, dy: 0 },
+              isLocked: false,
+              isVisible: true,
+            },
+          ],
+        },
+        {
+          id: "t3",
+          name: "Mirrored Symmetry",
+          color: "#e8835a",
+          isLocked: false,
+          isVisible: true,
+          interpolationType: "Equidistant",
+          controlPoints: [
+            {
+              id: "m1",
+              name: "Start",
+              x: 100,
+              y: 500,
+              theta: null,
+              splineType: "CubicBezier",
+              symmetry: "mirrored",
+              handleIn: { dx: -30, dy: 20 },
+              handleOut: { dx: 30, dy: -20 },
+              isLocked: false,
+              isVisible: true,
+            },
+            {
+              id: "m2",
+              name: "Mid1",
+              x: 200,
+              y: 520,
+              theta: null,
+              splineType: "Line",
+              symmetry: "mirrored",
+              handleIn: { dx: -25, dy: 15 },
+              handleOut: { dx: 25, dy: -15 },
+              isLocked: false,
+              isVisible: true,
+            },
+            {
+              id: "m3",
+              name: "Mid2",
+              x: 300,
+              y: 500,
+              theta: null,
+              splineType: "Line",
+              symmetry: "mirrored",
+              handleIn: { dx: -20, dy: 10 },
+              handleOut: { dx: 20, dy: -10 },
+              isLocked: false,
+              isVisible: true,
+            },
+            {
+              id: "m4",
+              name: "End",
+              x: 400,
+              y: 520,
+              theta: null,
+              splineType: "CubicBezier",
+              symmetry: "mirrored",
+              handleIn: { dx: -40, dy: 0 },
+              handleOut: { dx: 40, dy: 0 },
               isLocked: false,
               isVisible: true,
             },
@@ -209,4 +379,6 @@ export const useEditorStore = create<EditorState>((set) => ({
         },
       ],
     }),
+
+  // END of store
 }));

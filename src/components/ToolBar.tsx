@@ -1,12 +1,14 @@
 import { useEditorStore } from "../store/editorStore";
+import { CgInsertAfter } from "react-icons/cg";
+import { FaExpand } from "react-icons/fa6";
+import { FaMousePointer, FaPlus, FaTrash } from "react-icons/fa";
 
 const tools = [
-  { id: "select", label: "1" },
-  { id: "add", label: "2" },
-  { id: "insert", label: "3" },
-  { id: "remove", label: "4" },
-  { id: "pan", label: "5" },
-  { id: "zoom", label: "6" },
+  { id: "move", label: <FaMousePointer />, title: "Move (Select & Drag)" },
+  { id: "add", label: <FaPlus />, title: "Add Control Point" },
+  { id: "insert", label: <CgInsertAfter />, title: "Insert Between Points" },
+  { id: "delete", label: <FaTrash />, title: "Delete Control Point" },
+  { id: "simulate", label: <FaExpand />, title: "Simulate Path" },
 ] as const;
 
 export default function ToolBar() {
@@ -24,8 +26,11 @@ export default function ToolBar() {
             activeTool === tool.id ? "btn-light" : "btn-outline-light"
           }`}
           style={{ width: "40px", height: "40px" }}
-          onClick={() => setActiveTool(tool.id)}
-          title={tool.id}
+          onClick={() => {
+            setActiveTool(tool.id);
+            console.log(`Active tool set to: ${tool.id}`);
+          }}
+          title={tool.title}
         >
           {tool.label}
         </button>

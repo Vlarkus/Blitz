@@ -1,4 +1,4 @@
-export type ToolID = "select" | "add" | "insert" | "remove" | "pan" | "zoom";
+export type ToolID = "move" | "add" | "delete" | "insert" | "simulate";
 
 export type SplineType = "Line" | "CubicBezier" | "Clothoid";
 
