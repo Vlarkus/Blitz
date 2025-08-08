@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ControlPoint } from "../types/editorTypes";
-import { useEditorStore } from "../store/editorStore";
+import { useEditorStore } from "../editor/editorStore";
 import { FaLock, FaLockOpen } from "react-icons/fa";
 
 interface Props {

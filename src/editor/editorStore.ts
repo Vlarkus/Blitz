@@ -1,19 +1,6 @@
 import { create } from "zustand";
 import { nanoid } from "nanoid";
-import type {
-  Vec2,
-  ToolID,
-  Trajectory,
-  ControlPoint,
-  InterpolationType,
-} from "../types/editorTypes";
-
-function getRandomColor(): `#${string}` {
-  const letters = "0123456789ABCDEF";
-  let color = "#";
-  for (let i = 0; i < 6; i++) color += letters[Math.floor(Math.random() * 16)];
-  return color as `#${string}`;
-}
+import type { Vec2, ToolID, InterpolationType, Unit } from "../types/types";
 
 function updateTrajectoryInList(
   list: Trajectory[],
@@ -22,6 +9,8 @@ function updateTrajectoryInList(
 ): Trajectory[] {
   return list.map((t) => (t.id === id ? { ...t, ...changes } : t));
 }
+
+// TODO: rework this file so it only manages editor store. Leave only selected trajectory & selected control point
 
 interface EditorState {
   // Viewport state
@@ -34,7 +23,7 @@ interface EditorState {
   setActiveTool: (tool: ToolID) => void;
 
   // Units
-  unit: "m" | "cm" | "in";
+  unit: Unit;
   pxPerMeter: number;
 
   // Selection
@@ -55,6 +44,8 @@ interface EditorState {
   removeTrajectory: (id: string) => void;
   reorderTrajectories: (newOrderIds: string[]) => void;
   updateTrajectory: (id: string, changes: Partial<Trajectory>) => void;
+
+  cutTrajectoryAtPoint: (trajectoryId: string, controlPointId: string) => void;
 
   // Control Points
   addControlPoint: (trajectoryId: string, point: ControlPoint) => void;
@@ -187,6 +178,44 @@ export const useEditorStore = create<EditorState>((set) => ({
           : t
       ),
     })),
+
+  cutTrajectoryAtPoint: (trajectoryId, controlPointId) =>
+    set((state) => {
+      const original = state.trajectories.find((t) => t.id === trajectoryId);
+      if (!original) return {};
+
+      const index = original.controlPoints.findIndex(
+        (p) => p.id === controlPointId
+      );
+      if (index === -1 || index === original.controlPoints.length - 1)
+        return {};
+
+      const cp = original.controlPoints[index];
+      const tail = original.controlPoints.slice(index + 1);
+
+      const newStart = {
+        ...cp,
+        id: crypto.randomUUID(),
+        name: `${cp.name} (copy)`,
+      };
+      const newTrajectory = {
+        ...original,
+        id: crypto.randomUUID(),
+        name: `${original.name} (cut)`,
+        controlPoints: [newStart, ...tail],
+      };
+
+      const updatedOriginal = {
+        ...original,
+        controlPoints: original.controlPoints.slice(0, index + 1),
+      };
+
+      return {
+        trajectories: state.trajectories
+          .filter((t) => t.id !== trajectoryId)
+          .concat(updatedOriginal, newTrajectory),
+      };
+    }),
 
   seedDemo: () =>
     set({

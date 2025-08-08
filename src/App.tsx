@@ -3,7 +3,7 @@ import "./App.sass";
 import TopBar from "./components/TopBar";
 import CentralPanel from "./components/CentralPanel";
 import SidePanel from "./components/SidePanel";
-import ToolBar from "./components/ToolBar";
+import ToolBar from "./components/ToolPanel";
 
 function App() {
   return (

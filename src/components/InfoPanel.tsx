@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { TwitterPicker } from "react-color";
-import { useEditorStore } from "../store/editorStore";
+import { useEditorStore } from "../editor/editorStore";
 import type { InterpolationType } from "../types/editorTypes";
 
 export default function InfoPanel() {
@@ -243,41 +243,34 @@ export default function InfoPanel() {
               {selectedPoint ? (
                 editingY ? (
                   <input
-                    autoFocus
                     type="number"
-                    className="name-edit-input"
-                    value={yDraft}
-                    onChange={(e) => setYDraft(parseFloat(e.target.value))}
+                    value={xDraft}
+                    onChange={(e) => setXDraft(parseFloat(e.target.value))}
+                    className="number-input"
+                    autoFocus
                     onBlur={() => {
                       if (selectedTrajectoryId) {
                         updateSelectedControlPoint(
                           selectedTrajectoryId,
                           selectedPoint.id,
-                          {
-                            y: yDraft,
-                          }
+                          { x: xDraft }
                         );
                       }
-                      setEditingY(false);
+                      setEditingX(false);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
-                        if (selectedTrajectoryId) {
-                          updateSelectedControlPoint(
-                            selectedTrajectoryId,
-                            selectedPoint.id,
-                            {
-                              y: yDraft,
-                            }
-                          );
-                        }
-                        setEditingY(false);
+                        updateSelectedControlPoint(
+                          selectedTrajectoryId!,
+                          selectedPoint.id,
+                          { x: xDraft }
+                        );
+                        setEditingX(false);
                       } else if (e.key === "Escape") {
-                        setYDraft(selectedPoint.y);
-                        setEditingY(false);
+                        setXDraft(selectedPoint.x);
+                        setEditingX(false);
                       }
                     }}
-                    style={{ maxWidth: "80px" }}
                   />
                 ) : (
                   <span

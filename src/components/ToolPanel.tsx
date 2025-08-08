@@ -1,6 +1,7 @@
-import { useEditorStore } from "../store/editorStore";
-import { CgInsertAfter } from "react-icons/cg";
+import { useEditorStore } from "../editor/editorStore";
+import { CgInsertAfter, CgArrowsMergeAltH } from "react-icons/cg";
 import { FaExpand } from "react-icons/fa6";
+import { MdContentCut } from "react-icons/md";
 import { FaMousePointer, FaPlus, FaTrash } from "react-icons/fa";
 
 const tools = [
@@ -8,6 +9,8 @@ const tools = [
   { id: "add", label: <FaPlus />, title: "Add Control Point" },
   { id: "insert", label: <CgInsertAfter />, title: "Insert Between Points" },
   { id: "delete", label: <FaTrash />, title: "Delete Control Point" },
+  { id: "cut", label: <MdContentCut />, title: "Cut Trajectory" },
+  { id: "merge", label: <CgArrowsMergeAltH />, title: "Merge Trajectories" },
   { id: "simulate", label: <FaExpand />, title: "Simulate Path" },
 ] as const;
 

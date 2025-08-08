@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { useEditorStore } from "../store/editorStore";
+import { useEditorStore } from "../editor/editorStore";
 import TrajectoryCard from "./TrajectoryCard";
 
 import {

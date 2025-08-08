@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Stage, Layer, Line, Circle, Group, Path } from "react-konva";
-import { useEditorStore } from "../store/editorStore";
+import { useEditorStore } from "../editor/editorStore";
 
 // ---- handle math helpers ----
 const EPS = 1e-6;
@@ -105,6 +105,8 @@ export default function CanvasViewport() {
   const setSelectedControlPointId = useEditorStore(
     (s) => s.setSelectedControlPointId
   );
+
+  const cutTrajectoryAtPoint = useEditorStore((s) => s.cutTrajectoryAtPoint);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<any>(null);
@@ -222,7 +224,7 @@ export default function CanvasViewport() {
 
         const newPoint = {
           id: "", // ignored by store
-          name: "",
+          name: "Inserted Point",
           x: worldX,
           y: worldY,
           theta: 0,
@@ -339,10 +341,14 @@ export default function CanvasViewport() {
                     })}
 
                   {/* Handles & ControlPoints */}
-                  {pts.map((p) => {
+                  {pts.map((p, i) => {
                     const hIn = absHandleIn(p);
                     const hOut = absHandleOut(p);
                     const locked = t.isLocked || p.isLocked;
+
+                    const skipHandleOut = p.splineType === "Line";
+                    const skipHandleIn =
+                      i > 0 && pts[i - 1].splineType === "Line";
 
                     const onDragHandle = (which: WhichHandle) => (e: any) => {
                       if (locked) return;
@@ -379,44 +385,52 @@ export default function CanvasViewport() {
                     return (
                       <Group key={p.id}>
                         {/* handle lines */}
-                        <Line
-                          points={[p.x, p.y, hIn.x, hIn.y]}
-                          stroke="#888"
-                          strokeWidth={handleStroke}
-                          dash={[4 * invScale, 4 * invScale]}
-                          listening={false}
-                        />
-                        <Line
-                          points={[p.x, p.y, hOut.x, hOut.y]}
-                          stroke="#888"
-                          strokeWidth={handleStroke}
-                          dash={[4 * invScale, 4 * invScale]}
-                          listening={false}
-                        />
+                        {!skipHandleIn && (
+                          <Line
+                            points={[p.x, p.y, hIn.x, hIn.y]}
+                            stroke="#888"
+                            strokeWidth={handleStroke}
+                            dash={[4 * invScale, 4 * invScale]}
+                            listening={false}
+                          />
+                        )}
+                        {!skipHandleOut && (
+                          <Line
+                            points={[p.x, p.y, hOut.x, hOut.y]}
+                            stroke="#888"
+                            strokeWidth={handleStroke}
+                            dash={[4 * invScale, 4 * invScale]}
+                            listening={false}
+                          />
+                        )}
 
                         {/* handle points - draggable */}
-                        <Circle
-                          x={hIn.x}
-                          y={hIn.y}
-                          radius={handleR}
-                          fill="#bbb"
-                          stroke="#666"
-                          strokeWidth={handleStroke}
-                          draggable={!locked && activeTool === "move"}
-                          onDragMove={onDragHandle("in")}
-                          onDragEnd={onDragHandle("in")}
-                        />
-                        <Circle
-                          x={hOut.x}
-                          y={hOut.y}
-                          radius={handleR}
-                          fill="#bbb"
-                          stroke="#666"
-                          strokeWidth={handleStroke}
-                          draggable={!locked && activeTool === "move"}
-                          onDragMove={onDragHandle("out")}
-                          onDragEnd={onDragHandle("out")}
-                        />
+                        {!skipHandleIn && (
+                          <Circle
+                            x={hIn.x}
+                            y={hIn.y}
+                            radius={handleR}
+                            fill="#bbb"
+                            stroke="#666"
+                            strokeWidth={handleStroke}
+                            draggable={!locked && activeTool === "move"}
+                            onDragMove={onDragHandle("in")}
+                            onDragEnd={onDragHandle("in")}
+                          />
+                        )}
+                        {!skipHandleOut && (
+                          <Circle
+                            x={hOut.x}
+                            y={hOut.y}
+                            radius={handleR}
+                            fill="#bbb"
+                            stroke="#666"
+                            strokeWidth={handleStroke}
+                            draggable={!locked && activeTool === "move"}
+                            onDragMove={onDragHandle("out")}
+                            onDragEnd={onDragHandle("out")}
+                          />
+                        )}
 
                         {/* anchor (control point) */}
                         <Circle
@@ -445,6 +459,11 @@ export default function CanvasViewport() {
                               setSelectedControlPointId(p.id);
                             } else if (activeTool === "delete") {
                               removeControlPoint(t.id, p.id);
+                            } else if (activeTool === "cut") {
+                              cutTrajectoryAtPoint(t.id, p.id);
+                              useEditorStore
+                                .getState()
+                                .setSelectedControlPointId(null);
                             }
                           }}
                         />

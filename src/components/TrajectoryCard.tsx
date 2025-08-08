@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useEditorStore } from "../store/editorStore";
+import { useEditorStore } from "../editor/editorStore";
 import type { Trajectory } from "../types/editorTypes";
 import {
   FaEye,
