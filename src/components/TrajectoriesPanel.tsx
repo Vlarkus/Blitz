@@ -21,13 +21,8 @@ import { FaPaintBrush, FaPlus, FaTrash } from "react-icons/fa";
 
 export default function TrajectoriesPanel() {
   const {
-    trajectories,
-    reorderTrajectories,
     selectedTrajectoryId,
     selectedControlPointId,
-    removeTrajectory,
-    removeControlPoint,
-    addTrajectory,
     setSelectedTrajectoryId,
   } = useEditorStore();
 

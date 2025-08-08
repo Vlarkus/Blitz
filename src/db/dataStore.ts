@@ -3,8 +3,11 @@ import { Trajectory } from "./data/trajectory";
 
 interface DataStore {
   trajectories: Trajectory[];
-  activeTrajectoryId: string | null;
-  activeControlPointId: string | null;
+
+  selectedTrajectoryId: string | null;
+  selectedControlPointId: string | null;
+  setSelectedTrajectoryId: (id: string | null) => void;
+  setSelectedControlPointId: (id: string | null) => void;
 
   addTrajectory: (trajectory: Trajectory) => void;
   removeTrajectoryById: (id: string) => void;
@@ -15,17 +18,28 @@ interface DataStore {
   getTrajectoryById: (id: string) => Trajectory | undefined;
   getTrajectoryByIndex: (index: number) => Trajectory | undefined;
 
-  setActiveTrajectory: (id: string | null) => void;
-  setActiveControlPoint: (id: string | null) => void;
-
   duplicateTrajectory: (id: string) => void;
   reorderTrajectories: (newOrder: string[]) => void;
 }
 
 export const useDataStore = create<DataStore>((set, get) => ({
   trajectories: [],
-  activeTrajectoryId: null,
-  activeControlPointId: null,
+  selectedTrajectoryId: null,
+  selectedControlPointId: null,
+
+  setSelectedTrajectoryId: (id) =>
+    set({ selectedTrajectoryId: id, selectedControlPointId: null }),
+
+  setSelectedControlPointId: (id) => {
+    const trajectory = get().trajectories.find((t) =>
+      t.controlPoints.some((cp) => cp.id === id)
+    );
+    if (!trajectory) return;
+    set({
+      selectedControlPointId: id,
+      selectedTrajectoryId: trajectory.id,
+    });
+  },
 
   addTrajectory: (trajectory) => {
     set((state) => ({ trajectories: [...state.trajectories, trajectory] }));
@@ -34,8 +48,10 @@ export const useDataStore = create<DataStore>((set, get) => ({
   removeTrajectoryById: (id) => {
     set((state) => ({
       trajectories: state.trajectories.filter((t) => t.id !== id),
-      activeTrajectoryId:
-        state.activeTrajectoryId === id ? null : state.activeTrajectoryId,
+      selectedTrajectoryId:
+        state.selectedTrajectoryId === id ? null : state.selectedTrajectoryId,
+      selectedControlPointId:
+        state.selectedTrajectoryId === id ? null : state.selectedControlPointId,
     }));
   },
 
@@ -43,12 +59,13 @@ export const useDataStore = create<DataStore>((set, get) => ({
     set((state) => {
       const newTrajectories = [...state.trajectories];
       const removed = newTrajectories.splice(index, 1)[0];
+      const wasSelected = removed?.id === state.selectedTrajectoryId;
       return {
         trajectories: newTrajectories,
-        activeTrajectoryId:
-          removed?.id === state.activeTrajectoryId
-            ? null
-            : state.activeTrajectoryId,
+        selectedTrajectoryId: wasSelected ? null : state.selectedTrajectoryId,
+        selectedControlPointId: wasSelected
+          ? null
+          : state.selectedControlPointId,
       };
     });
   },
@@ -67,7 +84,8 @@ export const useDataStore = create<DataStore>((set, get) => ({
       const original = state.trajectories.find((t) => t.id === trajectoryId);
       if (!original) return {};
       const index = original.getCPIndex(controlPointId);
-      if (index < 0 || index >= original.length - 1) return {};
+
+      if (index <= 0 || index >= original.length - 1) return {};
 
       const newCPs = original.controlPoints.slice(index);
       original.removeAllCPs();
@@ -77,7 +95,12 @@ export const useDataStore = create<DataStore>((set, get) => ({
       newTrajectory.removeAllCPs();
       newCPs.forEach((cp) => newTrajectory.appendCP(cp));
 
-      return { trajectories: [...state.trajectories, newTrajectory] };
+      const firstCP = newTrajectory.getFirstCP();
+      return {
+        trajectories: [...state.trajectories, newTrajectory],
+        selectedTrajectoryId: newTrajectory.id,
+        selectedControlPointId: firstCP ? firstCP.id : null,
+      };
     });
   },
 
@@ -93,7 +116,20 @@ export const useDataStore = create<DataStore>((set, get) => ({
       const filtered = state.trajectories.filter(
         (t) => t.id !== firstId && t.id !== secondId
       );
-      return { trajectories: [...filtered, merged] };
+
+      const wasSelected =
+        state.selectedTrajectoryId === firstId ||
+        state.selectedTrajectoryId === secondId;
+
+      return {
+        trajectories: [...filtered, merged],
+        selectedTrajectoryId: wasSelected
+          ? merged.id
+          : state.selectedTrajectoryId,
+        selectedControlPointId: wasSelected
+          ? null
+          : state.selectedControlPointId,
+      };
     });
   },
 
@@ -103,14 +139,6 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   getTrajectoryByIndex: (index) => {
     return get().trajectories[index];
-  },
-
-  setActiveTrajectory: (id) => {
-    set({ activeTrajectoryId: id });
-  },
-
-  setActiveControlPoint: (id) => {
-    set({ activeControlPointId: id });
   },
 
   duplicateTrajectory: (id) => {
