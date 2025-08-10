@@ -1,22 +1,93 @@
-import type { Trajectory } from "./data/trajectory";
+import type {
+  ColorHex,
+  ControlPointId,
+  InterpolationType,
+  SplineType,
+  SymmetryType,
+  TrajectoryId,
+} from "../types/types";
+import type { ControlPoint } from "./entities/controlPoint/controlPoint";
+import type { Trajectory } from "./entities/trajectory/trajectory";
 
 export interface IDataStore {
-  trajectories: Trajectory[];
+  /** ───── Selection ───── */
+  setSelectedTrajectoryId(id: TrajectoryId | null): void;
+  setSelectedControlPointId(id: ControlPointId | null): void;
 
-  selectedTrajectoryId: string | null;
-  selectedControlPointId: string | null;
-  setSelectedTrajectoryId: (id: string | null) => void;
-  setSelectedControlPointId: (id: string | null) => void;
+  /** ───── Trajectories ───── */
+  addTrajectory(traj: Trajectory): void;
+  removeTrajectory(id: TrajectoryId): void;
+  renameTrajectory(id: TrajectoryId, name: string): void;
+  setTrajectoryColor(id: TrajectoryId, color: ColorHex): void;
+  setTrajectoryVisibility(id: TrajectoryId, visible: boolean): void;
+  setTrajectoryLock(id: TrajectoryId, locked: boolean): void;
+  setTrajectoryInterpolation(id: TrajectoryId, type: InterpolationType): void;
+  cloneTrajectory(id: TrajectoryId): TrajectoryId | null;
+  reorderTrajectory(fromIndex: number, toIndex: number): void;
 
-  addTrajectory: (trajectory: Trajectory) => void;
-  removeTrajectoryById: (id: string) => void;
-  removeTrajectoryByIndex: (index: number) => void;
-  moveTrajectory: (fromIndex: number, toIndex: number) => void;
-  cutTrajectory: (trajectoryId: string, controlPointId: string) => void;
-  mergeTrajectories: (firstId: string, secondId: string) => void;
-  getTrajectoryById: (id: string) => Trajectory | undefined;
-  getTrajectoryByIndex: (index: number) => Trajectory | undefined;
+  /** ───── Control Points ───── */
+  addControlPoint(trajId: TrajectoryId, cp: ControlPoint, index?: number): void;
+  insertControlPointBefore(
+    trajId: TrajectoryId,
+    beforeCpId: ControlPointId,
+    cp: ControlPoint
+  ): void;
+  insertControlPointAfter(
+    trajId: TrajectoryId,
+    afterCpId: ControlPointId,
+    cp: ControlPoint
+  ): void;
+  removeControlPoint(trajId: TrajectoryId, cpId: ControlPointId): void;
+  renameControlPoint(
+    trajId: TrajectoryId,
+    cpId: ControlPointId,
+    name: string
+  ): void;
+  moveControlPoint(
+    trajId: TrajectoryId,
+    cpId: ControlPointId,
+    x: number,
+    y: number
+  ): void;
+  setControlPointSymmetry(
+    trajId: TrajectoryId,
+    cpId: ControlPointId,
+    symmetry: SymmetryType
+  ): void;
+  setControlPointSplineType(
+    trajId: TrajectoryId,
+    cpId: ControlPointId,
+    type: SplineType
+  ): void;
 
-  duplicateTrajectory: (id: string) => void;
-  reorderTrajectories: (newOrder: string[]) => void;
+  /** ───── Helper Points (Handles) ───── */
+  setHandlePosition(
+    trajId: TrajectoryId,
+    cpId: ControlPointId,
+    which: "in" | "out",
+    x: number,
+    y: number
+  ): void;
+  setHandlePolar(
+    trajId: TrajectoryId,
+    cpId: ControlPointId,
+    which: "in" | "out",
+    r: number,
+    thetaRad: number
+  ): void;
+
+  /** ───── Lookups & Path ops ───── */
+  getTrajectoryById(id: TrajectoryId): Trajectory | undefined;
+  getControlPoint(
+    trajId: TrajectoryId,
+    cpId: ControlPointId
+  ): ControlPoint | undefined;
+  cutTrajectoryAt(
+    trajId: TrajectoryId,
+    cpId: ControlPointId
+  ): { firstId: TrajectoryId; secondId: TrajectoryId } | null;
+  mergeTrajectories(
+    firstId: TrajectoryId,
+    secondId: TrajectoryId
+  ): TrajectoryId | null;
 }

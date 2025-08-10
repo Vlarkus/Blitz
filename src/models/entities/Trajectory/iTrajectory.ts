@@ -4,8 +4,8 @@ import type {
   InterpolationType,
   SymmetryType,
   SplineType,
-} from "../../../types/Types";
-import type { ControlPoint } from "../ControlPoint/controlPoint";
+} from "../../../types/types";
+import type { ControlPoint } from "../controlPoint/controlPoint";
 
 export interface TrajectoryInternalAPI {
   // meta

@@ -1,142 +1,426 @@
 import { create } from "zustand";
-import { Trajectory } from "./data/trajectory";
+import { Trajectory } from "./entities/trajectory/trajectory";
+import type { ColorHex, ControlPointId, TrajectoryId } from "../types/types";
 import type { IDataStore } from "./IDataStore";
+import { ControlPoint } from "./entities/controlPoint/controlPoint";
+import { HelperPoint } from "./entities/helperPoint/helperPoint";
 
-export const useDataStore = create<IDataStore>((set, get) => ({
+type State = {
+  // Collections
+  trajectories: Trajectory[];
+
+  // Selection
+  selectedTrajectoryId: TrajectoryId | null;
+  selectedControlPointId: ControlPointId | null;
+};
+
+type Actions = IDataStore;
+
+type Store = State & Actions;
+
+export const useDataStore = create<Store>((set, get) => ({
+  /* =========================
+   * Initial state
+   * ========================= */
   trajectories: [],
   selectedTrajectoryId: null,
   selectedControlPointId: null,
 
-  setSelectedTrajectoryId: (id) =>
-    set({ selectedTrajectoryId: id, selectedControlPointId: null }),
-
-  setSelectedControlPointId: (id) => {
-    const trajectory = get().trajectories.find((t) =>
-      t.controlPoints.some((cp) => cp.id === id)
-    );
-    if (!trajectory) return;
-    set({
-      selectedControlPointId: id,
-      selectedTrajectoryId: trajectory.id,
-    });
+  /* =========================
+   * Selection
+   * ========================= */
+  setSelectedTrajectoryId(id) {
+    set({ selectedTrajectoryId: id, selectedControlPointId: null });
   },
 
-  addTrajectory: (trajectory) => {
-    set((state) => ({ trajectories: [...state.trajectories, trajectory] }));
+  setSelectedControlPointId(id) {
+    set({ selectedControlPointId: id });
   },
 
-  removeTrajectoryById: (id) => {
-    set((state) => ({
-      trajectories: state.trajectories.filter((t) => t.id !== id),
+  /* =========================
+   * Trajectories
+   * ========================= */
+  addTrajectory(traj) {
+    set((s) => ({ trajectories: [...s.trajectories, traj] }));
+  },
+
+  removeTrajectory(id) {
+    set((s) => ({
+      trajectories: s.trajectories.filter((t) => t.id !== id),
       selectedTrajectoryId:
-        state.selectedTrajectoryId === id ? null : state.selectedTrajectoryId,
+        s.selectedTrajectoryId === id ? null : s.selectedTrajectoryId,
       selectedControlPointId:
-        state.selectedTrajectoryId === id ? null : state.selectedControlPointId,
+        s.selectedTrajectoryId === id ? null : s.selectedControlPointId,
     }));
   },
 
-  removeTrajectoryByIndex: (index) => {
-    set((state) => {
-      const newTrajectories = [...state.trajectories];
-      const removed = newTrajectories.splice(index, 1)[0];
-      const wasSelected = removed?.id === state.selectedTrajectoryId;
+  renameTrajectory(id, name) {
+    set((s) => {
+      const idx = findTrajIndex(s.trajectories, id);
+      if (idx < 0) return {};
+      s.trajectories[idx].internal.setName(sanitizeName(name));
+      return { trajectories: [...s.trajectories] };
+    });
+  },
+
+  setTrajectoryColor(id, color) {
+    set((s) => {
+      const idx = findTrajIndex(s.trajectories, id);
+      if (idx < 0) return {};
+      s.trajectories[idx].internal.setColor(normalizeColor(color));
+      return { trajectories: [...s.trajectories] };
+    });
+  },
+
+  setTrajectoryVisibility(id, visible) {
+    set((s) => {
+      const idx = findTrajIndex(s.trajectories, id);
+      if (idx < 0) return {};
+      s.trajectories[idx].internal.setIsVisible(!!visible);
+      return { trajectories: [...s.trajectories] };
+    });
+  },
+
+  setTrajectoryLock(id, locked) {
+    set((s) => {
+      const idx = findTrajIndex(s.trajectories, id);
+      if (idx < 0) return {};
+      s.trajectories[idx].internal.setIsLocked(!!locked);
+      return { trajectories: [...s.trajectories] };
+    });
+  },
+
+  setTrajectoryInterpolation(id, type) {
+    set((s) => {
+      const idx = findTrajIndex(s.trajectories, id);
+      if (idx < 0) return {};
+      s.trajectories[idx].internal.setInterpolationType(type);
+      return { trajectories: [...s.trajectories] };
+    });
+  },
+
+  cloneTrajectory(id) {
+    const state = get();
+    const idx = findTrajIndex(state.trajectories, id);
+    if (idx < 0) return null;
+
+    const src = state.trajectories[idx];
+    const cloned = new Trajectory(
+      src.name + " (copy)",
+      src.color,
+      src.controlPoints.map((cp) => deepCopyControlPoint(cp)),
+      src.interpolationType,
+      src.isVisible,
+      src.isLocked
+    );
+
+    set((s) => ({ trajectories: [...s.trajectories, cloned] }));
+    return cloned.id as TrajectoryId;
+  },
+
+  reorderTrajectory(fromIndex, toIndex) {
+    set((s) => {
+      const arr = [...s.trajectories];
+      const from = clampIndex(fromIndex, 0, arr.length - 1);
+      const to = clampIndex(toIndex, 0, arr.length - 1);
+      if (from === to) return {};
+      const [it] = arr.splice(from, 1);
+      arr.splice(to, 0, it);
+      return { trajectories: arr };
+    });
+  },
+
+  /* =========================
+   * Control Points
+   * ========================= */
+  addControlPoint(trajId, cp, index) {
+    set((s) => {
+      const t = findTraj(s.trajectories, trajId);
+      if (!t) return {};
+      if (index == null) t.internal.addControlPoint(cp);
+      else t.internal.insertControlPoint(cp, clampIndex(index, 0, t.length));
+      return { trajectories: [...s.trajectories] };
+    });
+  },
+
+  insertControlPointBefore(trajId, beforeCpId, cp) {
+    set((s) => {
+      const t = findTraj(s.trajectories, trajId);
+      if (!t) return {};
+      t.internal.insertControlPointBefore(cp, beforeCpId);
+      return { trajectories: [...s.trajectories] };
+    });
+  },
+
+  insertControlPointAfter(trajId, afterCpId, cp) {
+    set((s) => {
+      const t = findTraj(s.trajectories, trajId);
+      if (!t) return {};
+      t.internal.insertControlPointAfter(cp, afterCpId);
+      return { trajectories: [...s.trajectories] };
+    });
+  },
+
+  removeControlPoint(trajId, cpId) {
+    set((s) => {
+      const t = findTraj(s.trajectories, trajId);
+      if (!t) return {};
+      t.internal.removeControlPoint(cpId);
       return {
-        trajectories: newTrajectories,
-        selectedTrajectoryId: wasSelected ? null : state.selectedTrajectoryId,
-        selectedControlPointId: wasSelected
-          ? null
-          : state.selectedControlPointId,
+        trajectories: [...s.trajectories],
+        selectedControlPointId:
+          s.selectedControlPointId === cpId ? null : s.selectedControlPointId,
       };
     });
   },
 
-  moveTrajectory: (fromIndex, toIndex) => {
-    set((state) => {
-      const list = [...state.trajectories];
-      const [moved] = list.splice(fromIndex, 1);
-      list.splice(toIndex, 0, moved);
-      return { trajectories: list };
+  renameControlPoint(trajId, cpId, name) {
+    set((s) => {
+      const cp = findCP(s.trajectories, trajId, cpId);
+      if (!cp) return {};
+      cp.internal.setName(sanitizeName(name));
+      return { trajectories: [...s.trajectories] };
     });
   },
 
-  cutTrajectory: (trajectoryId, controlPointId) => {
-    set((state) => {
-      const original = state.trajectories.find((t) => t.id === trajectoryId);
-      if (!original) return {};
-      const index = original.getCPIndex(controlPointId);
-
-      if (index <= 0 || index >= original.length - 1) return {};
-
-      const newCPs = original.controlPoints.slice(index);
-      original.removeAllCPs();
-      original.controlPoints.push(...original.controlPoints.slice(0, index));
-
-      const newTrajectory = original.clone();
-      newTrajectory.removeAllCPs();
-      newCPs.forEach((cp) => newTrajectory.appendCP(cp));
-
-      const firstCP = newTrajectory.getFirstCP();
-      return {
-        trajectories: [...state.trajectories, newTrajectory],
-        selectedTrajectoryId: newTrajectory.id,
-        selectedControlPointId: firstCP ? firstCP.id : null,
-      };
-    });
-  },
-
-  mergeTrajectories: (firstId, secondId) => {
-    set((state) => {
-      const first = state.trajectories.find((t) => t.id === firstId);
-      const second = state.trajectories.find((t) => t.id === secondId);
-      if (!first || !second) return {};
-
-      const merged = first.clone();
-      second.controlPoints.forEach((cp) => merged.appendCP(cp));
-
-      const filtered = state.trajectories.filter(
-        (t) => t.id !== firstId && t.id !== secondId
+  moveControlPoint(trajId, cpId, x, y) {
+    set((s) => {
+      const t = findTraj(s.trajectories, trajId);
+      if (!t) return {};
+      t.internal.setControlPointPosition(
+        cpId,
+        assertFinite(x, "x"),
+        assertFinite(y, "y")
       );
-
-      const wasSelected =
-        state.selectedTrajectoryId === firstId ||
-        state.selectedTrajectoryId === secondId;
-
-      return {
-        trajectories: [...filtered, merged],
-        selectedTrajectoryId: wasSelected
-          ? merged.id
-          : state.selectedTrajectoryId,
-        selectedControlPointId: wasSelected
-          ? null
-          : state.selectedControlPointId,
-      };
+      return { trajectories: [...s.trajectories] };
     });
   },
 
-  getTrajectoryById: (id) => {
-    return get().trajectories.find((t) => t.id === id);
-  },
-
-  getTrajectoryByIndex: (index) => {
-    return get().trajectories[index];
-  },
-
-  duplicateTrajectory: (id) => {
-    set((state) => {
-      const original = state.trajectories.find((t) => t.id === id);
-      if (!original) return {};
-      const copy = original.clone();
-      return { trajectories: [...state.trajectories, copy] };
+  setControlPointSymmetry(trajId, cpId, symmetry) {
+    set((s) => {
+      const t = findTraj(s.trajectories, trajId);
+      if (!t) return {};
+      t.internal.setControlPointSymmetry(cpId, symmetry);
+      return { trajectories: [...s.trajectories] };
     });
   },
 
-  reorderTrajectories: (newOrder) => {
-    set((state) => {
-      const idMap = new Map(state.trajectories.map((t) => [t.id, t]));
-      const reordered = newOrder
-        .map((id) => idMap.get(id))
-        .filter(Boolean) as Trajectory[];
-      return { trajectories: reordered };
+  setControlPointSplineType(trajId, cpId, type) {
+    set((s) => {
+      const t = findTraj(s.trajectories, trajId);
+      if (!t) return {};
+      // TODO in model: verify shared state issues when changing spline type
+      t.internal.setControlPointSplineType(cpId, type);
+      return { trajectories: [...s.trajectories] };
     });
+  },
+
+  /* =========================
+   * Helper points (handles)
+   * ========================= */
+  setHandlePosition(trajId, cpId, which, x, y) {
+    set((s) => {
+      const t = findTraj(s.trajectories, trajId);
+      if (!t) return {};
+      t.internal.setHelperPointPosition(
+        cpId,
+        which,
+        assertFinite(x, "x"),
+        assertFinite(y, "y")
+      );
+      return { trajectories: [...s.trajectories] };
+    });
+  },
+
+  setHandlePolar(trajId, cpId, which, r, thetaRad) {
+    set((s) => {
+      const cp = findCP(s.trajectories, trajId, cpId);
+      if (!cp) return {};
+      const h = which === "in" ? cp.handleIn : cp.handleOut;
+      h.internal.setPosition(clampPositive(r), normRad(thetaRad));
+      // Reuse the existing neighbor rule via trajectory if desired
+      // For MVP we’ll simply touch the trajectory array to notify subscribers
+      return { trajectories: [...s.trajectories] };
+    });
+  },
+
+  /* =========================
+   * Lookups & path ops
+   * ========================= */
+  getTrajectoryById(id) {
+    return findTraj(get().trajectories, id);
+  },
+
+  getControlPoint(trajId, cpId) {
+    return findCP(get().trajectories, trajId, cpId);
+  },
+
+  cutTrajectoryAt(trajId, cpId) {
+    const state = get();
+    const idx = findTrajIndex(state.trajectories, trajId);
+    if (idx < 0) return null;
+
+    const src = state.trajectories[idx];
+    const splitIndex = src["controlPoints"].findIndex(
+      (c: ControlPoint) => c.id === cpId
+    );
+    if (splitIndex <= 0 || splitIndex >= src.length - 1) return null; // require interior split
+
+    const first = new Trajectory(
+      src.name,
+      src.color,
+      src.controlPoints.slice(0, splitIndex + 1).map(deepCopyControlPoint),
+      src.interpolationType,
+      src.isVisible,
+      src.isLocked
+    );
+
+    const second = new Trajectory(
+      src.name + " (split)",
+      src.color,
+      src.controlPoints.slice(splitIndex).map(deepCopyControlPoint),
+      src.interpolationType,
+      src.isVisible,
+      src.isLocked
+    );
+
+    set((s) => {
+      const arr = [...s.trajectories];
+      arr.splice(idx, 1, first, second);
+      return { trajectories: arr };
+    });
+
+    return {
+      firstId: first.id as TrajectoryId,
+      secondId: second.id as TrajectoryId,
+    };
+  },
+
+  mergeTrajectories(firstId, secondId) {
+    const state = get();
+    const aIdx = findTrajIndex(state.trajectories, firstId);
+    const bIdx = findTrajIndex(state.trajectories, secondId);
+    if (aIdx < 0 || bIdx < 0 || aIdx === bIdx) return null;
+
+    const a = state.trajectories[aIdx];
+    const b = state.trajectories[bIdx];
+
+    const mergedCPs = [
+      ...a.controlPoints.map(deepCopyControlPoint),
+      ...b.controlPoints.map(deepCopyControlPoint),
+    ];
+
+    const merged = new Trajectory(
+      `${a.name} + ${b.name}`,
+      a.color,
+      mergedCPs,
+      a.interpolationType,
+      a.isVisible && b.isVisible,
+      a.isLocked || b.isLocked
+    );
+
+    set((s) => {
+      const arr = [...s.trajectories];
+      const i1 = Math.min(aIdx, bIdx);
+      const i2 = Math.max(aIdx, bIdx);
+      arr.splice(i2, 1);
+      arr.splice(i1, 1, merged);
+      return { trajectories: arr };
+    });
+
+    return merged.id as TrajectoryId;
   },
 }));
+
+/* ========= Helpers ========= */
+
+function findTraj(
+  trajectories: Trajectory[],
+  id: TrajectoryId
+): Trajectory | undefined {
+  const idx = findTrajIndex(trajectories, id);
+  return idx >= 0 ? trajectories[idx] : undefined;
+}
+
+function findTrajIndex(trajectories: Trajectory[], id: TrajectoryId): number {
+  return trajectories.findIndex((t) => t.id === id);
+}
+
+function findCP(
+  trajectories: Trajectory[],
+  trajId: TrajectoryId,
+  cpId: ControlPointId
+): ControlPoint | undefined {
+  const t = findTraj(trajectories, trajId);
+  if (!t) return undefined;
+  const i = t["controlPoints"].findIndex((c: ControlPoint) => c.id === cpId);
+  return i >= 0 ? (t["controlPoints"][i] as ControlPoint) : undefined;
+}
+
+function sanitizeName(name: string): string {
+  if (typeof name !== "string") return "Trajectory";
+  const t = name.trim();
+  return t.length ? (t.length > 100 ? t.slice(0, 100) : t) : "Trajectory";
+}
+
+function normalizeColor(color: ColorHex): ColorHex {
+  const s = (color || "").toString().trim();
+  const hex = s.startsWith("#") ? s.slice(1) : s;
+  const full =
+    hex.length === 3
+      ? hex
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : hex;
+  const ok = /^[0-9a-fA-F]{6}$/.test(full);
+  return `#${ok ? full.toUpperCase() : "3A86FF"}` as ColorHex;
+}
+
+function clampIndex(n: number, min: number, max: number): number {
+  if (!Number.isFinite(n)) return min;
+  return Math.max(min, Math.min(Math.floor(n), max));
+}
+
+function assertFinite(n: number, label: string): number {
+  if (typeof n !== "number" || !Number.isFinite(n)) {
+    throw new Error(`${label} must be a finite number`);
+  }
+  return n;
+}
+
+function clampPositive(r: number, eps = 1e-4): number {
+  if (!Number.isFinite(r)) return eps;
+  return Math.max(r, eps);
+}
+
+function normRad(theta: number): number {
+  if (!Number.isFinite(theta)) return 0;
+  return Math.atan2(Math.sin(theta), Math.cos(theta));
+}
+
+// deep copy a ControlPoint, including HelperPoints
+function deepCopyControlPoint(cp: ControlPoint): ControlPoint {
+  const hin = new HelperPoint(
+    cp.handleIn.r,
+    cp.handleIn.theta,
+    cp.handleIn.isLinear
+  );
+  const hout = new HelperPoint(
+    cp.handleOut.r,
+    cp.handleOut.theta,
+    cp.handleOut.isLinear
+  );
+  return new ControlPoint(
+    cp.name,
+    cp.x,
+    cp.y,
+    cp.heading,
+    cp.splineType,
+    cp.symmetry,
+    hin,
+    hout,
+    cp.isLocked,
+    cp.isEvent
+  );
+}

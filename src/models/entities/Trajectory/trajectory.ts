@@ -1,11 +1,11 @@
 // src/domain/Trajectory/trajectory.ts
-import { ControlPoint } from "../ControlPoint/controlPoint";
+import { ControlPoint } from "../controlPoint/controlPoint";
 import type {
   ColorHex,
   InterpolationType,
   SplineType,
   SymmetryType,
-} from "../../../types/Types";
+} from "../../../types/types";
 import { generateId, getRandomColor } from "../../../utils/utils";
 import type { TrajectoryInternalAPI } from "./iTrajectory";
 
@@ -112,7 +112,6 @@ export class Trajectory {
     return this._controlPoints.length;
   }
 
-  // single-id lookup only
   private getControlPointById(id: string): ControlPoint | undefined {
     const idx = this.getCPIndex(id);
     return idx >= 0 ? this._controlPoints[idx] : undefined;
@@ -355,7 +354,7 @@ function normalizeColor(color: ColorHex): ColorHex {
           .join("")
       : hex;
   const ok = /^[0-9a-fA-F]{6}$/.test(full);
-  return `#${ok ? full.toUpperCase() : "3A86FF"}` as ColorHex;
+  return `#${ok ? full.toUpperCase() : "FF0000"}` as ColorHex;
 }
 
 function assertFinite(n: number, label: string): number {
