@@ -1,9 +1,9 @@
 import { create } from "zustand";
 import { Trajectory } from "./entities/trajectory/trajectory";
 import type { ColorHex, ControlPointId, TrajectoryId } from "../types/types";
-import type { IDataStore } from "./IDataStore";
 import { ControlPoint } from "./entities/controlPoint/controlPoint";
 import { HelperPoint } from "./entities/helperPoint/helperPoint";
+import type { IDataStore } from "./IDataStore";
 
 type State = {
   // Collections

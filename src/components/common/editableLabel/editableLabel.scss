@@ -1,0 +1,15 @@
+.el-input {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  line-height: inherit;
+  color: inherit;
+  outline: none;
+  border-bottom: 1px dashed currentColor;
+}
+
+.el-input:focus {
+  border: none;
+}
