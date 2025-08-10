@@ -1,5 +1,5 @@
 import type { SplineType, SymmetryType } from "../../../types/types";
-import type { HelperPoint } from "../helperPoint/helperPoint";
+import type { HelperPoint } from "../helper-point/helperPoint";
 
 export interface ControlPointInternalAPI {
   setName(name: string): void;

@@ -1,6 +1,6 @@
 // src/editor/editorStore.ts
 import { create } from "zustand";
-import type { IEditorStore, Viewport } from "./iEditorStore";
+import type { IEditorStore, Viewport } from "./editor-store.interface";
 import type { Tool } from "../types/types";
 
 const MIN_SCALE = 0.05; // px per meter

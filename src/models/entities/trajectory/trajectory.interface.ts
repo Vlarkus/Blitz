@@ -2,10 +2,10 @@
 import type {
   ColorHex,
   InterpolationType,
-  SymmetryType,
   SplineType,
+  SymmetryType,
 } from "../../../types/types";
-import type { ControlPoint } from "../controlPoint/controlPoint";
+import type { ControlPoint } from "../control-point/controlPoint";
 
 export interface TrajectoryInternalAPI {
   // meta

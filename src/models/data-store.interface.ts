@@ -6,7 +6,7 @@ import type {
   SymmetryType,
   TrajectoryId,
 } from "../types/types";
-import type { ControlPoint } from "./entities/controlPoint/controlPoint";
+import type { ControlPoint } from "./entities/control-point/controlPoint";
 import type { Trajectory } from "./entities/trajectory/trajectory";
 
 export interface IDataStore {

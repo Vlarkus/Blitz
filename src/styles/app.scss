@@ -1,0 +1,11 @@
+@use "./theme.scss";
+@use "./globals.scss";
+@use "./dev-utilities.scss";
+
+.test {
+  width: 400px;
+  height: 400px;
+  padding-bottom: 50px;
+  margin-top: 50px;
+  border: 50px solid;
+}

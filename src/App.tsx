@@ -1,10 +1,10 @@
 import "bootstrap/dist/css/bootstrap.min.css";
-import "./App.scss";
+import "./styles/app.scss";
 import React, { useState } from "react";
 import {
   EditableLabel,
   type InputRules,
-} from "./components/common/editableLabel";
+} from "./components/common/editable-label";
 
 export default function App() {
   const [trajName, setTrajName] = useState("Trajectory 1");
@@ -34,36 +34,13 @@ export default function App() {
   };
 
   return (
-    <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
-      <h2>EditableLabel Test</h2>
-
-      <div>
-        <strong>Name: </strong>
-        <EditableLabel
-          value={trajName}
-          onCommit={(val) => setTrajName(val)}
-          inputRules={textRules}
-        />
-      </div>
-
-      <div style={{ marginTop: "10px" }}>
-        <strong>Position X: </strong>
-        <EditableLabel
-          value={posX}
-          onCommit={(val) => setPosX(val)}
-          inputRules={numberRulesPosX}
-          className="test"
-        />
-      </div>
-
-      <div style={{ marginTop: "10px" }}>
-        <strong>Heading θ: </strong>
-        <EditableLabel
-          value={theta}
-          onCommit={(val) => setTheta(val)}
-          inputRules={numberRulesTheta}
-        />
-      </div>
+    <div>
+      <div className="dev-util-red test"></div>
+      <div className="dev-util-blue test"></div>
+      <div className="dev-util-green test"></div>
+      <div className="dev-util-yellow test"></div>
+      <div className="dev-util-purple test"></div>
+      <div className="dev-util-gray test"></div>
     </div>
   );
 }

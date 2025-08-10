@@ -1,5 +1,5 @@
 // src/domain/Trajectory/trajectory.ts
-import { ControlPoint } from "../controlPoint/controlPoint";
+import { ControlPoint } from "../control-point/controlPoint";
 import type {
   ColorHex,
   InterpolationType,
@@ -7,7 +7,7 @@ import type {
   SymmetryType,
 } from "../../../types/types";
 import { generateId, getRandomColor } from "../../../utils/utils";
-import type { TrajectoryInternalAPI } from "./iTrajectory";
+import type { TrajectoryInternalAPI } from "./trajectory.interface";
 
 export class Trajectory {
   // properties

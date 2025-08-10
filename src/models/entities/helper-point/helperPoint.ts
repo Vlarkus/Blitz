@@ -1,5 +1,5 @@
 import { generateId } from "../../../utils/utils";
-import type { HelperPointInternalAPI } from "./iHelperPoint";
+import type { HelperPointInternalAPI } from "./helper-point.interface";
 
 export class HelperPoint {
   private static readonly MIN_R = 1e-4;

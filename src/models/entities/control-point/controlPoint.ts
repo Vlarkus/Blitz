@@ -1,7 +1,7 @@
-import type { SplineType, SymmetryType } from "../../../types/Types";
+import type { SplineType, SymmetryType } from "../../../types/types";
 import { assertNumber, generateId, sanitizeName } from "../../../utils/utils";
-import { HelperPoint } from "../helperPoint/helperPoint";
-import type { ControlPointInternalAPI } from "./iControlPoint";
+import { HelperPoint } from "../helper-point/helperPoint";
+import type { ControlPointInternalAPI } from "./control-point.interface";
 
 export class ControlPoint {
   private static readonly DEFAULT_HANDLE_IN_R = 10;
