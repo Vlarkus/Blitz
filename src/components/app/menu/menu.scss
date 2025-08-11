@@ -1,0 +1,63 @@
+@use "../../../styles/constants.scss" as *;
+
+.menu {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  background-color: $bg-light;
+  padding: 0.75rem;
+}
+
+.menu-logo-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-logo {
+  height: 2rem;
+  width: auto;
+}
+
+.menu-divider {
+  width: 1px;
+  height: 2rem; // matches menu height visually
+  background-color: $default;
+  opacity: 0.3; // slightly faded so it's not too bold
+  margin: 0 1rem;
+}
+
+.menu-options-list-wrapper {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.menu-options-list {
+  display: flex;
+  gap: 1.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.menu-option {
+  cursor: pointer;
+  transition: color 0.2s ease;
+  color: $default;
+  justify-content: center;
+  margin: 0;
+
+  &:hover {
+    color: $active;
+  }
+
+  &:active {
+    color: $active;
+  }
+
+  &.disabled {
+    color: $disabled;
+    cursor: not-allowed;
+  }
+}

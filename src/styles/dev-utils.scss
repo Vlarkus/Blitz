@@ -10,8 +10,8 @@ $dev-colors: (
 );
 
 @each $name, $color in $dev-colors {
-  .dev-util-#{$name} {
+  .dev-util-#{"" + $name} {
     background-color: $color !important;
-    border-color: mix($color, white, 50%) !important;
+    border-color: color-mix($color, black, 50%) !important;
   }
 }

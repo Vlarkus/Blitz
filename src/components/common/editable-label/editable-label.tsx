@@ -1,8 +1,6 @@
-// src/components/editableLabel/EditableLabel.tsx
-import React from "react";
-import type { EditableLabelProps } from "./types";
 import "./editable-label.scss";
-import { useEditableLabel } from "./use-editable-label";
+import { useEditableLabel } from "./utils";
+import type { EditableLabelProps } from "./interface";
 
 export default function EditableLabel<
   T extends string | number = string | number
