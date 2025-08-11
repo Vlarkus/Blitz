@@ -1,0 +1,22 @@
+@use "/src/styles/constants.scss" as c;
+
+.workspace {
+  background-color: c.$bg;
+  color: c.$default;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+}
+
+.central-panel {
+  width: 100%;
+  height: 100%;
+  background-color: red;
+}
+
+.side-panel {
+  width: 50rem;
+  height: 100%;
+  background-color: skyblue;
+}
