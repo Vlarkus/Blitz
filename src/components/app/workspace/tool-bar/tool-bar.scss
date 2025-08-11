@@ -1,7 +1,14 @@
-@use "/src/styles/index.scss" as *;
+@use "/src/styles/constants.scss" as c;
+
+$spacing: 0.5rem;
 
 .tool-bar {
   height: 100%;
-  width: 10rem;
-  background-color: darkgreen;
+  width: 3rem;
+  background-color: c.$bg;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: $spacing;
+  gap: $spacing;
 }

@@ -1,3 +1,23 @@
-@use "./constants.scss";
+@use "./constants.scss" as c;
 * {
+}
+
+button {
+  background-color: c.$bg;
+  border: none;
+  border-radius: 0.25rem;
+  color: c.$disabled;
+  transition-property: all;
+  transition-duration: 0.15s;
+  transition-timing-function: ease;
+  transition-delay: 0s;
+
+  &:hover {
+    color: c.$default;
+  }
+
+  &:active {
+    color: c.$primary;
+    // color: c.$bg;
+  }
 }

@@ -1,5 +1,23 @@
 import "./tool-button.scss";
+import React from "react";
 
-export default function Workspace() {
-  return <button>1</button>;
+interface ToolButtonProps {
+  isActive: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}
+
+export default function ToolButton({
+  isActive,
+  onClick,
+  children,
+}: ToolButtonProps) {
+  return (
+    <button
+      className={`tool-button ${isActive ? "active" : ""}`}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
 }

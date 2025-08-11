@@ -1,0 +1,22 @@
+@use "/src/styles/constants.scss" as c;
+
+$dimention: 2rem;
+
+.tool-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: c.$disabled;
+  height: $dimention;
+  width: $dimention;
+
+  &.active {
+    color: c.$active;
+    transform: scale(1.1);
+  }
+
+  .tool-button:not(.active):hover {
+    color: c.$default;
+  }
+}
