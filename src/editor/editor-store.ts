@@ -24,6 +24,18 @@ export const useEditorStore = create<IEditorStore>((set, get) => ({
     snapGridM: 0.1,
   } as Viewport,
 
+  // --- state ---
+  hoverWorld: null,
+
+  // --- actions ---
+  setHoverFromScreen(xPx, yPx) {
+    const { xM, yM } = get().screenToWorld(xPx, yPx);
+    set({ hoverWorld: { xM, yM } });
+  },
+  clearHover() {
+    set({ hoverWorld: null });
+  },
+
   // Tool
   setActiveTool(tool) {
     set({ activeTool: tool });

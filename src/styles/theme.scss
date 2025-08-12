@@ -14,10 +14,11 @@ button {
 
   &:hover {
     color: c.$hover;
+    transform: scale(1.1);
   }
 
-  &:active {
-    color: c.$primary;
-    // color: c.$bg;
+  &.active {
+    color: c.$active;
+    transform: scale(1.2);
   }
 }

@@ -1,13 +1,13 @@
 @use "/src/styles/constants.scss" as *;
 
 .workspace {
-  background-color: $bg;
-  color: $hover;
   height: 100%;
   width: 100%;
   display: flex;
   flex-direction: row;
   min-height: 0;
+  color: $light;
+  background-color: $bg;
 }
 
 .central-panel {

@@ -3,8 +3,27 @@
 .status-bar {
   flex: 0 0 2rem;
   width: 100%;
-  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   z-index: 1;
-  justify-content: center;
+  background: $bg;
+  padding: 0 0.5rem;
+}
+
+.status-pos {
+  display: flex;
+  gap: 1rem;
+  margin-right: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.status-pos-item {
+  width: 5rem;
+}
+
+.status-zoom-wrapper {
+  margin-left: auto;
+  display: flex;
   align-items: center;
 }

@@ -19,6 +19,13 @@ export interface IEditorStore {
   activeTool: Tool;
   activeViewport: Viewport;
 
+  // Hover indicator (null = not hovering the canvas)
+  hoverWorld: { xM: number; yM: number } | null;
+
+  // Hover helpers
+  setHoverFromScreen(xPx: number, yPx: number): void;
+  clearHover(): void;
+
   // Tool
   setActiveTool(tool: Tool): void;
 

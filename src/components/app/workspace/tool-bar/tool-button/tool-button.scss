@@ -7,16 +7,6 @@ $dimention: 2rem;
   border: none;
   cursor: pointer;
   font-size: 1.2rem;
-  color: c.$default;
   height: $dimention;
   width: $dimention;
-
-  &.active {
-    color: c.$active;
-    transform: scale(1.1);
-  }
-
-  .tool-button:not(.active):hover {
-    color: c.$hover;
-  }
 }

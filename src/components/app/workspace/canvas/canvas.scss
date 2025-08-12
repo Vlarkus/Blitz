@@ -1,6 +1,6 @@
 @use "/src/styles/constants.scss" as *;
 
-$curvature: 0rem;
+$curvature: 0.5rem;
 
 .canvas-area {
   flex: 1 1 auto;
@@ -13,7 +13,6 @@ $curvature: 0rem;
 
 .canvas-area > canvas,
 .canvas-area .konvajs-content {
-  /* Ensure Konva fills the host area */
   width: 100%;
   height: 100%;
   display: block;

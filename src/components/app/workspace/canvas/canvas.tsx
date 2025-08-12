@@ -48,11 +48,25 @@ export default function Canvas() {
   };
 
   const onMouseMove = (e: KonvaEventObject<MouseEvent>) => {
-    if (!panning || !last.current) return;
-    const pos = e.target.getStage()?.getPointerPosition();
-    if (!pos) return;
-    panBy(pos.x - last.current.x, pos.y - last.current.y);
-    last.current = { x: pos.x, y: pos.y };
+    const stage = e.target.getStage();
+    const pos = stage?.getPointerPosition();
+    if (pos) {
+      // always update hover, even when not panning or over shapes
+      setHoverFromScreen(pos.x, pos.y);
+    } else {
+      // pointer left the stage surface but event bubbled — clear hover
+      clearHover();
+    }
+
+    if (panning && last.current && pos) {
+      panBy(pos.x - last.current.x, pos.y - last.current.y);
+      last.current = { x: pos.x, y: pos.y };
+    }
+  };
+
+  const onMouseLeave = () => {
+    endPan();
+    clearHover();
   };
 
   const endPan = () => {
@@ -76,6 +90,10 @@ export default function Canvas() {
   const worldLeft = -activeViewport.originX / activeViewport.scale;
   const worldTop = -activeViewport.originY / activeViewport.scale;
 
+  // Manage mouse position while hovering over canvas.
+  const setHoverFromScreen = useEditorStore((s) => s.setHoverFromScreen);
+  const clearHover = useEditorStore((s) => s.clearHover);
+
   return (
     <section
       className="canvas-area"
@@ -89,7 +107,7 @@ export default function Canvas() {
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={endPan}
-        onMouseLeave={endPan}
+        onMouseLeave={onMouseLeave}
         onContextMenu={(e) => e.evt.preventDefault()}
       >
         {/* Apply viewport transform so children use world meters */}

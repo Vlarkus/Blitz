@@ -28,7 +28,7 @@ body {
 
 /* 4. Remove default focus on tabindex */
 [tabindex="-1"]:focus {
-  outline: 0 !important;
+  outline: 0;
 }
 
 /* 5. Horizontal rule */
@@ -187,7 +187,7 @@ input[type="search"]::-webkit-search-decoration {
 
 /* 20. Disabled attribute */
 [hidden] {
-  display: none !important;
+  display: none;
 }
 
 /* 21. Reduce motion */

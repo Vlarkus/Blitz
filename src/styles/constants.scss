@@ -4,7 +4,11 @@ $bg-light: hsl(0, 0%, 20%);
 
 $primary: hsl(40, 100%, 70%);
 $secondary: hsl(333.63, 80.53%, 77.84%);
+$light: hsl(0, 0%, 95%);
+$medium: hsl(0, 0%, 70%);
+$dark: hsl(0, 0%, 50%);
 
-$hover: hsl(0, 0%, 95%);
+$hover: $light;
+$disabled: $dark;
 $active: $primary;
-$default: hsl(0, 0%, 65%);
+$default: $medium;
