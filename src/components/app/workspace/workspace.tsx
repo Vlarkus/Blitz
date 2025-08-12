@@ -1,6 +1,7 @@
 import "./workspace.scss";
 import ToolBar from "./tool-bar/tool-bar";
 import Canvas from "./canvas/canvas";
+import StatusBar from "./status-bar/status-bar";
 
 export default function Workspace() {
   return (
@@ -8,6 +9,7 @@ export default function Workspace() {
       <ToolBar />
       <div className="central-panel">
         <Canvas />
+        <StatusBar />
       </div>
       <div className="side-panel">Side</div>
     </main>

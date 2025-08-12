@@ -1,11 +1,14 @@
-/* src/components/app/workspace/canvas-area/canvas-area.scss */
 @use "/src/styles/constants.scss" as *;
+
+$curvature: 0rem;
 
 .canvas-area {
   flex: 1 1 auto;
+  height: auto;
   min-height: 0;
+  overflow: hidden;
   background: $bg-dark;
-  display: flex;
+  border-radius: 0 0 $curvature $curvature;
 }
 
 .canvas-area > canvas,
@@ -14,4 +17,5 @@
   width: 100%;
   height: 100%;
   display: block;
+  background-color: $bg-dark;
 }
