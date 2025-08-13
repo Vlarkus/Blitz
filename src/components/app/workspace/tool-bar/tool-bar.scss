@@ -1,11 +1,11 @@
-@use "/src/styles/constants.scss" as c;
+@use "/src/styles/constants.scss" as *;
 
 $spacing: 0.5rem;
 
 .tool-bar {
   height: 100%;
   width: 3rem;
-  background-color: c.$bg;
+  background-color: $bg-dark;
   display: flex;
   flex-direction: column;
   align-items: center;

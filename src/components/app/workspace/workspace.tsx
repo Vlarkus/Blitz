@@ -2,6 +2,7 @@ import "./workspace.scss";
 import ToolBar from "./tool-bar/tool-bar";
 import Canvas from "./canvas/canvas";
 import StatusBar from "./status-bar/status-bar";
+import InfoPanel from "./info-panel/info-panel";
 
 export default function Workspace() {
   return (
@@ -11,7 +12,9 @@ export default function Workspace() {
         <Canvas />
         <StatusBar />
       </div>
-      <div className="side-panel">Side</div>
+      <div className="side-panel">
+        <InfoPanel />
+      </div>
     </main>
   );
 }

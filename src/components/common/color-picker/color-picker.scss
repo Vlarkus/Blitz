@@ -1,0 +1,12 @@
+@use "/src/styles/constants.scss" as *;
+
+.color-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(2rem, 1fr));
+  gap: 0.5rem;
+  justify-content: space-between;
+  align-items: center;
+
+  height: auto;
+  width: 100%;
+}

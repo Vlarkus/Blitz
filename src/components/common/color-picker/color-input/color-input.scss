@@ -1,0 +1,40 @@
+@use "/src/styles/constants.scss" as *;
+
+.color-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  flex: 1;
+  height: 2rem;
+  padding: 0 0.5rem;
+
+  grid-column: span 4; // makes it take two squares’ width
+  aspect-ratio: auto;
+
+  background: $bg-light;
+  color: $light;
+  border-radius: 0.25rem;
+
+  min-width: 0;
+
+  .hash {
+    flex: 0 0 1.25rem;
+    text-align: center;
+    font-weight: 600;
+    user-select: none;
+    opacity: 0.9;
+    color: $medium;
+  }
+
+  // EditableLabel container (assumes it forwards className)
+  .hex-field {
+    flex: 1 1 auto;
+    min-width: 0;
+    // If EditableLabel renders a contenteditable/span, keep it inline-friendly:
+    display: inline-block;
+    line-height: 1;
+    // Optional visual tweaks:
+    // border-bottom: 1px dashed rgba(255,255,255,.2);
+  }
+}

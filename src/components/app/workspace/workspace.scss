@@ -7,7 +7,7 @@
   flex-direction: row;
   min-height: 0;
   color: $light;
-  background-color: $bg;
+  background-color: $bg-dark;
 }
 
 .central-panel {
@@ -19,7 +19,10 @@
 }
 
 .side-panel {
-  width: 25rem;
+  width: 28rem;
   height: 100%;
-  background-color: $bg;
+  background-color: $bg-dark;
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem;
 }

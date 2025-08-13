@@ -1,0 +1,21 @@
+@use "/src/styles/constants.scss" as *;
+
+$dimention: 2rem;
+
+.color-option {
+  aspect-ratio: 1 / 1;
+  width: $dimention;
+  height: $dimention;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  &.active {
+    transform: scale(1.1);
+    box-shadow: 0 0 0.5rem currentColor;
+  }
+}
