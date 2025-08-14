@@ -1,0 +1,29 @@
+@use "/src/styles/constants.scss" as *;
+
+.tr-info {
+  gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.tr-selector-wrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-self: center;
+  gap: 0.5rem;
+  width: 100%;
+
+  .label-active {
+    color: $light;
+  }
+
+  .label-disabled {
+    color: $default;
+  }
+
+  p {
+    margin-right: 1.15rem;
+  }
+}

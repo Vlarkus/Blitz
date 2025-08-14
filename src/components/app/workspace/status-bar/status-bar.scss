@@ -9,6 +9,7 @@
   z-index: 1;
   background: $bg-dark;
   padding: 0 0.5rem;
+  user-select: none;
 }
 
 .status-pos {
@@ -20,6 +21,7 @@
 
 .status-pos-item {
   width: 5rem;
+  user-select: none;
 }
 
 .status-zoom-wrapper {

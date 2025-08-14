@@ -1,40 +1,28 @@
-import { INTERPOLATION_TYPES } from "../../../../types/types";
-import ColorPicker from "../../../common/color-picker/color-picker";
-import { useDataStore } from "../../../../models/dataStore";
 import "./info-panel.scss";
+import { useDataStore } from "../../../../models/dataStore";
+import TrajectoryInfo from "./trajectory-info/trajectory-info";
+import ControlPointInfo from "./control-point-info/control-point-info";
 
 export default function InfoPanel() {
   const selectedTrajectoryId = useDataStore(
     (state) => state.selectedTrajectoryId
   );
+  const selectedControlPointId = useDataStore(
+    (state) => state.selectedControlPointId
+  );
+  const cp = useDataStore((s) =>
+    selectedTrajectoryId && selectedControlPointId
+      ? s.getControlPoint(selectedTrajectoryId, selectedControlPointId)
+      : undefined
+  );
+  const moveControlPoint = useDataStore((s) => s.moveControlPoint);
 
   return (
     <div className="info-panel">
-      <div className="tr-info">
-        <ColorPicker />
-        <div className="selector-wrapper">
-          <p
-            className={selectedTrajectoryId ? "label-active" : "label-disabled"}
-          >
-            Interpolation:
-          </p>
-          <select
-            className="interpolation-types-dropdown"
-            name="interpolation-types"
-            disabled={!selectedTrajectoryId}
-          >
-            {INTERPOLATION_TYPES.map((option) => {
-              const label = option.charAt(0) + option.slice(1).toLowerCase();
-              return (
-                <option key={option.toLowerCase()} value={option.toLowerCase()}>
-                  {label}
-                </option>
-              );
-            })}
-          </select>
-        </div>
-      </div>
-      <div className="cp-info">cp</div>
+      <TrajectoryInfo />
+      <hr className="divider" />
+      <ControlPointInfo />
+      <hr className="divider" />
     </div>
   );
 }
