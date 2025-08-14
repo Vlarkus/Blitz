@@ -17,12 +17,14 @@
   gap: 0.5rem;
   width: 100%;
 
-  .label-active {
+  .active-element {
     color: $light;
   }
 
-  .label-disabled {
+  .disabled-element {
     color: $default;
+    user-select: none;
+    pointer-events: none;
   }
 
   .half-width {

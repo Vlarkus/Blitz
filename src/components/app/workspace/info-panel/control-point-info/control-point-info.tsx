@@ -1,3 +1,4 @@
+import { act } from "react";
 import { useDataStore } from "../../../../../models/dataStore";
 import { SPLINE_TYPES, SYMMETRY_TYPES } from "../../../../../types/types";
 import { EditableLabel } from "../../../../common/editable-label";
@@ -23,32 +24,45 @@ export default function ControlPointInfo() {
         <div className="half-width">
           <label
             className={
-              selectedControlPointId ? "label-active" : "label-disabled"
+              selectedControlPointId ? "active-element" : "disabled-element"
             }
           >
             x:
           </label>
-          <EditableLabel<number>
-            value={cp?.y ?? 0}
-            onCommit={() => {
-              console.log("Commit");
-            }}
-          />
+          {selectedControlPointId ? (
+            <>
+              <EditableLabel<number>
+                value={cp!.x ?? 0}
+                onCommit={() => {
+                  console.log("Commit");
+                }}
+              />
+            </>
+          ) : (
+            <label className="disabled-element">-</label>
+          )}
         </div>
         <div className="half-width">
           <label
             className={
-              selectedControlPointId ? "label-active" : "label-disabled"
+              selectedControlPointId ? "active-element" : "disabled-element"
             }
           >
             y:
           </label>
-          <EditableLabel<number>
-            value={cp?.y ?? 0}
-            onCommit={() => {
-              console.log("Commit");
-            }}
-          />
+
+          {selectedControlPointId ? (
+            <>
+              <EditableLabel<number>
+                value={cp!.y ?? 0}
+                onCommit={() => {
+                  console.log("Commit");
+                }}
+              />
+            </>
+          ) : (
+            <label className="disabled-element">-</label>
+          )}
         </div>
       </div>
 
@@ -56,28 +70,39 @@ export default function ControlPointInfo() {
         <div className="half-width">
           <label
             className={
-              selectedControlPointId ? "label-active" : "label-disabled"
+              selectedControlPointId ? "active-element" : "disabled-element"
             }
           >
             ϑ:
           </label>
-          <input type="checkbox" className="checkbox" />
-          <EditableLabel<number>
-            value={cp?.heading ?? 0}
-            onCommit={() => {
-              console.log("Commit");
-            }}
-          />
+          {selectedControlPointId ? (
+            <>
+              <input type="checkbox" className="checkbox" />
+              <EditableLabel<number>
+                value={cp?.y ?? 0}
+                onCommit={() => {
+                  console.log("Commit");
+                }}
+              />
+            </>
+          ) : (
+            <label className="disabled-element">-</label>
+          )}
         </div>
         <div className="half-width">
           <label
             className={
-              selectedControlPointId ? "label-active" : "label-disabled"
+              selectedControlPointId ? "active-element" : "disabled-element"
             }
           >
             Event:
           </label>
-          <input type="checkbox" className="checkbox" />
+
+          {selectedControlPointId ? (
+            <input type="checkbox" className="checkbox" />
+          ) : (
+            <label className="disabled-element">-</label>
+          )}
         </div>
       </div>
 
@@ -85,7 +110,7 @@ export default function ControlPointInfo() {
         <div className="half-width">
           <label
             className={
-              selectedControlPointId ? "label-active" : "label-disabled"
+              selectedControlPointId ? "active-element" : "disabled-element"
             }
           >
             Symmetry:
@@ -113,7 +138,7 @@ export default function ControlPointInfo() {
         <div className="half-width">
           <label
             className={
-              selectedControlPointId ? "label-active" : "label-disabled"
+              selectedControlPointId ? "active-element" : "disabled-element"
             }
           >
             Spline:

@@ -1,13 +1,13 @@
-import "./radio-button-group.scss";
+import "./coord-mode-radio-selector.scss";
 
 type Option = { label: string; value: string };
 
 type Props = {
   name: string;
-  options: Option[]; // e.g. [{label:'A', value:'a'}, ...]
-  value: string; // controlled selected value
+  options: Option[];
+  value: string;
   onChange: (value: string) => void;
-  className?: string; // optional wrapper class
+  className?: string;
 };
 
 export default function RadioButtonGroup({

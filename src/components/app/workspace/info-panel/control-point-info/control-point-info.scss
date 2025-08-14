@@ -20,6 +20,8 @@
   }
 
   .label-disabled {
+    user-select: none;
+    pointer-events: none;
     color: $default;
   }
 

@@ -2,7 +2,8 @@ import React from "react";
 import { useDataStore } from "../../../../../models/dataStore";
 import { EditableLabel } from "../../../../common/editable-label";
 import "./helper-point-info.scss";
-import RadioButtonGroup from "./RadioButtonGroup/radio-button-group";
+import RadioButtonGroup from "./coord-mode-radio-selector/coord-mode-radio-selector";
+import CoordLabel from "./coord-label/coord-label";
 
 export default function HelperPointInfo() {
   const selectedTrajectoryId = useDataStore(
@@ -19,7 +20,7 @@ export default function HelperPointInfo() {
 
   // DEMO
 
-  const [val, setVal] = React.useState("polar");
+  const [coordMode, setCoordMode] = React.useState("polar");
 
   return (
     <div className="helper-point-info">
@@ -30,41 +31,107 @@ export default function HelperPointInfo() {
           { label: "Relative", value: "relative" },
           { label: "Absolute", value: "absolute" },
         ]}
-        value={val}
-        onChange={setVal}
+        value={coordMode}
+        onChange={setCoordMode}
       />
 
-      {/* Selector */}
+      {/* Handle In */}
       <div className="hp-selector-wrapper">
         <div className="half-width">
-          <label
-            className={
-              selectedControlPointId ? "label-active" : "label-disabled"
-            }
-          >
-            x:
-          </label>
-          <EditableLabel<number>
-            value={cp?.y ?? 0}
-            onCommit={() => {
-              console.log("Commit");
+          <CoordLabel
+            coordMode={coordMode}
+            selectedControlPointId={selectedControlPointId}
+            labelMap={{
+              polar: "r:",
+              relative: "dx:",
+              absolute: "x:",
             }}
           />
+          {selectedControlPointId ? (
+            <>
+              <EditableLabel<number>
+                value={cp?.y ?? 0}
+                onCommit={() => {
+                  console.log("Commit");
+                }}
+              />
+            </>
+          ) : (
+            <label className="disabled-element">-</label>
+          )}
         </div>
         <div className="half-width">
-          <label
-            className={
-              selectedControlPointId ? "label-active" : "label-disabled"
-            }
-          >
-            y:
-          </label>
-          <EditableLabel<number>
-            value={cp?.y ?? 0}
-            onCommit={() => {
-              console.log("Commit");
+          <CoordLabel
+            coordMode={coordMode}
+            selectedControlPointId={selectedControlPointId}
+            labelMap={{
+              polar: "ϑ:",
+              relative: "dy:",
+              absolute: "y:",
             }}
           />
+          {selectedControlPointId ? (
+            <>
+              <EditableLabel<number>
+                value={cp?.y ?? 0}
+                onCommit={() => {
+                  console.log("Commit");
+                }}
+              />
+            </>
+          ) : (
+            <label className="disabled-element">-</label>
+          )}
+        </div>
+      </div>
+
+      {/* Handle Out */}
+      <div className="hp-selector-wrapper">
+        <div className="half-width">
+          <CoordLabel
+            coordMode={coordMode}
+            selectedControlPointId={selectedControlPointId}
+            labelMap={{
+              polar: "r:",
+              relative: "dx:",
+              absolute: "x:",
+            }}
+          />
+          {selectedControlPointId ? (
+            <>
+              <EditableLabel<number>
+                value={cp?.y ?? 0}
+                onCommit={() => {
+                  console.log("Commit");
+                }}
+              />
+            </>
+          ) : (
+            <label className="disabled-element">-</label>
+          )}
+        </div>
+        <div className="half-width">
+          <CoordLabel
+            coordMode={coordMode}
+            selectedControlPointId={selectedControlPointId}
+            labelMap={{
+              polar: "ϑ:",
+              relative: "dy:",
+              absolute: "y:",
+            }}
+          />
+          {selectedControlPointId ? (
+            <>
+              <EditableLabel<number>
+                value={cp?.y ?? 0}
+                onCommit={() => {
+                  console.log("Commit");
+                }}
+              />
+            </>
+          ) : (
+            <label className="disabled-element">-</label>
+          )}
         </div>
       </div>
     </div>

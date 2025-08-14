@@ -22,6 +22,7 @@
 
 .radio-btn:hover {
   transform: scale(1.05);
+  background-color: $bg-lighter;
 }
 .radio-btn.is-active {
   transform: scale(1.1);
