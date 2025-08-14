@@ -1,10 +1,6 @@
-import "./info-panel.scss";
 import { useDataStore } from "../../../../models/dataStore";
-import TrajectoryInfo from "./trajectory-info/trajectory-info";
-import ControlPointInfo from "./control-point-info/control-point-info";
-import HelperPointInfo from "./helper-point-info/helper-point-info";
 
-export default function InfoPanel() {
+export default function TrajectoriesPanel() {
   const selectedTrajectoryId = useDataStore(
     (state) => state.selectedTrajectoryId
   );
@@ -18,13 +14,5 @@ export default function InfoPanel() {
   );
   const moveControlPoint = useDataStore((s) => s.moveControlPoint);
 
-  return (
-    <div className="side-panel-element">
-      <TrajectoryInfo />
-      <hr className="divider" />
-      <ControlPointInfo />
-      <hr className="divider" />
-      <HelperPointInfo />
-    </div>
-  );
+  return <div className="side-panel-element">w</div>;
 }

@@ -3,6 +3,7 @@ import ToolBar from "./tool-bar/tool-bar";
 import Canvas from "./canvas/canvas";
 import StatusBar from "./status-bar/status-bar";
 import InfoPanel from "./info-panel/info-panel";
+import TrajectoriesPanel from "./trajectories-panel/trajectories-panel";
 
 export default function Workspace() {
   return (
@@ -14,6 +15,7 @@ export default function Workspace() {
       </div>
       <div className="side-panel">
         <InfoPanel />
+        <TrajectoriesPanel />
       </div>
     </main>
   );

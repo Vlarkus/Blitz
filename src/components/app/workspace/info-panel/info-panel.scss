@@ -1,17 +1,5 @@
 @use "/src/styles/constants.scss" as *;
 
-.info-panel {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem;
-  border-radius: 0.25rem;
-  background: $bg;
-}
-
 label {
   margin: 0;
   user-select: none;
