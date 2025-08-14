@@ -14,9 +14,11 @@ export default function TrajectoryInfo() {
     <div className="tr-info">
       <ColorPicker />
       <div className="tr-selector-wrapper">
-        <p className={selectedTrajectoryId ? "label-active" : "label-disabled"}>
+        <label
+          className={selectedTrajectoryId ? "label-active" : "label-disabled"}
+        >
           Interpolation:
-        </p>
+        </label>
         <select
           className="dropdown"
           name="interpolation-types"

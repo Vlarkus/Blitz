@@ -1,0 +1,40 @@
+@use "/src/styles/constants.scss" as *;
+
+.radio-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* hide native input, style the label as a button */
+.radio-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.35rem;
+  background: $bg-light;
+  color: $light;
+  cursor: pointer;
+  user-select: none;
+  transition-duration: 0.15s;
+  transition-property: all;
+}
+
+.radio-btn:hover {
+  transform: scale(1.05);
+}
+.radio-btn.is-active {
+  transform: scale(1.1);
+  color: $primary;
+}
+
+.radio-btn input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none; /* input still receives change via label */
+}
+
+.radio-label {
+  line-height: 1;
+}

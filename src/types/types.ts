@@ -8,6 +8,9 @@ export type ColorHex = `#${string}`; // Expect normalized #RRGGBB
 export type SplineType = "LINEAR" | "BEZIER" | "CLOTHOID";
 export type SymmetryType = "BROKEN" | "ALIGNED" | "MIRRORED";
 export type InterpolationType = "EQUIDISTANT" | "UNIFORM";
+
+export const SPLINE_TYPES: SplineType[] = ["LINEAR", "BEZIER", "CLOTHOID"];
+export const SYMMETRY_TYPES: SymmetryType[] = ["BROKEN", "ALIGNED", "MIRRORED"];
 export const INTERPOLATION_TYPES: InterpolationType[] = [
   "EQUIDISTANT",
   "UNIFORM",
