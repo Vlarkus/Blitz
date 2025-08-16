@@ -13,7 +13,7 @@
   padding: 0.4rem 0.8rem;
   border-radius: 0.35rem;
   background: $bg-light;
-  color: $light;
+  color: $default;
   cursor: pointer;
   user-select: none;
   transition-duration: 0.15s;
@@ -21,11 +21,10 @@
 }
 
 .radio-btn:hover {
-  transform: scale(1.05);
+  transform: scale(1.1);
   background-color: $bg-lighter;
 }
 .radio-btn.is-active {
-  transform: scale(1.1);
   color: $primary;
 }
 

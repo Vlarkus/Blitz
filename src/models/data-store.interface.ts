@@ -77,6 +77,7 @@ export interface IDataStore {
   ): void;
 
   /** ───── Lookups & Path ops ───── */
+  getTrajectoryIdByControlPointId(cpId: ControlPointId): TrajectoryId | null;
   getTrajectoryById(id: TrajectoryId): Trajectory | undefined;
   getControlPoint(
     trajId: TrajectoryId,

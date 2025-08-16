@@ -33,8 +33,17 @@ export const useDataStore = create<Store>((set, get) => ({
     set({ selectedTrajectoryId: id, selectedControlPointId: null });
   },
 
-  setSelectedControlPointId(id) {
-    set({ selectedControlPointId: id });
+  setSelectedControlPointId(id: ControlPointId | null) {
+    if (id === null) {
+      set({ selectedControlPointId: null, selectedTrajectoryId: null });
+      return;
+    }
+
+    const trId = get().getTrajectoryIdByControlPointId(id);
+    set({
+      selectedControlPointId: id,
+      selectedTrajectoryId: trId ?? null,
+    });
   },
 
   /* =========================
@@ -42,6 +51,7 @@ export const useDataStore = create<Store>((set, get) => ({
    * ========================= */
   addTrajectory(traj) {
     set((s) => ({ trajectories: [...s.trajectories, traj] }));
+    console.log("Added trajectory:", traj.name);
   },
 
   removeTrajectory(id) {
@@ -107,8 +117,8 @@ export const useDataStore = create<Store>((set, get) => ({
     const src = state.trajectories[idx];
     const cloned = new Trajectory(
       src.name + " (copy)",
-      src.color,
       src.controlPoints.map((cp) => deepCopyControlPoint(cp)),
+      src.color,
       src.interpolationType,
       src.isVisible,
       src.isLocked
@@ -268,8 +278,8 @@ export const useDataStore = create<Store>((set, get) => ({
 
     const first = new Trajectory(
       src.name,
-      src.color,
       src.controlPoints.slice(0, splitIndex + 1).map(deepCopyControlPoint),
+      src.color,
       src.interpolationType,
       src.isVisible,
       src.isLocked
@@ -277,8 +287,8 @@ export const useDataStore = create<Store>((set, get) => ({
 
     const second = new Trajectory(
       src.name + " (split)",
-      src.color,
       src.controlPoints.slice(splitIndex).map(deepCopyControlPoint),
+      src.color,
       src.interpolationType,
       src.isVisible,
       src.isLocked
@@ -294,6 +304,13 @@ export const useDataStore = create<Store>((set, get) => ({
       firstId: first.id as TrajectoryId,
       secondId: second.id as TrajectoryId,
     };
+  },
+
+  getTrajectoryIdByControlPointId(cpId: ControlPointId): TrajectoryId | null {
+    const traj = this.trajectories.find((t) =>
+      t.controlPoints.some((cp) => cp.id === cpId)
+    );
+    return traj ? traj.id : null;
   },
 
   mergeTrajectories(firstId, secondId) {
@@ -312,8 +329,8 @@ export const useDataStore = create<Store>((set, get) => ({
 
     const merged = new Trajectory(
       `${a.name} + ${b.name}`,
-      a.color,
       mergedCPs,
+      a.color,
       a.interpolationType,
       a.isVisible && b.isVisible,
       a.isLocked || b.isLocked

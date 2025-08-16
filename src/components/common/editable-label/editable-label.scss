@@ -1,3 +1,14 @@
+/* Truncated label */
+.el-label {
+  display: block; /* or inline-block */
+  min-width: 0; /* important if inside flex */
+  max-width: 100%; /* or a fixed width if you want */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Fixed-size input that scrolls horizontally */
 .el-input {
   border: none;
   background: transparent;
@@ -6,10 +17,16 @@
   font: inherit;
   line-height: inherit;
   color: inherit;
+  white-space: nowrap;
+
   outline: none;
   border-bottom: 1px dashed currentColor;
+
+  width: 160px; /* fixed width */
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .el-input:focus {
-  border: none;
+  border: none; /* keep border behavior */
 }

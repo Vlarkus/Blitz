@@ -8,25 +8,9 @@ import Workspace from "./workspace/workspace";
 function demo() {
   const store = useDataStore.getState();
 
-  // Create a minimal control point
-  const cp = new ControlPoint(
-    "Demo CP", // name
-    0, // x
-    0 // y
-    // all other params will use defaults
-  );
+  const cp = new ControlPoint("Demo CP", 0, 0);
 
-  // Create a minimal trajectory with that control point
-  const traj = new Trajectory(
-    "Demo Trajectory", // name
-    undefined, // color (random default)
-    [cp] // controlPoints
-    // other params use defaults
-  );
-
-  // Add to store and set as selected
-  store.addTrajectory(traj);
-  store.setSelectedTrajectoryId(traj.id);
+  store.addTrajectory(new Trajectory("Trajectory", [cp]));
   store.setSelectedControlPointId(cp.id);
 }
 

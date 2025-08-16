@@ -13,8 +13,8 @@ export class Trajectory {
   // properties
   private readonly _id: string;
   private _name: string;
-  private _color: ColorHex;
   private _controlPoints: ControlPoint[];
+  private _color: ColorHex;
   private _interpolationType: InterpolationType;
   private _isVisible: boolean;
   private _isLocked: boolean;
@@ -25,8 +25,8 @@ export class Trajectory {
   // constructor
   constructor(
     name: string,
-    color: ColorHex = getRandomColor(),
     controlPoints: ControlPoint[] = [],
+    color: ColorHex = getRandomColor(),
     interpolationType: InterpolationType = "EQUIDISTANT",
     isVisible: boolean = true,
     isLocked: boolean = false

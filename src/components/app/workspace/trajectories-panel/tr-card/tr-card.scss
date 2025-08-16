@@ -1,0 +1,94 @@
+/* tr-card.scss */
+@use "/src/styles/constants.scss" as *;
+
+.tr-card {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem;
+  background: $bg-light;
+  color: $light;
+  border-radius: 0.25rem;
+  transition: all 0.5s ease;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+}
+
+.tr-card-expander {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  background: transparent;
+  color: $default;
+  margin-right: 0.35rem;
+  border-radius: 0.35rem;
+  transition: transform 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    background: $bg-lighter;
+  }
+  &.is-open svg {
+    transform: rotate(180deg);
+  }
+}
+
+.tr-card-name {
+  min-width: 0;
+  display: inline-block;
+  white-space: nowrap;
+
+  .el-label,
+  .el-input {
+    color: $light;
+    text-overflow: ellipsis;
+    max-width: 10rem;
+  }
+
+  .el-input {
+    min-width: 0; /* important in flex context */
+    overflow: hidden !important;
+  }
+}
+
+.tr-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  background: transparent;
+  color: $default;
+  border-radius: 0.35rem;
+  transition: all 0.15s ease;
+
+  &:hover {
+    transform: scale(1.1);
+    background: $bg-lighter;
+  }
+  &.is-on {
+    color: $light;
+  }
+  &.is-off {
+    color: $default;
+  }
+}
+
+.left-half {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.right-half {
+  width: auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+}
