@@ -18,20 +18,7 @@ export default function TrajectoriesPanel() {
     <div className="tr-panel">
       <div className="side-panel-element tr-list">
         {trajectories.map((traj) => (
-          <TrCard
-            key={traj.id}
-            name={traj.name}
-            visible={traj.isVisible}
-            locked={traj.isLocked}
-            onToggleVisible={() =>
-              setTrajectoryVisibility(traj.id, !traj.isVisible)
-            }
-            onToggleLocked={() => setTrajectoryLock(traj.id, !traj.isLocked)}
-            onToggleExpand={(expanded: any) => {
-              // later: show/hide control point list for this trajectory
-              console.log("Expanded:", traj.id, expanded);
-            }}
-          />
+          <TrCard trID={traj.id} key={traj.id} />
         ))}
       </div>
       <div className="tr-edit-options">

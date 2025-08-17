@@ -51,7 +51,7 @@ export const useDataStore = create<Store>((set, get) => ({
    * ========================= */
   addTrajectory(traj) {
     set((s) => ({ trajectories: [...s.trajectories, traj] }));
-    console.log("Added trajectory:", traj.name);
+    console.log("Added trajectory:", traj.id);
   },
 
   removeTrajectory(id) {

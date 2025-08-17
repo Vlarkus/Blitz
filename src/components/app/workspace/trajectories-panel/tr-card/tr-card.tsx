@@ -1,44 +1,43 @@
 import React from "react";
 import "./tr-card.scss";
 import { EditableLabel } from "../../../../common/editable-label";
+import { Trajectory } from "../../../../../models/entities/trajectory/trajectory";
+import { useDataStore } from "../../../../../models/dataStore";
 
-type TrCardProps = {
-  name?: string;
-  visible?: boolean;
-  locked?: boolean;
+interface TrCardProps {
+  trID: string;
+}
 
-  /** Optional handlers to wire later */
-  onToggleVisible?: () => void;
-  onToggleLocked?: () => void;
-  onToggleExpand?: (expanded: boolean) => void;
-};
+export default function TrCard({ trID }: TrCardProps) {
+  const dataStore = useDataStore(); // get the store instance
 
-export default function TrCard({
-  name,
-  visible,
-  locked,
-  onToggleVisible,
-  onToggleLocked,
-  onToggleExpand,
-}: TrCardProps) {
+  const traj = dataStore.getTrajectoryById(trID) as Trajectory;
+
   const [expanded, setExpanded] = React.useState<boolean>(false);
 
-  const toggleExpand = () => {
-    const next = !expanded;
-    setExpanded(next);
-    onToggleExpand?.(next);
-  };
+  const toggleExpand = () => setExpanded((prev) => !prev);
 
   const handleToggleVisible = () => {
-    onToggleVisible?.();
+    dataStore.setTrajectoryVisibility(traj.id, !traj.isVisible);
   };
 
   const handleToggleLocked = () => {
-    onToggleLocked?.();
+    dataStore.setTrajectoryLock(traj.id, !traj.isLocked);
+  };
+
+  const handleRename = (next: string) => {
+    dataStore.renameTrajectory(traj.id, next);
   };
 
   return (
-    <div className="tr-card" role="group" aria-label="Trajectory card">
+    <div
+      className={`tr-card${
+        dataStore.selectedTrajectoryId === traj.id ? " selected" : ""
+      }`}
+      role="group"
+      aria-label="Trajectory card"
+      onClick={() => dataStore.setSelectedTrajectoryId(traj.id)}
+    >
       <div className="left-half">
         <button
           type="button"
@@ -63,8 +62,8 @@ export default function TrCard({
         {/* Name */}
         <div className="tr-card-name">
           <EditableLabel<string>
-            value={name!}
-            onCommit={(next) => console.log("Rename trajectory to:", next)}
+            value={traj.name}
+            onCommit={handleRename}
             ariaLabel="Trajectory name"
             className="el"
             labelClassName="el-label"
@@ -77,13 +76,12 @@ export default function TrCard({
         {/* Visible toggle (eye) */}
         <button
           type="button"
-          className={`tr-card-icon ${visible ? "is-on" : "is-off"}`}
+          className={`tr-card-icon ${traj.isVisible ? "is-on" : "is-off"}`}
           onClick={handleToggleVisible}
-          aria-label={visible ? "Hide trajectory" : "Show trajectory"}
-          title={visible ? "Visible" : "Hidden"}
+          aria-label={traj.isVisible ? "Hide trajectory" : "Show trajectory"}
+          title={traj.isVisible ? "Visible" : "Hidden"}
         >
-          {/* Eye / Eye-off (simple inline SVG) */}
-          {visible ? (
+          {traj.isVisible ? (
             <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"
@@ -107,12 +105,12 @@ export default function TrCard({
         {/* Lock toggle */}
         <button
           type="button"
-          className={`tr-card-icon ${locked ? "is-on" : "is-off"}`}
+          className={`tr-card-icon ${traj.isLocked ? "is-on" : "is-off"}`}
           onClick={handleToggleLocked}
-          aria-label={locked ? "Unlock trajectory" : "Lock trajectory"}
-          title={locked ? "Locked" : "Unlocked"}
+          aria-label={traj.isLocked ? "Unlock trajectory" : "Lock trajectory"}
+          title={traj.isLocked ? "Locked" : "Unlocked"}
         >
-          {locked ? (
+          {traj.isLocked ? (
             <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 d="M7 10V7a5 5 0 0 1 10 0v3M6 10h12v10H6z"

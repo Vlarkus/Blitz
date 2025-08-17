@@ -10,9 +10,14 @@
   background: $bg-light;
   color: $light;
   border-radius: 0.25rem;
-  transition: all 0.5s ease;
+  transition: all 0.15s ease;
   gap: 0.5rem;
   flex-wrap: nowrap;
+}
+
+.selected {
+  background: $bg-lighter;
+  // box-shadow: 0 0 0.25rem $default;
 }
 
 .tr-card-expander {
@@ -28,9 +33,6 @@
   border-radius: 0.35rem;
   transition: transform 0.15s ease, background 0.15s ease;
 
-  &:hover {
-    background: $bg-lighter;
-  }
   &.is-open svg {
     transform: rotate(180deg);
   }
@@ -66,10 +68,6 @@
   border-radius: 0.35rem;
   transition: all 0.15s ease;
 
-  &:hover {
-    transform: scale(1.1);
-    background: $bg-lighter;
-  }
   &.is-on {
     color: $light;
   }

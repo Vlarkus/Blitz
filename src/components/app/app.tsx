@@ -15,7 +15,7 @@ function demo() {
 }
 
 export default function App() {
-  demo();
+  // demo();
   return (
     <div className="app">
       <Menu />
