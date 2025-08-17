@@ -1,0 +1,14 @@
+@use "/src/styles/constants.scss" as *;
+
+.cp-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem;
+  background: $bg-light;
+  color: $light;
+  border-radius: 0.25rem;
+  transition: all 0.15s ease;
+  gap: 0.5rem;
+}

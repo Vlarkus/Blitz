@@ -73,6 +73,9 @@ export class Trajectory {
         setControlPointSplineType: (id: string, splineType: SplineType) =>
           this.setControlPointSplineType(id, splineType),
 
+        setControlPointLock: (trajId: string, cpId: string, locked: boolean) =>
+          this.setControlPointLock(trajId, cpId, locked),
+
         setHelperPointPosition: (
           cpId: string,
           handle: "in" | "out",
@@ -239,6 +242,17 @@ export class Trajectory {
       cp.handleOut.internal.setIsLinear(false);
     }
     this.setControlPointSymmetry(cp.id, cp.symmetry);
+  }
+
+  private setControlPointLock(
+    trajId: string,
+    cpId: string,
+    locked: boolean
+  ): void {
+    const cp = this.getControlPointById(cpId);
+    if (!cp) return;
+
+    cp.internal.setIsLocked(locked);
   }
 
   private setHelperPointPosition(
