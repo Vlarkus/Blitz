@@ -3,6 +3,8 @@ import { Stage, Layer, Circle, Rect } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import "./canvas.scss";
 import { useEditorStore } from "../../../../editor/editor-store";
+import { useDataStore } from "../../../../models/dataStore";
+import TrajectoriesLayer from "./layers/trajectories-layer";
 
 export default function Canvas() {
   // Select store fields individually to keep selector snapshots stable
@@ -10,6 +12,8 @@ export default function Canvas() {
   const setStageSize = useEditorStore((s) => s.setStageSize);
   const panBy = useEditorStore((s) => s.panBy);
   const zoomBy = useEditorStore((s) => s.zoomBy);
+
+  const trajectories = useDataStore((s) => s.trajectories);
 
   // Container sizing
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -124,14 +128,10 @@ export default function Canvas() {
             y={worldTop}
             width={worldWidth}
             height={worldHeight}
-            fill="rgba(0,0,0,0)" // transparent but hit-detectable
+            fill="rgba(0,0,0,0)"
             listening={true}
           />
-
-          {/* Three test circles in world coordinates (meters) */}
-          <Circle x={-10} y={0} radius={1.5} fill="red" />
-          <Circle x={0} y={0} radius={1.5} fill="green" />
-          <Circle x={10} y={0} radius={1.5} fill="blue" />
+          <TrajectoriesLayer />
         </Layer>
       </Stage>
     </section>

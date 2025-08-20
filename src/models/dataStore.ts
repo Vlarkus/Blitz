@@ -267,6 +267,36 @@ export const useDataStore = create<Store>((set, get) => ({
     });
   },
 
+  getHandlePosition(
+    trajId: TrajectoryId,
+    cpId: ControlPointId,
+    which: "in" | "out"
+  ) {
+    const cp = findCP(get().trajectories, trajId, cpId);
+    if (!cp) return null;
+    const h = which === "in" ? cp.handleIn : cp.handleOut;
+    const r = clampPositive(h.r);
+    const theta = normRad(h.theta);
+    return {
+      x: cp.x + r * Math.cos(theta),
+      y: cp.y + r * Math.sin(theta),
+    };
+  },
+
+  getHandlePolar(
+    trajId: TrajectoryId,
+    cpId: ControlPointId,
+    which: "in" | "out"
+  ) {
+    const cp = findCP(get().trajectories, trajId, cpId);
+    if (!cp) return null;
+    const h = which === "in" ? cp.handleIn : cp.handleOut;
+    return {
+      r: clampPositive(h.r),
+      theta: normRad(h.theta),
+    };
+  },
+
   /* =========================
    * Lookups & path ops
    * ========================= */

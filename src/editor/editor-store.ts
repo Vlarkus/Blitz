@@ -4,7 +4,7 @@ import type { IEditorStore, Viewport } from "./editor-store.interface";
 import type { Tool } from "../types/types";
 
 const MIN_SCALE = 0.05; // px per meter
-const MAX_SCALE = 20; // px per meter
+const MAX_SCALE = 40; // px per meter
 const MIN_SNAP = 1e-4; // meters
 
 function clamp(n: number, min: number, max: number) {

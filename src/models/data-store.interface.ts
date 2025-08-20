@@ -81,6 +81,18 @@ export interface IDataStore {
     thetaRad: number
   ): void;
 
+  getHandlePosition(
+    trajId: TrajectoryId,
+    cpId: ControlPointId,
+    which: "in" | "out"
+  ): { x: number; y: number } | null;
+
+  getHandlePolar(
+    trajId: TrajectoryId,
+    cpId: ControlPointId,
+    which: "in" | "out"
+  ): { r: number; theta: number } | null;
+
   /** ───── Lookups & Path ops ───── */
   getTrajectoryIdByControlPointId(cpId: ControlPointId): TrajectoryId | null;
   getTrajectoryById(id: TrajectoryId): Trajectory | undefined;
