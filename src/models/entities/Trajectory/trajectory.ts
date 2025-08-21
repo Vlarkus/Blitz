@@ -264,7 +264,6 @@ export class Trajectory {
     this._dirty();
   }
 
-  // TODO: Verify shared state issues when changing spline type
   private setControlPointSplineType(id: string, splineType: SplineType): void {
     const cp = this.getControlPointById(id);
     if (!cp) return;
@@ -352,7 +351,7 @@ export class Trajectory {
     const prevLinear = !!prevCP && prevCP.splineType === "LINEAR"; // (prevCP → thisCP)
     const thisLinear = thisCP.splineType === "LINEAR"; // (thisCP → nextCP)
 
-    // Helper to compute θ from thisCP toward neighbor; returns null if degenerate.
+    // Helper: θ from thisCP toward neighbor; null if coincident/none
     const thetaToward = (neighbor?: ControlPoint): number | null => {
       if (!neighbor) return null;
       const dx = neighbor.x - thisCP.x;
@@ -361,49 +360,64 @@ export class Trajectory {
       return Math.atan2(dy, dx);
     };
 
-    // Only one side linear
+    // Exactly one side is linear
     if (prevLinear !== thisLinear) {
       if (prevLinear) {
-        const theta = thetaToward(prevCP);
-        if (theta != null) {
-          thisCP.handleIn.internal.setTheta(theta); // align IN to prev
+        // IN side linear → align IN, set isLinear flags
+        const th = thetaToward(prevCP);
+        thisCP.handleIn.internal.setIsLinear(true);
+        thisCP.handleOut.internal.setIsLinear(false);
+
+        if (th != null) {
+          thisCP.handleIn.internal.setTheta(th);
+          // If ALIGNED, mirror angle on the non-linear side (angle only)
           if (thisCP.symmetry === "ALIGNED" && !thisCP.handleOut.isLinear) {
             const opp = Math.atan2(
-              Math.sin(theta + Math.PI),
-              Math.cos(theta + Math.PI)
+              Math.sin(th + Math.PI),
+              Math.cos(th + Math.PI)
             );
-            thisCP.handleOut.internal.setTheta(opp); // angle only
+            thisCP.handleOut.internal.setTheta(opp);
           }
         }
       } else {
-        // thisLinear === true
-        const theta = thetaToward(nextCP);
-        if (theta != null) {
-          thisCP.handleOut.internal.setTheta(theta); // align OUT to next
+        // OUT side linear → align OUT, set isLinear flags
+        const th = thetaToward(nextCP);
+        thisCP.handleOut.internal.setIsLinear(true);
+        thisCP.handleIn.internal.setIsLinear(false);
+
+        if (th != null) {
+          thisCP.handleOut.internal.setTheta(th);
           if (thisCP.symmetry === "ALIGNED" && !thisCP.handleIn.isLinear) {
             const opp = Math.atan2(
-              Math.sin(theta + Math.PI),
-              Math.cos(theta + Math.PI)
+              Math.sin(th + Math.PI),
+              Math.cos(th + Math.PI)
             );
-            thisCP.handleIn.internal.setTheta(opp); // angle only
+            thisCP.handleIn.internal.setTheta(opp);
           }
         }
       }
       return;
     }
 
-    // Both linear → align both handles to their respective segments
+    // Both sides linear
     if (prevLinear && thisLinear) {
-      const thetaIn = thetaToward(prevCP);
-      if (thetaIn != null) thisCP.handleIn.internal.setTheta(thetaIn);
+      thisCP.handleIn.internal.setIsLinear(true);
+      thisCP.handleOut.internal.setIsLinear(true);
 
-      const thetaOut = thetaToward(nextCP);
-      if (thetaOut != null) thisCP.handleOut.internal.setTheta(thetaOut);
+      const thIn = thetaToward(prevCP);
+      if (thIn != null) thisCP.handleIn.internal.setTheta(thIn);
 
+      const thOut = thetaToward(nextCP);
+      if (thOut != null) thisCP.handleOut.internal.setTheta(thOut);
+
+      // Optional: symmetry cannot be maintained when both are linear
+      if (thisCP.symmetry !== "BROKEN") thisCP.internal.setSymmetry("BROKEN");
       return;
     }
 
-    // Neither linear → nothing to enforce here
+    // Neither side linear → ensure flags are unset; leave angles as-is
+    thisCP.handleIn.internal.setIsLinear(false);
+    thisCP.handleOut.internal.setIsLinear(false);
   }
 
   private enforceSymmetryRule(thisCP: ControlPoint) {
