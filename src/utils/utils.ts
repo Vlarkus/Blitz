@@ -46,3 +46,27 @@ export function mixColors(c1: string, c2: string, ratio: number): string {
 
   return rgbToHex(r, g, b);
 }
+
+export function polarToCartesian(
+  r: number,
+  theta: number
+): { x: number; y: number } {
+  assertNumber(r, "radius");
+  assertNumber(theta, "theta");
+  return {
+    x: r * Math.cos(theta),
+    y: r * Math.sin(theta),
+  };
+}
+
+export function cartesianToPolar(
+  x: number,
+  y: number
+): { r: number; theta: number } {
+  assertNumber(x, "x");
+  assertNumber(y, "y");
+  return {
+    r: Math.sqrt(x * x + y * y),
+    theta: Math.atan2(y, x),
+  };
+}

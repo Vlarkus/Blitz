@@ -1,6 +1,7 @@
 // src/components/editableLabel/useEditableLabel.ts
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { EditableLabelProps, InputRules } from "./types";
+import type { EditableLabelProps } from "./interface";
+import type { InputRules } from "./types";
 
 export function useEditableLabel<T extends string | number = string | number>(
   props: EditableLabelProps<T>

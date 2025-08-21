@@ -54,6 +54,11 @@ export interface IDataStore {
     x: number,
     y: number
   ): void;
+  setControlPointHeading(
+    trajId: TrajectoryId,
+    cpId: ControlPointId,
+    heading: number | null
+  ): void;
   setControlPointSymmetry(
     trajId: TrajectoryId,
     cpId: ControlPointId,
@@ -64,6 +69,7 @@ export interface IDataStore {
     cpId: ControlPointId,
     type: SplineType
   ): void;
+  setControlPointEvent(trajId: string, cpId: string, event: boolean): void;
 
   /** ───── Helper Points (Handles) ───── */
   setHandlePosition(

@@ -219,6 +219,26 @@ export const useDataStore = create<Store>((set, get) => ({
     });
   },
 
+  setControlPointHeading(trajId, cpId, heading) {
+    // validate early if you want
+    if (heading !== null && !Number.isFinite(heading as number)) return;
+
+    set((s) => {
+      const t = findTraj(s.trajectories, trajId);
+      if (!t) return {};
+
+      // Prefer a trajectory-level method if you have it:
+
+      // Fallback: direct CP call (still ok)
+      const cp = t.controlPoints.find((c) => c.id === cpId);
+      if (!cp) return {};
+      cp.internal.setHeading(heading);
+
+      // Notify subscribers by changing reference(s)
+      return { trajectories: [...s.trajectories] };
+    });
+  },
+
   setControlPointSymmetry(trajId, cpId, symmetry) {
     set((s) => {
       const t = findTraj(s.trajectories, trajId);
@@ -235,6 +255,23 @@ export const useDataStore = create<Store>((set, get) => ({
       // TODO in model: verify shared state issues when changing spline type
       t.internal.setControlPointSplineType(cpId, type);
       return { trajectories: [...s.trajectories] };
+    });
+  },
+
+  setControlPointEvent: (trajId, cpId, event) => {
+    set((state) => {
+      const t = findTraj(state.trajectories, trajId);
+      if (!t) return {};
+
+      const cp = t.controlPoints.find((c) => c.id === cpId);
+      if (!cp) return {};
+
+      // if you have an internal API for cp, call it here instead:
+      // cp.internal.setEvent(event);
+
+      cp.internal.setIsEvent(event);
+
+      return { trajectories: [...state.trajectories] };
     });
   },
 
@@ -443,7 +480,7 @@ function clampIndex(n: number, min: number, max: number): number {
 }
 
 function assertFinite(n: number, label: string): number {
-  if (typeof n !== "number" || !Number.isFinite(n)) {
+  if (!Number.isFinite(n)) {
     throw new Error(`${label} must be a finite number`);
   }
   return n;
