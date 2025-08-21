@@ -33,7 +33,11 @@ export interface IDataStore {
     beforeCpId: ControlPointId,
     cp: ControlPoint
   ): void;
-  setControlPointLock(cpId: ControlPointId, locked: boolean): void;
+  setControlPointLock(
+    trajId: TrajectoryId,
+    cpId: ControlPointId,
+    locked: boolean
+  ): void;
   insertControlPointAfter(
     trajId: TrajectoryId,
     afterCpId: ControlPointId,

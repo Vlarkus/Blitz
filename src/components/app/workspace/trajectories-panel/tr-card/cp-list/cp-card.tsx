@@ -1,47 +1,52 @@
+// cp-card.tsx
 import React from "react";
 import "./cp-card.scss";
 import { EditableLabel } from "../../../../../common/editable-label";
-import { Trajectory } from "../../../../../../models/entities/trajectory/trajectory";
 import { useDataStore } from "../../../../../../models/dataStore";
-import { ControlPoint } from "../../../../../../models/entities/control-point/controlPoint";
 
-type CpListProps = {
-  cpID: string;
+type CpCardProps = {
+  trajId: string;
+  cpId: string;
 };
 
-export default function CpCard({ cpID }: CpListProps) {
-  const dataStore = useDataStore(); // get the store instance
+export default function CpCard({ trajId, cpId }: CpCardProps) {
+  // Lookups
+  const traj = useDataStore((s) => s.getTrajectoryById(trajId));
+  const cp = useDataStore((s) => s.getControlPoint(trajId, cpId));
 
-  const traj = dataStore.getTrajectoryById(cpID) as Trajectory;
-  console.log("traj", traj);
-  const cp = dataStore.getControlPoint(traj.id, cpID) as ControlPoint;
+  // Actions / selection
+  const setSelectedControlPointId = useDataStore(
+    (s) => s.setSelectedControlPointId
+  );
+  const setControlPointLock = useDataStore((s) => s.setControlPointLock);
+  const renameControlPoint = useDataStore((s) => s.renameControlPoint);
+  const selectedControlPointId = useDataStore((s) => s.selectedControlPointId);
 
-  const [expanded, setExpanded] = React.useState<boolean>(false);
+  if (!traj || !cp) return null;
 
-  const handleToggleLocked = () => {
-    dataStore.setControlPointLock(cp.id, !cp.isLocked);
+  const selected = selectedControlPointId === cpId;
+
+  const handleToggleLocked = (e: React.MouseEvent) => {
+    setControlPointLock(traj.id, cp.id, !cp.isLocked);
   };
 
   const handleRename = (next: string) => {
-    dataStore.renameTrajectory(traj.id, next);
+    renameControlPoint(traj.id, cp.id, next);
   };
 
   return (
     <div
-      className={`cp-card${
-        dataStore.selectedControlPointId === cpID ? " selected" : ""
-      }`}
+      className={`cp-card${selected ? " selected" : ""}`}
       role="group"
       aria-label="Control Point card"
-      onClick={() => dataStore.setSelectedControlPointId(cpID)}
+      onClick={() => setSelectedControlPointId(cpId)}
     >
       <div className="left-half">
-        {/* Name */}
-        <div className="tr-card-name">
+        <div className="cp-card-name">
           <EditableLabel<string>
-            value={traj.name}
+            value={cp.name}
             onCommit={handleRename}
-            ariaLabel="Trajectory name"
+            ariaLabel="Control point name"
             className="el"
             labelClassName="el-label"
             inputClassName="el-input"
@@ -50,15 +55,16 @@ export default function CpCard({ cpID }: CpListProps) {
       </div>
 
       <div className="right-half">
-        {/* Lock toggle */}
         <button
           type="button"
-          className={`tr-card-icon ${traj.isLocked ? "is-on" : "is-off"}`}
+          className={`cp-card-icon ${cp.isLocked ? "is-on" : "is-off"}`}
           onClick={handleToggleLocked}
-          aria-label={traj.isLocked ? "Unlock trajectory" : "Lock trajectory"}
-          title={traj.isLocked ? "Locked" : "Unlocked"}
+          aria-label={
+            cp.isLocked ? "Unlock control point" : "Lock control point"
+          }
+          title={cp.isLocked ? "Locked" : "Unlocked"}
         >
-          {traj.isLocked ? (
+          {cp.isLocked ? (
             <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 d="M7 10V7a5 5 0 0 1 10 0v3M6 10h12v10H6z"

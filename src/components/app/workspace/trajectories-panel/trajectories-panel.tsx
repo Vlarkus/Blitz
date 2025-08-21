@@ -4,15 +4,14 @@ import TrCard from "./tr-card/tr-card";
 import "./trajectories-panel.scss";
 
 export default function TrajectoriesPanel() {
-  const trajectories = useDataStore((state) => state.trajectories);
-  const setSelectedTrajectoryId = useDataStore(
-    (state) => state.setSelectedTrajectoryId
-  );
-  const setTrajectoryVisibility = useDataStore(
-    (state) => state.setTrajectoryVisibility
-  );
-  const addTrajectory = useDataStore((state) => state.addTrajectory);
-  const setTrajectoryLock = useDataStore((state) => state.setTrajectoryLock);
+  const trajectories = useDataStore((s) => s.trajectories);
+
+  const selectedTrajectoryId = useDataStore((s) => s.selectedTrajectoryId);
+  const selectedControlPointId = useDataStore((s) => s.selectedControlPointId);
+
+  const addTrajectory = useDataStore((s) => s.addTrajectory);
+  const removeTrajectory = useDataStore((s) => s.removeTrajectory);
+  const removeControlPoint = useDataStore((s) => s.removeControlPoint);
 
   return (
     <div className="tr-panel">
@@ -21,14 +20,35 @@ export default function TrajectoriesPanel() {
           <TrCard trID={traj.id} key={traj.id} />
         ))}
       </div>
+
       <div className="tr-edit-options">
         <button
-          className="btn add-btn"
+          className="btn"
           onClick={() => addTrajectory(new Trajectory("Trajectory", []))}
+          aria-label="Add trajectory"
+          title="Add trajectory"
         >
           +
         </button>
-        <button className="btn delete-btn">−</button>
+
+        <button
+          className="btn"
+          aria-label="Remove selected item"
+          title="Remove selected control point or trajectory"
+          disabled={!selectedControlPointId && !selectedTrajectoryId}
+          onClick={() => {
+            if (selectedControlPointId && selectedTrajectoryId) {
+              // Remove the selected control point
+              removeControlPoint(selectedTrajectoryId, selectedControlPointId);
+            } else if (selectedTrajectoryId) {
+              // Remove the selected trajectory
+              removeTrajectory(selectedTrajectoryId);
+            }
+            // else: nothing selected → no-op
+          }}
+        >
+          −
+        </button>
       </div>
     </div>
   );

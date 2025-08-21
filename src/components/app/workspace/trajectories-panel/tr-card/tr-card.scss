@@ -31,7 +31,7 @@
   color: $default;
   margin-right: 0.35rem;
   border-radius: 0.35rem;
-  transition: transform 0.15s ease, background 0.15s ease;
+  transition: transform 0.15s ease;
 
   &.is-open svg {
     transform: rotate(180deg);
@@ -47,7 +47,7 @@
   .el-input {
     color: $light;
     text-overflow: ellipsis;
-    max-width: 10rem;
+    max-width: 9rem;
   }
 
   .el-input {
@@ -89,4 +89,12 @@
   flex-direction: row;
   align-items: center;
   justify-content: flex-end;
+}
+
+.tr-card-cp-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-left: 1rem;
 }

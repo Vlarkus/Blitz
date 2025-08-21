@@ -1,3 +1,4 @@
+/* cp-card.scss */
 @use "/src/styles/constants.scss" as *;
 
 .cp-card {
@@ -5,10 +6,70 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.4rem 0.5rem;
   background: $bg-light;
   color: $light;
   border-radius: 0.25rem;
   transition: all 0.15s ease;
   gap: 0.5rem;
+  flex-wrap: nowrap;
+
+  &.selected {
+    background: $bg-lighter;
+  }
+
+  .cp-card-name {
+    min-width: 0;
+    display: inline-block;
+    white-space: nowrap;
+
+    .el-label,
+    .el-input {
+      color: $light;
+      text-overflow: ellipsis;
+      max-width: 12rem;
+    }
+
+    .el-input {
+      min-width: 0; /* important in flex context */
+      overflow: hidden !important;
+    }
+  }
+
+  .cp-card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: none;
+    background: transparent;
+    color: $default;
+    border-radius: 0.35rem;
+    transition: all 0.15s ease;
+
+    &.is-on {
+      color: $light;
+    }
+    &.is-off {
+      color: $default;
+    }
+  }
+
+  .left-half {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    flex: 1 1 auto;
+  }
+
+  .right-half {
+    width: auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    flex: 0 0 auto;
+  }
 }

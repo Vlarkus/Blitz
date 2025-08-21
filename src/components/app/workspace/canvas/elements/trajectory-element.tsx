@@ -9,18 +9,16 @@ import HandleElement from "./handle-element";
 type Props = { trajId: string };
 
 export default function TrajectoryElement({ trajId }: Props) {
+  // ✅ Call hooks unconditionally at the top
   const traj = useDataStore((s) => s.getTrajectoryById(trajId));
+  const getHandlePosition = useDataStore((s) => s.getHandlePosition);
   const scale = useEditorStore((s) => s.activeViewport.scale);
 
+  // Only branch after all hooks have been called
   if (!traj) return null;
 
-  const getHandlePosition = useDataStore((s) => s.getHandlePosition);
-
   const d = buildPath(traj, getHandlePosition);
-  //   const d = React.useMemo(
-  //     () => buildPath(traj, getHandlePosition),
-  //     [traj, getHandlePosition]
-  //   ); // Optimization that stops rendering paths on every frame.
+  // const d = React.useMemo(() => buildPath(traj, getHandlePosition), [traj, getHandlePosition]);
 
   return (
     <Group name={`traj:${traj.id}`} listening>
@@ -28,8 +26,7 @@ export default function TrajectoryElement({ trajId }: Props) {
         name={`trajectory:${traj.id}`}
         data={d}
         stroke={traj.color}
-        // strokeWidth={(1 / scale) * 3} // screen-constant stroke
-        strokeWidth={2 / scale} // world-constant stroke
+        strokeWidth={2 / scale}
         hitStrokeWidth={5 / scale}
         listening
         onMouseDown={() =>

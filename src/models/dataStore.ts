@@ -108,9 +108,15 @@ export const useDataStore = create<Store>((set, get) => ({
     });
   },
 
-  setControlPointLock(cpId: ControlPointId, locked: boolean) {
+  setControlPointLock(
+    trajId: TrajectoryId,
+    cpId: ControlPointId,
+    locked: boolean
+  ) {
     set((s) => {
-      s.setControlPointLock(cpId, !!locked);
+      const t = findTraj(s.trajectories, trajId);
+      if (!t) return {};
+      t.internal.setControlPointLock(trajId, cpId, !!locked);
       return { trajectories: [...s.trajectories] };
     });
   },

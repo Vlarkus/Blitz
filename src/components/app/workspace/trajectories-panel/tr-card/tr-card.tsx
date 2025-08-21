@@ -1,5 +1,6 @@
 import React from "react";
 import "./tr-card.scss";
+import { AnimatePresence, motion } from "framer-motion";
 import { EditableLabel } from "../../../../common/editable-label";
 import { Trajectory } from "../../../../../models/entities/trajectory/trajectory";
 import { useDataStore } from "../../../../../models/dataStore";
@@ -159,16 +160,30 @@ export default function TrCard({ trID }: TrCardProps) {
         </div>
       </div>
       {/* Control Points List */}
-      {expanded && (
-        <div className="tr-card-cp-list">
-          {traj.controlPoints.map(
-            (cp) => (
-              console.log(traj.controlPoints, "cp", cp),
-              (<CpCard key={cp.id} cpID={cp.id} />)
-            )
-          )}
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            className="tr-card-cp-list"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {traj.controlPoints.map((cp) => (
+              <motion.div
+                key={cp.id}
+                layout
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.16 }}
+              >
+                <CpCard trajId={traj.id} cpId={cp.id} />
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
