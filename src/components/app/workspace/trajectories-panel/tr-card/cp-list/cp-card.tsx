@@ -19,7 +19,7 @@ export default function CpCard({ cpID }: CpListProps) {
   const [expanded, setExpanded] = React.useState<boolean>(false);
 
   const handleToggleLocked = () => {
-    dataStore.setControlPointLock(traj.id, cp.id, !cp.isLocked);
+    dataStore.setControlPointLock(cp.id, !cp.isLocked);
   };
 
   const handleRename = (next: string) => {

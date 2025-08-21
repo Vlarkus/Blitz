@@ -1,6 +1,7 @@
 import type {
   ColorHex,
   ControlPointId,
+  HandlePosInput,
   InterpolationType,
   SplineType,
   SymmetryType,
@@ -32,11 +33,7 @@ export interface IDataStore {
     beforeCpId: ControlPointId,
     cp: ControlPoint
   ): void;
-  setControlPointLock(
-    trajId: TrajectoryId,
-    cpId: ControlPointId,
-    locked: boolean
-  ): void;
+  setControlPointLock(cpId: ControlPointId, locked: boolean): void;
   insertControlPointAfter(
     trajId: TrajectoryId,
     afterCpId: ControlPointId,
@@ -76,15 +73,7 @@ export interface IDataStore {
     trajId: TrajectoryId,
     cpId: ControlPointId,
     which: "in" | "out",
-    x: number,
-    y: number
-  ): void;
-  setHandlePolar(
-    trajId: TrajectoryId,
-    cpId: ControlPointId,
-    which: "in" | "out",
-    r: number,
-    thetaRad: number
+    pos: HandlePosInput
   ): void;
 
   getHandlePosition(
@@ -114,4 +103,6 @@ export interface IDataStore {
     firstId: TrajectoryId,
     secondId: TrajectoryId
   ): TrajectoryId | null;
+
+  touchTrajectory(trajId: TrajectoryId): void;
 }

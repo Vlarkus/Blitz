@@ -25,3 +25,8 @@ export type Tool =
   | "cut"
   | "merge"
   | "simulate";
+
+export type HandlePosInput =
+  | { type?: "polar"; r: number; theta: number } // default
+  | { type: "absolute"; x: number; y: number }
+  | { type: "relative"; dx: number; dy: number };

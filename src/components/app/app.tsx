@@ -1,11 +1,7 @@
 import { useDataStore } from "../../models/dataStore";
 import { ControlPoint } from "../../models/entities/control-point/controlPoint";
 import { Trajectory } from "../../models/entities/trajectory/trajectory";
-import type {
-  SymmetryType,
-  SplineType,
-  InterpolationType,
-} from "../../types/types";
+import type { SymmetryType, SplineType } from "../../types/types";
 import "./app.scss";
 import Menu from "./menu/menu";
 import Workspace from "./workspace/workspace";

@@ -101,7 +101,6 @@ export default function HelperPointInfo() {
 
   // setters (stable)
   const setHandlePosition = useDataStore((s) => s.setHandlePosition);
-  const setHandlePolar = useDataStore((s) => s.setHandlePolar);
 
   // UI mode
   const [coordMode, setCoordMode] = React.useState<CoordMode>("polar");
@@ -160,35 +159,31 @@ export default function HelperPointInfo() {
     const cpId = selectedControlPointId!;
 
     if (mode === "polar") {
+      // UI shows degrees for theta; convert to radians before sending.
       const curR = which === "in" ? rIn : rOut;
-      // Notice: thInDeg/thOutDeg are already in degrees for display
       const curThDeg = which === "in" ? thIn : thOut;
-
-      if (part === "primary") {
-        // r setter (no conversion)
-        setHandlePolar(trajId, cpId, which, val, (curThDeg * Math.PI) / 180);
-      } else {
-        // θ setter (convert from degrees to radians)
-        setHandlePolar(trajId, cpId, which, curR, (val * Math.PI) / 180);
-      }
+      const r = part === "primary" ? val : curR;
+      const theta = ((part === "secondary" ? val : curThDeg) * Math.PI) / 180;
+      setHandlePosition(trajId, cpId, which, { type: "polar", r, theta });
       return;
     }
 
     if (mode === "relative") {
+      // dx/dy relative to CP
       const curDx = which === "in" ? dxIn : dxOut;
       const curDy = which === "in" ? dyIn : dyOut;
-      const nextDx = part === "primary" ? val : curDx;
-      const nextDy = part === "secondary" ? val : curDy;
-      setHandlePosition(trajId, cpId, which, baseX + nextDx, baseY + nextDy);
+      const dx = part === "primary" ? val : curDx;
+      const dy = part === "secondary" ? val : curDy;
+      setHandlePosition(trajId, cpId, which, { type: "relative", dx, dy });
       return;
     }
 
     // absolute
     const curX = which === "in" ? xInAbs : xOutAbs;
     const curY = which === "in" ? yInAbs : yOutAbs;
-    const nextX = part === "primary" ? val : curX;
-    const nextY = part === "secondary" ? val : curY;
-    setHandlePosition(trajId, cpId, which, nextX, nextY);
+    const x = part === "primary" ? val : curX;
+    const y = part === "secondary" ? val : curY;
+    setHandlePosition(trajId, cpId, which, { type: "absolute", x, y });
   };
 
   return (

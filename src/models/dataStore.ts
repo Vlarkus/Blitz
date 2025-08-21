@@ -1,9 +1,15 @@
 import { create } from "zustand";
 import { Trajectory } from "./entities/trajectory/trajectory";
-import type { ColorHex, ControlPointId, TrajectoryId } from "../types/types";
+import type {
+  ColorHex,
+  ControlPointId,
+  HandlePosInput,
+  TrajectoryId,
+} from "../types/types";
 import { ControlPoint } from "./entities/control-point/controlPoint";
 import { HelperPoint } from "./entities/helper-point/helperPoint";
 import type { IDataStore } from "./data-store.interface";
+import { clampPositive, normRad } from "../utils/utils";
 
 type State = {
   // Collections
@@ -51,7 +57,9 @@ export const useDataStore = create<Store>((set, get) => ({
    * ========================= */
   addTrajectory(traj) {
     set((s) => ({ trajectories: [...s.trajectories, traj] }));
-    console.log("Added trajectory:", traj.id);
+    traj.setDirtyNotifier(() => {
+      set((s) => ({ ...s, trajectories: s.trajectories.slice() })); // <- publish new array ref
+    });
   },
 
   removeTrajectory(id) {
@@ -100,15 +108,9 @@ export const useDataStore = create<Store>((set, get) => ({
     });
   },
 
-  setControlPointLock(
-    trajId: TrajectoryId,
-    cpId: ControlPointId,
-    locked: boolean
-  ) {
+  setControlPointLock(cpId: ControlPointId, locked: boolean) {
     set((s) => {
-      const t = findTraj(s.trajectories, trajId);
-      if (!t) return {};
-      t.internal.setControlPointLock(trajId, cpId, !!locked);
+      s.setControlPointLock(cpId, !!locked);
       return { trajectories: [...s.trajectories] };
     });
   },
@@ -136,6 +138,10 @@ export const useDataStore = create<Store>((set, get) => ({
       src.isVisible,
       src.isLocked
     );
+
+    cloned.setDirtyNotifier(() => {
+      set((s) => ({ ...s, trajectories: s.trajectories.slice() })); // <- publish new array ref
+    });
 
     set((s) => ({ trajectories: [...s.trajectories, cloned] }));
     return cloned.id as TrajectoryId;
@@ -278,28 +284,21 @@ export const useDataStore = create<Store>((set, get) => ({
   /* =========================
    * Helper points (handles)
    * ========================= */
-  setHandlePosition(trajId, cpId, which, x, y) {
+  setHandlePosition(trajId, cpId, which, pos) {
     set((s) => {
       const t = findTraj(s.trajectories, trajId);
       if (!t) return {};
-      t.internal.setHelperPointPosition(
-        cpId,
-        which,
-        assertFinite(x, "x"),
-        assertFinite(y, "y")
-      );
-      return { trajectories: [...s.trajectories] };
-    });
-  },
 
-  setHandlePolar(trajId, cpId, which, r, thetaRad) {
-    set((s) => {
-      const cp = findCP(s.trajectories, trajId, cpId);
-      if (!cp) return {};
-      const h = which === "in" ? cp.handleIn : cp.handleOut;
-      h.internal.setPosition(clampPositive(r), normRad(thetaRad));
-      // Reuse the existing neighbor rule via trajectory if desired
-      // For MVP we’ll simply touch the trajectory array to notify subscribers
+      // If it's absolute, ensure numbers are finite
+      if (pos.type === "absolute") {
+        pos = {
+          type: "absolute",
+          x: assertFinite(pos.x, "x"),
+          y: assertFinite(pos.y, "y"),
+        };
+      }
+
+      t.internal.setHelperPointPosition(cpId, which, pos);
       return { trajectories: [...s.trajectories] };
     });
   },
@@ -374,6 +373,13 @@ export const useDataStore = create<Store>((set, get) => ({
       src.isLocked
     );
 
+    first.setDirtyNotifier(() => {
+      set((s) => ({ ...s, trajectories: s.trajectories.slice() })); // <- publish new array ref
+    });
+    second.setDirtyNotifier(() => {
+      set((s) => ({ ...s, trajectories: s.trajectories.slice() })); // <- publish new array ref
+    });
+
     set((s) => {
       const arr = [...s.trajectories];
       arr.splice(idx, 1, first, second);
@@ -416,6 +422,10 @@ export const useDataStore = create<Store>((set, get) => ({
       a.isLocked || b.isLocked
     );
 
+    merged.setDirtyNotifier(() => {
+      set((s) => ({ ...s, trajectories: s.trajectories.slice() })); // <- publish new array ref
+    });
+
     set((s) => {
       const arr = [...s.trajectories];
       const i1 = Math.min(aIdx, bIdx);
@@ -426,6 +436,13 @@ export const useDataStore = create<Store>((set, get) => ({
     });
 
     return merged.id as TrajectoryId;
+  },
+
+  touchTrajectory(trajId) {
+    set((s) => {
+      // Optionally assert trajId exists; either way publish a new array ref
+      return { ...s, trajectories: s.trajectories.slice() };
+    });
   },
 }));
 
@@ -484,16 +501,6 @@ function assertFinite(n: number, label: string): number {
     throw new Error(`${label} must be a finite number`);
   }
   return n;
-}
-
-function clampPositive(r: number, eps = 1e-4): number {
-  if (!Number.isFinite(r)) return eps;
-  return Math.max(r, eps);
-}
-
-function normRad(theta: number): number {
-  if (!Number.isFinite(theta)) return 0;
-  return Math.atan2(Math.sin(theta), Math.cos(theta));
 }
 
 // deep copy a ControlPoint, including HelperPoints

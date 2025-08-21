@@ -6,6 +6,7 @@ import type {
   SplineType,
   SymmetryType,
   TrajectoryId,
+  HandlePosInput,
 } from "../../../types/types";
 import type { ControlPoint } from "../control-point/controlPoint";
 
@@ -43,7 +44,6 @@ export interface TrajectoryInternalAPI {
   setHelperPointPosition(
     cpId: string,
     handle: "in" | "out",
-    absX: number,
-    absY: number
+    pos: HandlePosInput
   ): void;
 }

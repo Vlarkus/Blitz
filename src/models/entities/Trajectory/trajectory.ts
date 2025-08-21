@@ -2,12 +2,19 @@
 import { ControlPoint } from "../control-point/controlPoint";
 import type {
   ColorHex,
+  HandlePosInput,
   InterpolationType,
   SplineType,
   SymmetryType,
 } from "../../../types/types";
-import { generateId, getRandomColor } from "../../../utils/utils";
+import {
+  clampPositive,
+  generateId,
+  getRandomColor,
+  normRad,
+} from "../../../utils/utils";
 import type { TrajectoryInternalAPI } from "./trajectory.interface";
+import type { HelperPoint } from "../helper-point/helperPoint";
 
 export class Trajectory {
   // properties
@@ -21,6 +28,18 @@ export class Trajectory {
 
   // non-enumerable internal facade
   public readonly internal!: TrajectoryInternalAPI;
+
+  private _notifyDirty?: () => void;
+
+  /** Store wires this once when the Trajectory is created/loaded */
+  setDirtyNotifier(fn: () => void) {
+    this._notifyDirty = fn;
+  }
+
+  /** Call at the end of any mutator to publish a store update */
+  private _dirty() {
+    this._notifyDirty?.();
+  }
 
   // constructor
   constructor(
@@ -74,14 +93,13 @@ export class Trajectory {
           this.setControlPointSplineType(id, splineType),
 
         setControlPointLock: (trajId: string, cpId: string, locked: boolean) =>
-          this.setControlPointLock(trajId, cpId, locked),
+          this.setControlPointLock(cpId, locked),
 
         setHelperPointPosition: (
           cpId: string,
           handle: "in" | "out",
-          absX: number,
-          absY: number
-        ) => this.setHelperPointPosition(cpId, handle, absX, absY),
+          pos: HandlePosInput
+        ) => this.setHelperPointPosition(cpId, handle, pos),
       } as TrajectoryInternalAPI,
       enumerable: false,
       writable: false,
@@ -147,30 +165,9 @@ export class Trajectory {
     return !!last && last.id === id;
   }
 
-  // mutators (no lock semantics here per your directive)
-
-  private addControlPoint(cp: ControlPoint): void {
-    this._controlPoints.push(cp);
-  }
-
-  private insertControlPoint(cp: ControlPoint, index: number): void {
-    const idx = clampIndex(index, 0, this._controlPoints.length);
-    this._controlPoints.splice(idx, 0, cp);
-  }
-
-  private insertControlPointBefore(cp: ControlPoint, beforeId: string): void {
-    const idx = this.getCPIndex(beforeId);
-    if (idx >= 0) this._controlPoints.splice(idx, 0, cp);
-  }
-
-  private insertControlPointAfter(cp: ControlPoint, afterId: string): void {
-    const idx = this.getCPIndex(afterId);
-    if (idx >= 0) this._controlPoints.splice(idx + 1, 0, cp);
-  }
-
-  private removeControlPoint(id: string): void {
-    const idx = this.getCPIndex(id);
-    if (idx >= 0) this._controlPoints.splice(idx, 1);
+  private removeAllControlPoints(): void {
+    this._controlPoints = [];
+    this._dirty();
   }
 
   private copyControlPoint(id: string): ControlPoint | undefined {
@@ -192,8 +189,58 @@ export class Trajectory {
     );
   }
 
-  private removeAllControlPoints(): void {
-    this._controlPoints = [];
+  // mutators (no lock semantics here per your directive)
+  //
+  //
+  //
+  //
+
+  private addControlPoint(cp: ControlPoint): void {
+    this._controlPoints.push(cp);
+    this.enforceRules(cp);
+    this._dirty();
+  }
+
+  private insertControlPoint(cp: ControlPoint, index: number): void {
+    const idx = clampIndex(index, 0, this._controlPoints.length);
+    this._controlPoints.splice(idx, 0, cp);
+    this.enforceRules(cp);
+    this._dirty();
+  }
+
+  private insertControlPointBefore(cp: ControlPoint, beforeId: string): void {
+    const idx = this.getCPIndex(beforeId);
+    if (idx >= 0) this._controlPoints.splice(idx, 0, cp);
+    this.enforceRules(cp);
+    this._dirty();
+  }
+
+  private insertControlPointAfter(cp: ControlPoint, afterId: string): void {
+    const idx = this.getCPIndex(afterId);
+    if (idx >= 0) this._controlPoints.splice(idx + 1, 0, cp);
+    this.enforceRules(cp);
+    this._dirty();
+  }
+
+  private removeControlPoint(id: string): void {
+    const idx = this.getCPIndex(id);
+    if (idx < 0) return;
+
+    // Capture neighbors before removal
+    const prevCP = idx > 0 ? this._controlPoints[idx - 1] : undefined;
+    const nextCP =
+      idx + 1 < this._controlPoints.length
+        ? this._controlPoints[idx + 1]
+        : undefined;
+
+    // Remove the CP
+    this._controlPoints.splice(idx, 1);
+
+    // Re-enforce rules around the junction created by the removal
+    if (prevCP) this.enforceRules(prevCP, true);
+    if (nextCP) this.enforceRules(nextCP, true);
+
+    this._dirty();
   }
 
   // neighbor-aware ops kept here for now
@@ -202,7 +249,8 @@ export class Trajectory {
     const cp = this.getControlPointById(id);
     if (!cp) return;
     cp.internal.setPosition(assertFinite(x, "x"), assertFinite(y, "y"));
-    this.enforceLinearSplineConstraint(cp);
+    this.enforceRules(cp);
+    this._dirty();
   }
 
   // TODO: Revisit symmetry enforcement rules; align with trajectory-level ops later
@@ -210,22 +258,10 @@ export class Trajectory {
     const cp = this.getControlPointById(id);
     if (!cp) return;
 
-    const splineBefore = this.getCPBefore(cp.id)?.splineType;
-    const splineAfter: SplineType = cp.splineType;
-
-    if (splineBefore === undefined) {
-      // first point
-    } else if (this.isLast(cp.id)) {
-      // last point
-    } else if (splineBefore === "LINEAR" && splineAfter === "LINEAR") {
-      symmetry = "BROKEN";
-    } else if (
-      symmetry === "MIRRORED" &&
-      !(splineBefore === "BEZIER" && splineAfter === "BEZIER")
-    ) {
-      symmetry = "ALIGNED";
-    }
     cp.internal.setSymmetry(symmetry);
+    this.enforceRules(cp, true);
+
+    this._dirty();
   }
 
   // TODO: Verify shared state issues when changing spline type
@@ -234,21 +270,11 @@ export class Trajectory {
     if (!cp) return;
 
     cp.internal.setSplineType(splineType);
-    if (splineType === "LINEAR") {
-      cp.handleIn.internal.setIsLinear(true);
-      cp.handleOut.internal.setIsLinear(true);
-    } else {
-      cp.handleIn.internal.setIsLinear(false);
-      cp.handleOut.internal.setIsLinear(false);
-    }
-    this.setControlPointSymmetry(cp.id, cp.symmetry);
+    this.enforceRules(cp);
+    this._dirty();
   }
 
-  private setControlPointLock(
-    trajId: string,
-    cpId: string,
-    locked: boolean
-  ): void {
+  private setControlPointLock(cpId: string, locked: boolean): void {
     const cp = this.getControlPointById(cpId);
     if (!cp) return;
 
@@ -258,80 +284,144 @@ export class Trajectory {
   private setHelperPointPosition(
     cpId: string,
     handle: "in" | "out",
-    absX: number,
-    absY: number
+    pos: HandlePosInput
   ): void {
     const cp = this.getControlPointById(cpId);
     if (!cp) return;
 
-    const [active, opposite] =
-      handle === "in"
-        ? [cp.handleIn, cp.handleOut]
-        : [cp.handleOut, cp.handleIn];
+    const active = handle === "in" ? cp.handleIn : cp.handleOut;
+    const other = handle === "in" ? cp.handleOut : cp.handleIn;
 
-    const dx = assertFinite(absX, "x") - cp.x;
-    const dy = assertFinite(absY, "y") - cp.y;
+    // --- Normalize input to (r, theta) relative to CP ---
+    let r: number;
+    let theta: number;
 
-    const r = Math.hypot(dx, dy);
+    if (pos.type === "absolute") {
+      const dx = assertFinite(pos.x, "x") - cp.x;
+      const dy = assertFinite(pos.y, "y") - cp.y;
+      r = clampPositive(Math.hypot(dx, dy));
+      theta = Math.atan2(dy, dx);
+    } else if (pos.type === "relative") {
+      const dx = assertFinite(pos.dx, "dx");
+      const dy = assertFinite(pos.dy, "dy");
+      r = clampPositive(Math.hypot(dx, dy));
+      theta = Math.atan2(dy, dx);
+    } else {
+      // polar (default)
+      r = clampPositive(assertFinite(pos.r, "r"));
+      theta = normRad(assertFinite(pos.theta, "theta"));
+    }
+
+    // apply to active
     active.internal.setR(r);
+    if (!active.isLinear) active.internal.setTheta(theta);
 
-    const theta = Math.atan2(dy, dx);
-    if (!opposite.isLinear) active.internal.setTheta(theta);
+    // symmetry for non-linear pair
+    if (!active.isLinear && !other.isLinear) {
+      if (cp.symmetry === "ALIGNED" || cp.symmetry === "MIRRORED") {
+        const thetaOpp = Math.atan2(
+          Math.sin(theta + Math.PI),
+          Math.cos(theta + Math.PI)
+        );
+        other.internal.setTheta(thetaOpp);
+        if (cp.symmetry === "MIRRORED") other.internal.setR(r);
+      }
+    }
 
-    this.enforceLinearSplineConstraint(cp);
+    this.enforceRules(cp, true);
+    this._dirty();
   }
 
-  private enforceLinearSplineConstraint(
-    cp: ControlPoint,
-    triggeredByAdjacent: boolean = false
-  ): void {
-    const hip = cp.handleIn.isLinear;
-    const hop = cp.handleOut.isLinear;
+  private enforceRules(thisCP: ControlPoint, isFirstCall: boolean = true) {
+    this.enforceSymmetryRule(thisCP);
+    this.enforceLinearSplineRule(thisCP);
 
-    if (hip !== hop) {
-      const [priority, secondary, adjacentCP] = hip
-        ? [cp.handleIn, cp.handleOut, this.getCPBefore(cp.id)]
-        : [cp.handleOut, cp.handleIn, this.getCPAfter(cp.id)];
+    if (isFirstCall) {
+      const prev = this.getCPBefore(thisCP.id);
+      if (prev) this.enforceRules(prev, false);
 
-      if (!adjacentCP) return;
+      const next = this.getCPAfter(thisCP.id);
+      if (next) this.enforceRules(next, false);
+    }
+  }
 
-      const dx = adjacentCP.x - cp.x;
-      const dy = adjacentCP.y - cp.y;
-      const theta = Math.atan2(dy, dx);
-      priority.internal.setTheta(theta);
+  private enforceLinearSplineRule(thisCP: ControlPoint) {
+    const prevCP = this.getCPBefore(thisCP.id);
+    const nextCP = this.getCPAfter(thisCP.id);
 
-      if (cp.symmetry === "ALIGNED") {
-        secondary.internal.setTheta(theta + Math.PI);
+    const prevLinear = !!prevCP && prevCP.splineType === "LINEAR"; // (prevCP → thisCP)
+    const thisLinear = thisCP.splineType === "LINEAR"; // (thisCP → nextCP)
+
+    // Helper to compute θ from thisCP toward neighbor; returns null if degenerate.
+    const thetaToward = (neighbor?: ControlPoint): number | null => {
+      if (!neighbor) return null;
+      const dx = neighbor.x - thisCP.x;
+      const dy = neighbor.y - thisCP.y;
+      if (dx === 0 && dy === 0) return null;
+      return Math.atan2(dy, dx);
+    };
+
+    // Only one side linear
+    if (prevLinear !== thisLinear) {
+      if (prevLinear) {
+        const theta = thetaToward(prevCP);
+        if (theta != null) {
+          thisCP.handleIn.internal.setTheta(theta); // align IN to prev
+          if (thisCP.symmetry === "ALIGNED" && !thisCP.handleOut.isLinear) {
+            const opp = Math.atan2(
+              Math.sin(theta + Math.PI),
+              Math.cos(theta + Math.PI)
+            );
+            thisCP.handleOut.internal.setTheta(opp); // angle only
+          }
+        }
+      } else {
+        // thisLinear === true
+        const theta = thetaToward(nextCP);
+        if (theta != null) {
+          thisCP.handleOut.internal.setTheta(theta); // align OUT to next
+          if (thisCP.symmetry === "ALIGNED" && !thisCP.handleIn.isLinear) {
+            const opp = Math.atan2(
+              Math.sin(theta + Math.PI),
+              Math.cos(theta + Math.PI)
+            );
+            thisCP.handleIn.internal.setTheta(opp); // angle only
+          }
+        }
       }
+      return;
+    }
 
-      if (!triggeredByAdjacent) {
-        // NOTE: Recursive neighbor propagation; consider a visited set or depth guard in the future
-        this.enforceLinearSplineConstraint(adjacentCP, true);
-      }
-    } else if (hip) {
-      // Invariant: both handles are linear
-      const cpBefore = this.getCPBefore(cp.id);
-      const cpAfter = this.getCPAfter(cp.id);
+    // Both linear → align both handles to their respective segments
+    if (prevLinear && thisLinear) {
+      const thetaIn = thetaToward(prevCP);
+      if (thetaIn != null) thisCP.handleIn.internal.setTheta(thetaIn);
 
-      if (cpBefore) {
-        const dx = cpBefore.x - cp.x;
-        const dy = cpBefore.y - cp.y;
-        const theta = Math.atan2(dy, dx);
-        cp.handleIn.internal.setTheta(theta);
-        this.enforceLinearSplineConstraint(cpBefore, true);
-      }
+      const thetaOut = thetaToward(nextCP);
+      if (thetaOut != null) thisCP.handleOut.internal.setTheta(thetaOut);
 
-      if (cpAfter) {
-        const dx = cpAfter.x - cp.x;
-        const dy = cpAfter.y - cp.y;
-        const theta = Math.atan2(dy, dx);
-        cp.handleOut.internal.setTheta(theta);
-        this.enforceLinearSplineConstraint(cpAfter, true);
-      }
+      return;
+    }
+
+    // Neither linear → nothing to enforce here
+  }
+
+  private enforceSymmetryRule(thisCP: ControlPoint) {
+    const prevCP = this.getCPBefore(thisCP.id);
+    const prevIsLinear = prevCP?.splineType === "LINEAR";
+    const thisIsLinear = thisCP.splineType === "LINEAR";
+
+    if ((prevIsLinear || thisIsLinear) && thisCP.symmetry === "MIRRORED") {
+      thisCP.internal.setSymmetry("ALIGNED");
     }
   }
 
   // meta setters
+  //
+  //
+  //
+  //
+
   private setName(name: string): void {
     this._name = sanitizeName(name);
   }
@@ -389,5 +479,5 @@ function deepCopyHandle(h: ControlPoint["handleIn"]): ControlPoint["handleIn"] {
   // @ts-expect-error runtime class import cycle is okay; shape matches HelperPoint
   const { HelperPoint } = require("../HelperPoint/helperPoint");
   // eslint-disable-next-line new-cap
-  return new HelperPoint(h.r, h.theta, h.isLinear);
+  return new HelperPoint(h.r, h.theta);
 }

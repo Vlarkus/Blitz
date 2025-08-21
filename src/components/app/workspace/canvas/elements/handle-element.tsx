@@ -37,7 +37,7 @@ export default function HandleElement({ trajId, cpId, which }: Props) {
   const onDragMove = (e: KonvaEventObject<DragEvent>) => {
     const { x, y } = e.target.position(); // world coords (layer scaled)
     // Optional: apply snapping here if needed
-    setHandlePosition(trajId, cpId, which, x, y); // store converts abs->polar
+    setHandlePosition(trajId, cpId, which, { type: "absolute", x, y }); // store converts to polar internally
   };
 
   return (

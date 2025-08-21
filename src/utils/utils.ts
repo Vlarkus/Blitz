@@ -70,3 +70,16 @@ export function cartesianToPolar(
     theta: Math.atan2(y, x),
   };
 }
+
+// Clamp to non-negative values (avoid -0 edge case too)
+export function clampPositive(value: number): number {
+  return value < 0 ? 0 : value;
+}
+
+// Normalize angle to range [0, 2π)
+export function normRad(theta: number): number {
+  const twoPi = Math.PI * 2;
+  let t = theta % twoPi;
+  if (t < 0) t += twoPi;
+  return t;
+}
