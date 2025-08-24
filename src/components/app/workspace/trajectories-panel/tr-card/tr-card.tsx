@@ -11,7 +11,7 @@ interface TrCardProps {
 }
 
 export default function TrCard({ trID }: TrCardProps) {
-  const dataStore = useDataStore(); // get the store instance
+  const dataStore = useDataStore();
 
   const traj = dataStore.getTrajectoryById(trID) as Trajectory;
 

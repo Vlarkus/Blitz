@@ -12,10 +12,18 @@ export default function TrajectoriesPanel() {
   const addTrajectory = useDataStore((s) => s.addTrajectory);
   const removeTrajectory = useDataStore((s) => s.removeTrajectory);
   const removeControlPoint = useDataStore((s) => s.removeControlPoint);
+  const setSelectedControlPointId = useDataStore(
+    (s) => s.setSelectedControlPointId
+  );
+
+  const handleClick: React.MouseEventHandler<HTMLDivElement> = (e) => {
+    if (e.target !== e.currentTarget) return; // clicked a child → ignore
+    setSelectedControlPointId(null);
+  };
 
   return (
     <div className="tr-panel">
-      <div className="side-panel-element tr-list">
+      <div className="side-panel-element tr-list" onClick={handleClick}>
         {trajectories.map((traj) => (
           <TrCard trID={traj.id} key={traj.id} />
         ))}

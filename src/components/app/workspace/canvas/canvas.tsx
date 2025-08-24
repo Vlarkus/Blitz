@@ -72,7 +72,7 @@ export default function Canvas() {
     const isLeft = e.evt.button === 0;
 
     // Panning
-    if (isMiddle) {
+    if (isMiddle || (isLeft && activeTool === "select")) {
       e.evt.preventDefault();
       setPanning(true);
       const pos = e.target.getStage()?.getPointerPosition();

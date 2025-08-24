@@ -52,8 +52,6 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
         cutTrajectoryAt(trajId, cpId);
         return;
     }
-    setSelectedTrajectoryId(trajId);
-    return;
 
     // Default (select) behavior
     setSelectedControlPointId(cpId);

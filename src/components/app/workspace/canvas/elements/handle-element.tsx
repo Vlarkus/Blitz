@@ -15,6 +15,7 @@ export default function HandleElement({ trajId, cpId, which }: Props) {
   const cp = useDataStore((s) => s.getControlPoint(trajId, cpId));
   const traj = useDataStore((s) => s.getTrajectoryById(trajId));
   const scale = useEditorStore((s) => s.activeViewport.scale);
+  const activeTool = useEditorStore((s) => s.activeTool);
   const setHandlePosition = useDataStore((s) => s.setHandlePosition);
 
   if (!cp || !traj) return null;
@@ -51,6 +52,8 @@ export default function HandleElement({ trajId, cpId, which }: Props) {
     setHandlePosition(trajId, cpId, which, { type: "absolute", x, y }); // store converts to polar internally
   };
 
+  const draggable = !cp.isLocked && !traj.isLocked && activeTool === "select";
+
   return (
     <>
       {/* Line from CP to handle (purely visual) */}
@@ -67,7 +70,7 @@ export default function HandleElement({ trajId, cpId, which }: Props) {
         y={hy}
         radius={radius}
         fill={handleColor}
-        draggable={!cp.isLocked && !traj.isLocked}
+        draggable={draggable}
         onDragMove={onDragMove}
         // don't steal CP selection; only the dot is draggable
       />
