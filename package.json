@@ -29,6 +29,7 @@
     "react-icons": "^5.5.0",
     "react-konva": "^19.0.7",
     "scss": "^0.2.4",
+    "use-image": "^1.1.4",
     "uuid": "^11.1.0",
     "zustand": "^5.0.7"
   },

@@ -1,7 +1,6 @@
 // components/app/tool-bar/tool-bar.tsx
 import "./tool-bar.scss";
 import ToolButton from "./tool-button/tool-button";
-import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { Tool } from "../../../../types/types";
 
@@ -14,6 +13,7 @@ import {
   faObjectGroup,
   faPlayCircle,
 } from "@fortawesome/free-solid-svg-icons";
+import { useEditorStore } from "../../../../editor/editor-store";
 
 const toolIcons: Record<Tool, any> = {
   select: faArrowPointer, // more modern pointer icon
@@ -26,7 +26,8 @@ const toolIcons: Record<Tool, any> = {
 };
 
 export default function ToolBar() {
-  const [activeTool, setActiveTool] = useState<Tool>("select");
+  const activeTool = useEditorStore((s) => s.activeTool);
+  const setActiveTool = useEditorStore((s) => s.setActiveTool);
 
   return (
     <div className="tool-bar">

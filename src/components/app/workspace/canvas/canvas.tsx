@@ -3,8 +3,9 @@ import { Stage, Layer, Circle, Rect } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import "./canvas.scss";
 import { useEditorStore } from "../../../../editor/editor-store";
-import { useDataStore } from "../../../../models/dataStore";
 import TrajectoriesLayer from "./layers/trajectories-layer";
+import { useDataStore } from "../../../../models/dataStore";
+import { ControlPoint } from "../../../../models/entities/control-point/controlPoint";
 
 export default function Canvas() {
   // Select store fields individually to keep selector snapshots stable
@@ -13,7 +14,19 @@ export default function Canvas() {
   const panBy = useEditorStore((s) => s.panBy);
   const zoomBy = useEditorStore((s) => s.zoomBy);
 
-  const trajectories = useDataStore((s) => s.trajectories);
+  const activeTool = useEditorStore((s) => s.activeTool);
+
+  const selectedTrajectoryId = useDataStore((s) => s.selectedTrajectoryId);
+  const getTrajectoryById = useDataStore((s) => {
+    s.getTrajectoryById;
+  });
+  const addControlPoint = useDataStore((s) => s.addControlPoint);
+  const setSelectedControlPointId = useDataStore(
+    (s) => s.setSelectedControlPointId
+  );
+  const setSelectedTrajectoryId = useDataStore(
+    (s) => s.setSelectedTrajectoryId
+  );
 
   // Container sizing
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -39,15 +52,36 @@ export default function Canvas() {
   //  - Left-click on "empty space" (captured by an invisible background Rect)
   const onMouseDown = (e: KonvaEventObject<MouseEvent>) => {
     const isMiddle = e.evt.button === 1;
-    const isLeftOnEmpty =
-      e.evt.button === 0 &&
-      (e.target === e.target.getStage() || e.target?.attrs?.name === "pan-bg");
+    const isLeft = e.evt.button === 0;
 
-    if (isMiddle || isLeftOnEmpty) {
+    // Panning
+    if (isMiddle) {
       e.evt.preventDefault();
       setPanning(true);
       const pos = e.target.getStage()?.getPointerPosition();
       if (pos) last.current = { x: pos.x, y: pos.y };
+      return;
+    }
+
+    if (isLeft) {
+      if (activeTool === "add") {
+        const stage = e.target.getStage();
+        const pos = stage?.getPointerPosition();
+        if (!pos) return; // no pointer -> nothing to do
+        if (!selectedTrajectoryId) return; // no selected trajectory -> no-op
+
+        // screen -> world
+        const x = (pos.x - activeViewport.originX) / activeViewport.scale;
+        const y = (pos.y - activeViewport.originY) / activeViewport.scale;
+
+        // Construct CP first so we know its id
+        const cp = new ControlPoint(undefined, x, y); // your comment hinted this ctor
+        addControlPoint(selectedTrajectoryId, cp);
+        setSelectedTrajectoryId(selectedTrajectoryId); // reassert selection (optional)
+        setSelectedControlPointId(cp.id); // select the newly added CP
+
+        return; // prevent starting a pan on Add clicks
+      }
     }
   };
 
