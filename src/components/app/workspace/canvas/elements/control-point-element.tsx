@@ -17,6 +17,7 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
   const setSelectedTrajectoryId = useDataStore(
     (s) => s.setSelectedTrajectoryId
   );
+  const cutTrajectoryAt = useDataStore((s) => s.cutTrajectoryAt);
 
   const scale = useEditorStore((s) => s.activeViewport.scale);
   const activeTool = useEditorStore((s) => s.activeTool);
@@ -36,15 +37,23 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
   const draggable = !cp.isLocked && !traj.isLocked && activeTool === "select";
 
   const onMouseDown = (e: KonvaEventObject<MouseEvent>) => {
-    if (activeTool === "remove" && e.evt.button === 0) {
-      e.cancelBubble = true;
-      e.evt.preventDefault();
-      e.target.stopDrag?.();
+    if (e.evt.button !== 0) return;
 
-      removeControlPoint(trajId, cpId);
-      setSelectedTrajectoryId(trajId);
-      return;
+    switch (activeTool) {
+      case "remove":
+        e.evt.preventDefault();
+        e.target.stopDrag?.();
+
+        removeControlPoint(trajId, cpId);
+        setSelectedTrajectoryId(trajId);
+        return;
+
+      case "cut":
+        cutTrajectoryAt(trajId, cpId);
+        return;
     }
+    setSelectedTrajectoryId(trajId);
+    return;
 
     // Default (select) behavior
     setSelectedControlPointId(cpId);
