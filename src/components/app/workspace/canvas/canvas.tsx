@@ -17,6 +17,7 @@ export default function Canvas() {
   const activeTool = useEditorStore((s) => s.activeTool);
 
   const selectedTrajectoryId = useDataStore((s) => s.selectedTrajectoryId);
+  const selectedControlPointId = useDataStore((s) => s.selectedControlPointId);
   const getTrajectoryById = useDataStore((s) => {
     s.getTrajectoryById;
   });
@@ -26,6 +27,10 @@ export default function Canvas() {
   );
   const setSelectedTrajectoryId = useDataStore(
     (s) => s.setSelectedTrajectoryId
+  );
+  const removeControlPoint = useDataStore((s) => s.removeControlPoint);
+  const getTrajectoryIdByControlPointId = useDataStore(
+    (s) => s.getTrajectoryIdByControlPointId
   );
 
   // Container sizing
@@ -47,6 +52,18 @@ export default function Canvas() {
   const [panning, setPanning] = useState(false);
   const last = useRef<{ x: number; y: number } | null>(null);
 
+  const getClickedControlPointId = (target: any): string | null => {
+    if (!target) return null;
+    // Preferred: explicit cpId attr set on the CP node
+    if (typeof target.attrs?.cpId === "string") return target.attrs.cpId;
+
+    // Fallback: name prefix convention "cp:<id>"
+    const n = target.attrs?.name;
+    if (typeof n === "string" && n.startsWith("cp:")) return n.slice(3);
+
+    return null;
+  };
+
   // Start panning on:
   //  - Middle mouse anywhere, OR
   //  - Left-click on "empty space" (captured by an invisible background Rect)
@@ -63,6 +80,7 @@ export default function Canvas() {
       return;
     }
 
+    // Tool Used
     if (isLeft) {
       if (activeTool === "add") {
         const stage = e.target.getStage();
@@ -80,7 +98,7 @@ export default function Canvas() {
         setSelectedTrajectoryId(selectedTrajectoryId); // reassert selection (optional)
         setSelectedControlPointId(cp.id); // select the newly added CP
 
-        return; // prevent starting a pan on Add clicks
+        return;
       }
     }
   };

@@ -9,7 +9,17 @@ type Props = { trajId: string; cpId: string };
 export default function ControlPointElement({ trajId, cpId }: Props) {
   const cp = useDataStore((s) => s.getControlPoint(trajId, cpId));
   const traj = useDataStore((s) => s.getTrajectoryById(trajId));
+
+  const removeControlPoint = useDataStore((s) => s.removeControlPoint);
+  const setSelectedControlPointId = useDataStore(
+    (s) => s.setSelectedControlPointId
+  );
+  const setSelectedTrajectoryId = useDataStore(
+    (s) => s.setSelectedTrajectoryId
+  );
+
   const scale = useEditorStore((s) => s.activeViewport.scale);
+  const activeTool = useEditorStore((s) => s.activeTool);
 
   if (!cp || !traj) return null;
 
@@ -23,7 +33,22 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
     traj.controlPoints.length > 0 &&
     traj.controlPoints[traj.controlPoints.length - 1].id === cp.id;
 
-  const selectable = !cp.isLocked && !traj.isLocked;
+  const draggable = !cp.isLocked && !traj.isLocked && activeTool === "select";
+
+  const onMouseDown = (e: KonvaEventObject<MouseEvent>) => {
+    if (activeTool === "remove" && e.evt.button === 0) {
+      e.cancelBubble = true;
+      e.evt.preventDefault();
+      e.target.stopDrag?.();
+
+      removeControlPoint(trajId, cpId);
+      setSelectedTrajectoryId(trajId);
+      return;
+    }
+
+    // Default (select) behavior
+    setSelectedControlPointId(cpId);
+  };
 
   const onDragMove = (e: KonvaEventObject<DragEvent>) => {
     const p = e.target.position();
@@ -41,11 +66,10 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       offsetX={size / 2}
       offsetY={size / 2}
       fill={traj.color}
-      draggable={selectable}
+      draggable={draggable}
+      hitStrokeWidth={12}
       onDragMove={onDragMove}
-      onMouseDown={() =>
-        useDataStore.getState().setSelectedControlPointId(cpId)
-      }
+      onMouseDown={onMouseDown}
       onTouchStart={() =>
         useDataStore.getState().setSelectedControlPointId(cpId)
       }
@@ -57,11 +81,10 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       y={cp.y}
       radius={radius}
       fill={traj.color}
-      draggable={selectable}
+      draggable={draggable}
+      hitStrokeWidth={12}
       onDragMove={onDragMove}
-      onMouseDown={() =>
-        useDataStore.getState().setSelectedControlPointId(cpId)
-      }
+      onMouseDown={onMouseDown}
       onTouchStart={() =>
         useDataStore.getState().setSelectedControlPointId(cpId)
       }

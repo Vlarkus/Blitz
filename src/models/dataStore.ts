@@ -398,8 +398,10 @@ export const useDataStore = create<Store>((set, get) => ({
     };
   },
 
-  getTrajectoryIdByControlPointId(cpId: ControlPointId): TrajectoryId | null {
-    const traj = this.trajectories.find((t) =>
+  // dataStore.ts (inside your create<IDataStore>((set, get) => ({ ... })))
+  getTrajectoryIdByControlPointId: (cpId) => {
+    const { trajectories } = get();
+    const traj = trajectories.find((t) =>
       t.controlPoints.some((cp) => cp.id === cpId)
     );
     return traj ? traj.id : null;
