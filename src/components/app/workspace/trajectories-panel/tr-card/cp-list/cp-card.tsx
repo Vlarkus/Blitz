@@ -1,5 +1,3 @@
-// cp-card.tsx
-import React from "react";
 import "./cp-card.scss";
 import { EditableLabel } from "../../../../../common/editable-label";
 import { useDataStore } from "../../../../../../models/dataStore";
@@ -26,7 +24,7 @@ export default function CpCard({ trajId, cpId }: CpCardProps) {
 
   const selected = selectedControlPointId === cpId;
 
-  const handleToggleLocked = (e: React.MouseEvent) => {
+  const handleToggleLocked = () => {
     setControlPointLock(traj.id, cp.id, !cp.isLocked);
   };
 

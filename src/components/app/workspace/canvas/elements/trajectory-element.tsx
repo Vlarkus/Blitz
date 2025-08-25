@@ -21,9 +21,6 @@ export default function TrajectoryElement({ trajId }: Props) {
   const setSelectedControlPointId = useDataStore(
     (s) => s.setSelectedControlPointId
   );
-  const setSelectedTrajectoryId = useDataStore(
-    (s) => s.setSelectedTrajectoryId
-  );
 
   const activeTool = useEditorStore((s) => s.activeTool);
   const activeViewport = useEditorStore((s) => s.activeViewport);

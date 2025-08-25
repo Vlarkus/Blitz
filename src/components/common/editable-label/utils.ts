@@ -1,4 +1,3 @@
-// src/components/editableLabel/useEditableLabel.ts
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { EditableLabelProps } from "./interface";
 import type { InputRules } from "./types";
@@ -37,7 +36,7 @@ export function useEditableLabel<T extends string | number = string | number>(
 
   // commit (convert according to rules, soft clamp for numbers)
   const commit = () => {
-    let next: any = buffer;
+    let next: number | string = buffer;
 
     if (rules.type === "number") {
       // normalize textual edge-cases
@@ -156,7 +155,7 @@ export function useEditableLabel<T extends string | number = string | number>(
       return;
     }
     // allow only digits, dot, minus (evaluation handles positions)
-    if (!/^[0-9.\-]$/.test(data)) {
+    if (!/^[0-9.]$/.test(data)) {
       e.preventDefault();
       return;
     }
@@ -196,7 +195,7 @@ export function useEditableLabel<T extends string | number = string | number>(
     }
 
     // number paste
-    let txt = pasted.replace(/[^\d.\-]/g, "");
+    let txt = pasted.replace(/[^\d.]/g, "");
     if ((rules.decimals ?? Infinity) === 0) {
       txt = txt.replace(/\./g, "");
     } else {

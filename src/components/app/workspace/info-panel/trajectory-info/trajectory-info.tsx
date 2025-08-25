@@ -2,7 +2,6 @@ import { useDataStore } from "../../../../../models/dataStore";
 import {
   INTERPOLATION_TYPES,
   type InterpolationType,
-  type TrajectoryId,
 } from "../../../../../types/types";
 import ColorPicker from "../../../../common/color-picker/color-picker";
 import "./trajectory-info.scss";
@@ -10,10 +9,6 @@ import "./trajectory-info.scss";
 export default function TrajectoryInfo() {
   const selectedTrajectoryId = useDataStore(
     (state) => state.selectedTrajectoryId
-  );
-
-  const selectedControlPointId = useDataStore(
-    (state) => state.selectedControlPointId
   );
 
   const setTrajectoryColor = useDataStore((state) => state.setTrajectoryColor);

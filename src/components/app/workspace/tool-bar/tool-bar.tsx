@@ -12,10 +12,11 @@ import {
   faScissors,
   faObjectGroup,
   faPlayCircle,
+  type IconDefinition,
 } from "@fortawesome/free-solid-svg-icons";
 import { useEditorStore } from "../../../../editor/editor-store";
 
-const toolIcons: Record<Tool, any> = {
+const toolIcons: Record<Tool, IconDefinition> = {
   select: faArrowPointer, // more modern pointer icon
   add: faCirclePlus, // add circle icon
   remove: faCircleMinus, // remove circle icon

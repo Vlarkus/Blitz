@@ -1,11 +1,6 @@
 import { create } from "zustand";
 import { Trajectory } from "./entities/trajectory/trajectory";
-import type {
-  ColorHex,
-  ControlPointId,
-  HandlePosInput,
-  TrajectoryId,
-} from "../types/types";
+import type { ColorHex, ControlPointId, TrajectoryId } from "../types/types";
 import { ControlPoint } from "./entities/control-point/controlPoint";
 import { HelperPoint } from "./entities/helper-point/helperPoint";
 import type { IDataStore } from "./data-store.interface";
@@ -116,7 +111,7 @@ export const useDataStore = create<Store>((set, get) => ({
     set((s) => {
       const t = findTraj(s.trajectories, trajId);
       if (!t) return {};
-      t.internal.setControlPointLock(trajId, cpId, !!locked);
+      t.internal.setControlPointLock(cpId, !!locked);
       return { trajectories: [...s.trajectories] };
     });
   },
@@ -444,13 +439,6 @@ export const useDataStore = create<Store>((set, get) => ({
     });
 
     return merged.id as TrajectoryId;
-  },
-
-  touchTrajectory(trajId) {
-    set((s) => {
-      // Optionally assert trajId exists; either way publish a new array ref
-      return { ...s, trajectories: s.trajectories.slice() };
-    });
   },
 }));
 

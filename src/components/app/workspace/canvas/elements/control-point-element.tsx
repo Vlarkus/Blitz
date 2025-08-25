@@ -1,4 +1,3 @@
-import React from "react";
 import { Circle, Rect, Group } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useDataStore } from "../../../../../models/dataStore";

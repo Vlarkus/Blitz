@@ -1,4 +1,3 @@
-import { act } from "react";
 import { useDataStore } from "../../../../../models/dataStore";
 import {
   SPLINE_TYPES,

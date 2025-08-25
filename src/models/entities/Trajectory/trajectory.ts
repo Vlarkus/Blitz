@@ -1,4 +1,3 @@
-// src/domain/Trajectory/trajectory.ts
 import { ControlPoint } from "../control-point/controlPoint";
 import type {
   ColorHex,
@@ -14,7 +13,6 @@ import {
   normRad,
 } from "../../../utils/utils";
 import type { TrajectoryInternalAPI } from "./trajectory.interface";
-import type { HelperPoint } from "../helper-point/helperPoint";
 
 export class Trajectory {
   // properties
@@ -92,7 +90,7 @@ export class Trajectory {
         setControlPointSplineType: (id: string, splineType: SplineType) =>
           this.setControlPointSplineType(id, splineType),
 
-        setControlPointLock: (trajId: string, cpId: string, locked: boolean) =>
+        setControlPointLock: (cpId: string, locked: boolean) =>
           this.setControlPointLock(cpId, locked),
 
         setHelperPointPosition: (
@@ -139,12 +137,12 @@ export class Trajectory {
   }
 
   // basic info helpers
-  private getFirstCP(): ControlPoint | undefined {
-    return this._controlPoints[0];
-  }
-  private getLastCP(): ControlPoint | undefined {
-    return this._controlPoints[this._controlPoints.length - 1];
-  }
+  // private getFirstCP(): ControlPoint | undefined {
+  //   return this._controlPoints[0];
+  // }
+  // private getLastCP(): ControlPoint | undefined {
+  //   return this._controlPoints[this._controlPoints.length - 1];
+  // }
   private getCPAfter(id: string): ControlPoint | undefined {
     const i = this.getCPIndex(id);
     return i >= 0 ? this._controlPoints[i + 1] : undefined;
@@ -156,14 +154,14 @@ export class Trajectory {
   private getCPIndex(id: string): number {
     return this._controlPoints.findIndex((cp) => cp.id === id);
   }
-  private isFirst(id: string): boolean {
-    const first = this.getFirstCP();
-    return !!first && first.id === id;
-  }
-  private isLast(id: string): boolean {
-    const last = this.getLastCP();
-    return !!last && last.id === id;
-  }
+  // private isFirst(id: string): boolean {
+  //   const first = this.getFirstCP();
+  //   return !!first && first.id === id;
+  // }
+  // private isLast(id: string): boolean {
+  //   const last = this.getLastCP();
+  //   return !!last && last.id === id;
+  // }
 
   private removeAllControlPoints(): void {
     this._controlPoints = [];
@@ -173,8 +171,8 @@ export class Trajectory {
   private copyControlPoint(id: string): ControlPoint | undefined {
     const cp = this.getControlPointById(id);
     if (!cp) return undefined;
-    const hin = deepCopyHandle(cp.handleIn);
-    const hout = deepCopyHandle(cp.handleOut);
+    const hin = cp.handleIn;
+    const hout = cp.handleOut;
     return new ControlPoint(
       cp.name,
       cp.x,
@@ -487,11 +485,10 @@ function clampIndex(n: number, min: number, max: number): number {
   return Math.max(min, Math.min(Math.floor(n), max));
 }
 
-function deepCopyHandle(h: ControlPoint["handleIn"]): ControlPoint["handleIn"] {
-  // HelperPoint has constructor (r, theta, isLinear)
-  // Accessors: r, theta, isLinear
-  // @ts-expect-error runtime class import cycle is okay; shape matches HelperPoint
-  const { HelperPoint } = require("../HelperPoint/helperPoint");
-  // eslint-disable-next-line new-cap
-  return new HelperPoint(h.r, h.theta);
-}
+// function deepCopyHandle(h: ControlPoint["handleIn"]): ControlPoint["handleIn"] {
+//   // HelperPoint has constructor (r, theta, isLinear)
+//   // Accessors: r, theta, isLinear
+//   // @ts-expect-error runtime class import cycle is okay; shape matches HelperPoint
+//   const { HelperPoint } = require("../HelperPoint/helperPoint");
+//   return new HelperPoint(h.r, h.theta);
+// }

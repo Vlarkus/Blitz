@@ -1,4 +1,3 @@
-import React from "react";
 import "./menu.scss";
 import AppIcon from "../../../assets/app-icon.svg";
 

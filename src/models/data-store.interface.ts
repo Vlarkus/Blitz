@@ -107,6 +107,4 @@ export interface IDataStore {
     firstId: TrajectoryId,
     secondId: TrajectoryId
   ): TrajectoryId | null;
-
-  touchTrajectory(trajId: TrajectoryId): void;
 }

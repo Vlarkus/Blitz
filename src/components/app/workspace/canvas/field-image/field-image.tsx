@@ -1,4 +1,3 @@
-import React from "react";
 import { Image } from "react-konva";
 import useImage from "use-image";
 import "./field-image.scss";

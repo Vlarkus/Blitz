@@ -5,7 +5,6 @@ import type {
   InterpolationType,
   SplineType,
   SymmetryType,
-  TrajectoryId,
   HandlePosInput,
 } from "../../../types/types";
 import type { ControlPoint } from "../control-point/controlPoint";
@@ -35,11 +34,7 @@ export interface TrajectoryInternalAPI {
 
   // TODO: Verify shared state issues when changing spline type
   setControlPointSplineType(id: string, splineType: SplineType): void;
-  setControlPointLock(
-    trajId: TrajectoryId,
-    cpId: ControlPointId,
-    locked: boolean
-  ): void;
+  setControlPointLock(cpId: ControlPointId, locked: boolean): void;
 
   setHelperPointPosition(
     cpId: string,

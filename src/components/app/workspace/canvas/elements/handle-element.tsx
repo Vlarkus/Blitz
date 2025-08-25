@@ -1,9 +1,7 @@
-import React from "react";
 import { Line, Circle } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useDataStore } from "../../../../../models/dataStore";
 import { useEditorStore } from "../../../../../editor/editor-store";
-import { mixColors } from "../../../../../utils/utils";
 
 type Props = {
   trajId: string;
