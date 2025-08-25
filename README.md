@@ -1,69 +1,119 @@
-# React + TypeScript + Vite
+<div align="center">
+  <img src="src/assets/app-icon.svg" alt="Blitz Logo" width="128" height="128">
+  <h1>Blitz</h1>
+  <h2>Complex Made Simple</h2>
+</div>
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+---
 
-Currently, two official plugins are available:
+## Introduction
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Blitz is a **desktop-only** web editor for designing and refining autonomous robot trajectories. Built to reduce friction on complex tasks, it emphasizes **customizability**, **ease of use**, and **accessibility across skill levels**.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Key Features
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Blitz takes inspiration from Adobe Illustrator:
+- **Tool-driven interactions** determine how elements respond to clicks and drags.
+- A **canvas** as the primary area for graphical interaction.
+- An **info panel** for **discrete** numeric editing.
+- A **trajectories (layers) panel** for managing paths.
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+Together, these enable **high-precision** trajectory editing.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+---
+
+## Tech Stack
+
+- **Frontend:** React + Vite + TypeScript  
+- **Canvas:** Konva / react-konva  
+- **State:** Zustand (editor store + data store)  
+- **Tooling:** ESLint, Prettier (optional)  
+- **Paradigm:** Partial OOP *(Java influence)*  
+
+---
+
+## Quick Start
+
+### Prerequisites
+- **Node.js** ≥ 18 (recommended)
+
+### Install
+```sh
+# pick one
+pnpm install
+# or
+npm install
+# or
+yarn install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Run (Local)
+```sh
+pnpm dev
+# or
+npm run dev
+# or
+yarn dev
 ```
+
+Open the printed local URL (commonly http://localhost:5173).
+
+### Build
+```sh
+pnpm build
+# or npm run build / yarn build
+```
+
+---
+
+## Tools — Current Semantics
+
+- **Select:** Click a control point to select it (and its trajectory). Drag to move if unlocked. Click a path to select its trajectory.
+- **Add:** With a trajectory selected, click the canvas to add a control point at that world position; the new point becomes active.
+- **Remove:** Click a control point to delete it; the parent trajectory becomes selected.
+- **Insert:** Click on a trajectory path to insert a control point projected onto the nearest segment at the clicked position.
+- **Cut:** Click a control point to split its trajectory into two; the trajectories panel will display both halves.
+
+---
+
+## Tutorials
+
+Guides and videos are coming soon.
+
+---
+
+## Reporting Issues
+
+1. **Open an issue:** https://github.com/Vlarkus/Blitz/issues  
+2. **Please include:**
+   - What happened vs. what you expected  
+   - Reproduction steps (numbered)  
+   - Console logs / screenshots (if relevant)  
+   - Environment details (OS, browser, Node version)
+
+---
+
+## Join the [Discord](https://discord.gg/mytSnb7t)
+
+---
+
+## Contributing
+
+1. Fork the repo  
+2. Create a branch:
+   ```sh
+   git checkout -b feat/your-feature
+   ```
+3. Commit with a clear message:
+   ```sh
+   git commit -m "feat: add XYZ"
+   ```
+4. Push and open a Pull Request
+
+---
+
+## License
+
+MIT © Valery Rabchanka (Vlarkus)
