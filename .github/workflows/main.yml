@@ -2,8 +2,8 @@ name: Deploy Blitz to GitHub Pages
 
 on:
   push:
-    branches: [main] # deploy only when main changes
-  workflow_dispatch: # allow manual runs
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
