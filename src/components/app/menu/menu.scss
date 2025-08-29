@@ -27,37 +27,54 @@
   margin: 0 1rem;
 }
 
-.menu-options-list-wrapper {
+.menu-options-wrapper {
   display: flex;
   align-items: flex-start;
   justify-content: center;
+
+  .menu-options {
+    display: flex;
+    gap: 0.75rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    .menu-option-button {
+      cursor: pointer;
+      transition: all 0.15s ease;
+      color: $default;
+      background-color: transparent;
+      justify-content: center;
+      padding: 0;
+      margin: 0;
+
+      &:hover:not(.is-active) {
+        color: $hover;
+        transform: scale(1.05);
+      }
+
+      &.disabled {
+        color: $default;
+        cursor: not-allowed;
+      }
+    }
+
+    .is-active {
+      color: $primary;
+      transform: scale(1.1);
+    }
+
+    // Menu Individual Option Panel
+  }
 }
 
-.menu-options-list {
-  display: flex;
-  gap: 1.5rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
+.menu-option-panel {
+  position: fixed;
+  z-index: 10000;
+  isolation: isolate;
+  will-change: transform;
 
-.menu-option {
-  cursor: pointer;
-  transition: color 0.2s ease;
-  color: $hover;
-  justify-content: center;
-  margin: 0;
-
-  &:hover {
-    color: $active;
-  }
-
-  &:active {
-    color: $active;
-  }
-
-  &.disabled {
-    color: $default;
-    cursor: not-allowed;
-  }
+  width: 10rem;
+  height: 10rem;
+  background: red; /* or #f00 */
 }

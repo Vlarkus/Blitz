@@ -1,7 +1,6 @@
 import "./menu.scss";
 import AppIcon from "../../../assets/app-icon.svg";
-
-const MENU_OPTIONS = ["File", "Edit", "About", "Help"];
+import MenuOptionFile from "./menu-options/menu-option-file";
 
 export default function Menu() {
   return (
@@ -9,15 +8,17 @@ export default function Menu() {
       <span className="menu-logo-wrapper">
         <img src={AppIcon} alt="Blitz Logo" className="menu-logo" />
       </span>
-      <span className="menu-divider"></span>
-      <nav className="menu-options-list-wrapper">
-        <ul className="menu-options-list">
-          {MENU_OPTIONS.map((option) => (
-            <li key={option} className="menu-option">
-              {option}
-            </li>
-          ))}
-        </ul>
+      <span className="menu-divider" />
+      <nav
+        className="menu-options-wrapper"
+        role="menubar"
+        aria-label="Application Menu"
+      >
+        <span className="menu-options">
+          <MenuOptionFile />
+          <MenuOptionFile />
+          <MenuOptionFile />
+        </span>
       </nav>
     </header>
   );
