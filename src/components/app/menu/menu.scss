@@ -38,43 +38,64 @@
     list-style: none;
     margin: 0;
     padding: 0;
-
-    .menu-option-button {
-      cursor: pointer;
-      transition: all 0.15s ease;
-      color: $default;
-      background-color: transparent;
-      justify-content: center;
-      padding: 0;
-      margin: 0;
-
-      &:hover:not(.is-active) {
-        color: $hover;
-        transform: scale(1.05);
-      }
-
-      &.disabled {
-        color: $default;
-        cursor: not-allowed;
-      }
-    }
-
-    .is-active {
-      color: $primary;
-      transform: scale(1.1);
-    }
-
-    // Menu Individual Option Panel
   }
 }
 
-.menu-option-panel {
+.menu-panel {
   position: fixed;
   z-index: 10000;
   isolation: isolate;
   will-change: transform;
 
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  justify-content: start;
+  align-items: start;
+
+  padding: 0.5rem;
   width: 10rem;
-  height: 10rem;
-  background: red; /* or #f00 */
+  height: auto;
+  background: $bg-light;
+
+  border-radius: 0.25rem;
+
+  hr {
+    width: 100%;
+    margin: 0;
+    color: $bg-lighter;
+  }
+
+  button {
+    background: transparent;
+    padding: 0;
+  }
+}
+
+.menu-option-button {
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: $default;
+  background-color: transparent;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+
+  &:hover:not(.active):not(.is-active) {
+    color: $hover;
+  }
+
+  &.disabled {
+    color: $default;
+    cursor: not-allowed;
+  }
+
+  &.active {
+    color: $primary;
+  }
+}
+
+.is-active {
+  color: $primary;
+  transform: scale(1.1);
 }

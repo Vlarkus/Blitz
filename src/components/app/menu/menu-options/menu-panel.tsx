@@ -1,7 +1,18 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 
-export default function MenuOptionFile() {
+type MenuProps = {
+  buttonLabel: string;
+  children: ReactNode;
+};
+
+export default function ({ buttonLabel, children }: MenuProps) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number; width: number }>({
     top: 0,
@@ -11,7 +22,7 @@ export default function MenuOptionFile() {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const layerRef = useRef<HTMLDivElement>(null);
 
-  // Position the layer relative to the trigger
+  // Position panel
   useLayoutEffect(() => {
     if (!open || !buttonRef.current) return;
     const update = () => {
@@ -20,27 +31,29 @@ export default function MenuOptionFile() {
     };
     update();
     window.addEventListener("resize", update);
-    window.addEventListener("scroll", update, true); // capture scroll from any ancestor
+    window.addEventListener("scroll", update, true);
     return () => {
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
     };
   }, [open]);
 
-  // Close on outside click
+  // Outside click
+  // Close when clicking inside (but not on panel container itself)
   useEffect(() => {
     if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      const t = e.target as Node;
-      if (buttonRef.current?.contains(t)) return;
-      if (layerRef.current?.contains(t)) return;
-      setOpen(false);
+    const handler = (e: MouseEvent) => {
+      if (!layerRef.current) return;
+      if (layerRef.current === e.target) return; // clicked the panel background itself
+      if (layerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
     };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  // Close on Escape
+  // Escape key
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
@@ -56,25 +69,18 @@ export default function MenuOptionFile() {
         aria-expanded={open}
         className={`menu-option-button${open ? " is-active" : ""}`}
         onClick={() => setOpen((v) => !v)}
-        onKeyDown={(e) => {
-          if (e.key === "ArrowDown") {
-            e.preventDefault();
-            setOpen(true);
-          }
-        }}
       >
-        File
+        {buttonLabel}
       </button>
 
       {open &&
         createPortal(
           <div
             ref={layerRef}
-            className="menu-option-panel" // style this in SCSS
+            className="menu-panel"
             style={{ top: pos.top, left: pos.left }}
-            role="presentation"
           >
-            Hello
+            {children}
           </div>,
           document.body
         )}

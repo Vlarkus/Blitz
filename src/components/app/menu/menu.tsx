@@ -1,6 +1,6 @@
 import "./menu.scss";
 import AppIcon from "../../../assets/app-icon.svg";
-import MenuOptionFile from "./menu-options/menu-option-file";
+import MenuPanel from "./menu-options/menu-panel";
 
 export default function Menu() {
   return (
@@ -15,9 +15,12 @@ export default function Menu() {
         aria-label="Application Menu"
       >
         <span className="menu-options">
-          <MenuOptionFile />
-          <MenuOptionFile />
-          <MenuOptionFile />
+          <MenuPanel buttonLabel="File">
+            <button onClick={() => console.log("New File")}>New</button>
+            <hr />
+            <button onClick={() => console.log("Open File")}>Open…</button>
+            <button onClick={() => console.log("Save File")}>Save</button>
+          </MenuPanel>
         </span>
       </nav>
     </header>
