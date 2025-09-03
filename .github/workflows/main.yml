@@ -1,5 +1,4 @@
 name: Deploy Blitz to GitHub Pages
-
 on:
   push:
     branches: [main]
