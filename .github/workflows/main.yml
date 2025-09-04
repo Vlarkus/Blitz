@@ -40,15 +40,15 @@ jobs:
             cp dist/index.html dist/404.html
           fi
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
+      - name: Prepare Pages artifact
+        run: |
+          if [ -d dist ]; then
+            mkdir -p pages
+            # copy all files and folders from dist, including dotfiles
+            cp -a dist/. pages/
+          fi
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-      - name: Debug: list built files
+      - name: Debug - list built files
         if: always()
         run: |
           echo "Contents of dist:"
@@ -56,6 +56,14 @@ jobs:
           echo "\nContents of pages:"
           ls -laR pages || true
 
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: pages
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
