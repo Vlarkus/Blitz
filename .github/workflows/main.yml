@@ -48,6 +48,14 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+      - name: Debug: list built files
+        if: always()
+        run: |
+          echo "Contents of dist:"
+          ls -laR dist || true
+          echo "\nContents of pages:"
+          ls -laR pages || true
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
