@@ -133,7 +133,7 @@ export const useDataStore = create<Store>((set, get) => ({
     const src = state.trajectories[idx];
     const cloned = new Trajectory(
       src.name + " (copy)",
-      src.controlPoints.map((cp: ControlPoint) => deepCopyControlPoint(cp)),
+      src.controlPoints.map((cp) => deepCopyControlPoint(cp)),
       src.color,
       src.interpolationType,
       src.isVisible,
