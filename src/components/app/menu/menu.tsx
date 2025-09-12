@@ -1,6 +1,7 @@
+import * as Menubar from "@radix-ui/react-menubar";
 import "./menu.scss";
 import AppIcon from "../../../assets/app-icon.svg";
-import MenuPanel from "./menu-options/menu-panel";
+import MenuFile from "./menu-options/menu-file";
 
 export default function Menu() {
   return (
@@ -15,12 +16,11 @@ export default function Menu() {
         aria-label="Application Menu"
       >
         <span className="menu-options">
-          <MenuPanel buttonLabel="File">
-            <button onClick={() => console.log("New File")}>New</button>
-            <hr />
-            <button onClick={() => console.log("Open File")}>Open…</button>
-            <button onClick={() => console.log("Save File")}>Save</button>
-          </MenuPanel>
+          <Menubar.Root>
+            <MenuFile />
+            <MenuFile />
+            <MenuFile />
+          </Menubar.Root>
         </span>
       </nav>
     </header>

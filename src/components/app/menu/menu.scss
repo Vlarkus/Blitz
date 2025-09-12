@@ -1,5 +1,6 @@
 @use "../../../styles/constants.scss" as *;
 
+/* ----- Container (already present) ----- */
 .menu {
   display: flex;
   align-items: center;
@@ -21,81 +22,135 @@
 
 .menu-divider {
   width: 1px;
-  height: 2rem; // matches menu height visually
+  height: 2rem;
   background-color: $hover;
-  opacity: 0.3; // slightly faded so it's not too bold
+  opacity: 0.3;
   margin: 0 1rem;
 }
 
-.menu-options-wrapper {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
+/* ===== Radix Menubar styling ===== */
 
-  .menu-options {
-    display: flex;
-    gap: 0.75rem;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
+/* Wrapper that contains Menubar.Root */
+.menu-options-wrapper[role="menubar"] {
+  display: inline-flex;
+  align-items: center;
 }
 
-.menu-panel {
-  position: fixed;
-  z-index: 10000;
-  isolation: isolate;
-  will-change: transform;
-
-  display: flex;
-  flex-direction: column;
+.menu-options {
+  display: inline-flex;
   gap: 0.25rem;
-  justify-content: start;
-  align-items: start;
-
-  padding: 0.5rem;
-  width: 10rem;
-  height: auto;
-  background: $bg-light;
-
-  border-radius: 0.25rem;
-
-  hr {
-    width: 100%;
-    margin: 0;
-    color: $bg-lighter;
-  }
-
-  button {
-    background: transparent;
-    padding: 0;
-  }
 }
 
-.menu-option-button {
-  cursor: pointer;
-  transition: all 0.15s ease;
-  color: $default;
-  background-color: transparent;
-  justify-content: center;
-  padding: 0;
-  margin: 0;
+/* Top-level triggers (Menubar.Trigger) */
+.menu-option {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: $default; // define in constants.scss (fallback: #fff/#111 as needed)
+  font-weight: 500;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.375rem;
+  line-height: 1;
+  cursor: default;
+  user-select: none;
 
-  &:hover:not(.active):not(.is-active) {
-    color: $hover;
-  }
-
-  &.disabled {
-    color: $default;
-    cursor: not-allowed;
-  }
-
-  &.active {
+  /* Radix state when menu is open */
+  &[data-state="open"] {
     color: $primary;
   }
+
+  &:focus {
+    outline: none; /* NEW: removes the native blue outline */
+  }
 }
 
-.is-active {
-  color: $primary;
-  transform: scale(1.1);
+/* Dropdown surface (Menubar.Content / Menubar.SubContent) */
+.radix-menubar-content {
+  min-width: 14rem;
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  background: $bg; // slightly darker/lighter than bar
+  border: 1px solid $bg-light;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.25),
+    0 4px 6px -2px rgba(0, 0, 0, 0.2);
+  z-index: 60;
+
+  /* Optional open/close motion */
+  &[data-state="open"] {
+    animation: mm-enter 120ms ease-out;
+  }
+  &[data-state="closed"] {
+    animation: mm-exit 90ms ease-in;
+  }
+}
+
+/* Items (Menubar.Item, Menubar.SubTrigger) */
+.radix-menubar-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* leaves room for a shortcut on the right */
+  gap: 1rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.375rem;
+  color: $default;
+  line-height: 1.1;
+  cursor: default;
+  user-select: none;
+  outline: none;
+
+  /* Hover/keyboard highlight from Radix */
+  &[data-highlighted] {
+    background: rgba($hover, 0.22);
+  }
+
+  /* Disabled state from Radix */
+  &[data-disabled] {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+}
+
+/* Separator (Menubar.Separator) */
+.radix-menubar-separator {
+  height: 1px;
+  margin: 0.35rem 0;
+  background: rgba($hover, 0.35);
+  border: 0;
+}
+
+/* Optional: small helper class if you show key hints inside items */
+.kbd {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  letter-spacing: 0.02em;
+}
+
+/* Motion */
+@keyframes mm-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-2px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes mm-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-2px) scale(0.98);
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .radix-menubar-content {
+    animation: none !important;
+  }
 }
