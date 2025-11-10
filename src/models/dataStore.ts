@@ -1,15 +1,15 @@
 import { create } from "zustand";
-import { Trajectory } from "./entities/trajectory/trajectory";
 import type {
   ColorHex,
   ControlPointId,
-  HandlePosInput,
+  InterpolationType,
   TrajectoryId,
 } from "../types/types";
 import { ControlPoint } from "./entities/control-point/controlPoint";
 import { HelperPoint } from "./entities/helper-point/helperPoint";
 import type { IDataStore } from "./data-store.interface";
 import { clampPositive, normRad } from "../utils/utils";
+import { Trajectory } from "./entities/trajectory/trajectory";
 
 type State = {
   // Collections
@@ -260,6 +260,37 @@ export const useDataStore = create<Store>((set, get) => ({
     });
   },
 
+  saveToJSON(filename?: string) {
+    const { trajectories } = get();
+
+    // Serialize the current trajectories
+    const json = JSON.stringify({ version: 1, trajectories }, null, 2);
+
+    // Create a Blob (plain text)
+    const blob = new Blob([json], { type: "text/plain" });
+
+    // Create an object URL for the Blob
+    const url = URL.createObjectURL(blob);
+
+    // Sanitize and build the filename
+    const safeName = (filename || "trajectories").replace(/[^a-z0-9_-]/gi, "_");
+    const fullName = `${safeName}.txt`;
+
+    // Create a temporary <a> element to trigger download
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fullName;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Clean up the object URL
+    URL.revokeObjectURL(url);
+  },
+
+  loadFromJSON(jsonText: string): void {},
+
   setControlPointSplineType(trajId, cpId, type) {
     set((s) => {
       const t = findTraj(s.trajectories, trajId);
@@ -444,13 +475,6 @@ export const useDataStore = create<Store>((set, get) => ({
     });
 
     return merged.id as TrajectoryId;
-  },
-
-  touchTrajectory(trajId) {
-    set((s) => {
-      // Optionally assert trajId exists; either way publish a new array ref
-      return { ...s, trajectories: s.trajectories.slice() };
-    });
   },
 }));
 

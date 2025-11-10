@@ -8,7 +8,7 @@ import type {
   TrajectoryId,
 } from "../types/types";
 import type { ControlPoint } from "./entities/control-point/controlPoint";
-import type { Trajectory } from "./entities/trajectory/trajectory";
+import { Trajectory } from "./entities/trajectory/trajectory";
 
 export interface IDataStore {
   /** ───── Selection ───── */
@@ -107,6 +107,6 @@ export interface IDataStore {
     firstId: TrajectoryId,
     secondId: TrajectoryId
   ): TrajectoryId | null;
-
-  touchTrajectory(trajId: TrajectoryId): void;
+  saveToJSON(filename: string): void;
+  loadFromJSON(data: string): void;
 }
