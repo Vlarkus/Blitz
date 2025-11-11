@@ -23,10 +23,50 @@ export class ControlPoint {
 
   public readonly internal!: ControlPointInternalAPI;
 
+  // --- Overloaded constructors ---
   constructor(
-    name: string = "Control Point",
+    name: string,
     x: number,
     y: number,
+    heading?: number | null,
+    splineType?: SplineType,
+    symmetry?: SymmetryType,
+    handleIn?: HelperPoint,
+    handleOut?: HelperPoint,
+    isLocked?: boolean,
+    isEvent?: boolean
+  );
+  constructor(obj: {
+    _name?: string;
+    _x?: number;
+    _y?: number;
+    _heading?: number | null;
+    _splineType?: SplineType;
+    _symmetry?: SymmetryType;
+    _handleIn?: { _r: number; _theta: number; _isLinear?: boolean };
+    _handleOut?: { _r: number; _theta: number; _isLinear?: boolean };
+    _isLocked?: boolean;
+    _isEvent?: boolean;
+  });
+
+  // --- Implementation ---
+  constructor(
+    arg1:
+      | string
+      | {
+          _name?: string;
+          _x?: number;
+          _y?: number;
+          _heading?: number | null;
+          _splineType?: SplineType;
+          _symmetry?: SymmetryType;
+          _handleIn?: { _r: number; _theta: number; _isLinear?: boolean };
+          _handleOut?: { _r: number; _theta: number; _isLinear?: boolean };
+          _isLocked?: boolean;
+          _isEvent?: boolean;
+        },
+    x?: number,
+    y?: number,
     heading: number | null = null,
     splineType: SplineType = "BEZIER",
     symmetry: SymmetryType = "ALIGNED",
@@ -42,16 +82,56 @@ export class ControlPoint {
     isEvent: boolean = false
   ) {
     this._id = generateId();
-    this._name = sanitizeName(name);
-    this._x = assertNumber(x, "x");
-    this._y = assertNumber(y, "y");
-    this._heading = heading;
-    this._splineType = splineType;
-    this._symmetry = symmetry;
-    this._handleIn = handleIn;
-    this._handleOut = handleOut;
-    this._isLocked = isLocked;
-    this._isEvent = isEvent;
+
+    if (typeof arg1 === "object" && arg1 !== null) {
+      const obj = arg1;
+
+      // Use underscored keys only
+      this._name = sanitizeName(obj._name ?? "Control Point");
+      this._x = assertNumber(obj._x ?? 0, "x");
+      this._y = assertNumber(obj._y ?? 0, "y");
+      this._heading = obj._heading ?? null;
+      this._splineType = obj._splineType ?? "BEZIER";
+      this._symmetry = obj._symmetry ?? "ALIGNED";
+
+      // Helper points
+      this._handleIn = obj._handleIn
+        ? new HelperPoint(
+            obj._handleIn._r,
+            obj._handleIn._theta,
+            obj._handleIn._isLinear ?? false
+          )
+        : new HelperPoint(
+            ControlPoint.DEFAULT_HANDLE_IN_R,
+            ControlPoint.DEFAULT_HANDLE_IN_THETA
+          );
+
+      this._handleOut = obj._handleOut
+        ? new HelperPoint(
+            obj._handleOut._r,
+            obj._handleOut._theta,
+            obj._handleOut._isLinear ?? false
+          )
+        : new HelperPoint(
+            ControlPoint.DEFAULT_HANDLE_OUT_R,
+            ControlPoint.DEFAULT_HANDLE_OUT_THETA
+          );
+
+      this._isLocked = obj._isLocked ?? false;
+      this._isEvent = obj._isEvent ?? false;
+    } else {
+      // Standard creation path
+      this._name = sanitizeName(arg1);
+      this._x = assertNumber(x!, "x");
+      this._y = assertNumber(y!, "y");
+      this._heading = heading;
+      this._splineType = splineType;
+      this._symmetry = symmetry;
+      this._handleIn = handleIn;
+      this._handleOut = handleOut;
+      this._isLocked = isLocked;
+      this._isEvent = isEvent;
+    }
 
     Object.defineProperty(this, "internal", {
       value: {

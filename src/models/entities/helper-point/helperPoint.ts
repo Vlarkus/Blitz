@@ -12,11 +12,30 @@ export class HelperPoint {
   /** Non-enumerable internal mutator facade (bound in constructor). */
   public readonly internal!: HelperPointInternalAPI;
 
-  constructor(r: number, theta: number, isLinear: boolean = false) {
+  // --- Overloaded constructors ---
+  constructor(r: number, theta: number, isLinear?: boolean);
+  constructor(obj: { r?: number; theta?: number; isLinear?: boolean });
+
+  // --- Implementation ---
+  constructor(
+    arg1: number | { r?: number; theta?: number; isLinear?: boolean },
+    theta?: number,
+    isLinear: boolean = false
+  ) {
     this._id = generateId();
-    this._r = this.clampR(r);
-    this._theta = this.normTheta(theta);
-    this._isLinear = isLinear;
+
+    if (typeof arg1 === "object" && arg1 !== null) {
+      // JSON hydration
+      const obj = arg1;
+      this._r = this.clampR(obj.r ?? HelperPoint.MIN_R);
+      this._theta = this.normTheta(obj.theta ?? 0);
+      this._isLinear = obj.isLinear ?? false;
+    } else {
+      // Normal instantiation
+      this._r = this.clampR(arg1);
+      this._theta = this.normTheta(theta ?? 0);
+      this._isLinear = isLinear;
+    }
 
     Object.defineProperty(this, "internal", {
       value: {

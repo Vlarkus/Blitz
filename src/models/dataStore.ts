@@ -289,7 +289,42 @@ export const useDataStore = create<Store>((set, get) => ({
     URL.revokeObjectURL(url);
   },
 
-  loadFromJSON(jsonText: string): void {},
+  loadFromJSON(jsonString: string): void {
+    try {
+      const parsed = JSON.parse(jsonString);
+
+      // Handle both old array-only and new object-with-version formats
+      const rawTrajs = Array.isArray(parsed)
+        ? parsed
+        : Array.isArray(parsed.trajectories)
+        ? parsed.trajectories
+        : null;
+
+      if (!rawTrajs) {
+        console.error("Invalid trajectory file format");
+        return;
+      }
+
+      // ✅ Hydrate each trajectory (constructor handles nested CPs & HelperPoints)
+      const newTrajectories = rawTrajs.map((t: unknown) => new Trajectory(t));
+
+      // ✅ Register dirty notifiers so UI re-renders on mutation
+      newTrajectories.forEach((traj: Trajectory) => {
+        traj.setDirtyNotifier(() => {
+          set((s) => ({ ...s, trajectories: s.trajectories.slice() }));
+        });
+      });
+
+      // ✅ Update the store state
+      set({
+        trajectories: newTrajectories,
+        selectedTrajectoryId: null,
+        selectedControlPointId: null,
+      });
+    } catch (err) {
+      console.error("Failed to load trajectories:", err);
+    }
+  },
 
   setControlPointSplineType(trajId, cpId, type) {
     set((s) => {

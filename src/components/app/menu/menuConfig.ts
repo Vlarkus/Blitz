@@ -12,7 +12,29 @@ export const MENU_STRUCTURE: MenuItem[] = [
     label: "File",
     subItems: [
       { label: "New", action: () => console.log("New File") },
-      { label: "Open", action: () => console.log("Open File") },
+      {
+        label: "Open",
+        action: () => {
+          const input = document.createElement("input");
+          input.type = "file";
+          input.accept = ".txt,.json,application/json,text/plain";
+
+          input.onchange = async (e) => {
+            const file = (e.target as HTMLInputElement).files?.[0];
+            if (!file) return;
+
+            try {
+              const text = await file.text();
+              const store = useDataStore.getState();
+              store.loadFromJSON(text);
+            } catch (err) {
+              console.error("Failed to open file:", err);
+            }
+          };
+
+          input.click();
+        },
+      },
       {
         label: "Save As",
         action: () => {
