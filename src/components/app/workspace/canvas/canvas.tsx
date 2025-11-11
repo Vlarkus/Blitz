@@ -1,11 +1,12 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
-import { Stage, Layer, Circle, Rect } from "react-konva";
+import { Stage, Layer, Rect } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import "./canvas.scss";
 import { useEditorStore } from "../../../../editor/editor-store";
 import TrajectoriesLayer from "./layers/trajectories-layer";
 import { useDataStore } from "../../../../models/dataStore";
 import { ControlPoint } from "../../../../models/entities/control-point/controlPoint";
+import FieldImage from "./field-image/field-image";
 
 export default function Canvas() {
   // Select store fields individually to keep selector snapshots stable
@@ -183,6 +184,7 @@ export default function Canvas() {
             fill="rgba(0,0,0,0)"
             listening={true}
           />
+          <FieldImage />
           <TrajectoriesLayer />
         </Layer>
       </Stage>

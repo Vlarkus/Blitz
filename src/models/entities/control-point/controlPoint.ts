@@ -4,9 +4,9 @@ import { HelperPoint } from "../helper-point/helperPoint";
 import type { ControlPointInternalAPI } from "./control-point.interface";
 
 export class ControlPoint {
-  private static readonly DEFAULT_HANDLE_IN_R = 10;
+  private static readonly DEFAULT_HANDLE_IN_R = 0.5;
   private static readonly DEFAULT_HANDLE_IN_THETA = -Math.PI / 2;
-  private static readonly DEFAULT_HANDLE_OUT_R = 10;
+  private static readonly DEFAULT_HANDLE_OUT_R = 0.5;
   private static readonly DEFAULT_HANDLE_OUT_THETA = Math.PI / 2;
 
   private readonly _id: string;

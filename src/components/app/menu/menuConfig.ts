@@ -1,4 +1,6 @@
+import { useFieldStore } from "../../../editor/editor-store";
 import { useDataStore } from "../../../models/dataStore";
+import { exportAsFtc14423RobocornsSwerve } from "../../../models/export-formats/export-as-ftc-14423-robocorns-swerve";
 
 // src/components/Menu/menuConfig.ts
 export interface MenuItem {
@@ -67,7 +69,28 @@ export const MENU_STRUCTURE: MenuItem[] = [
           store.saveToJSON(input);
         },
       },
-      { label: "Export As", action: () => console.log("Export As") },
+      {
+        label: "Export As",
+        subItems: [
+          {
+            label: "FTC 14423 Robocorns Swerve",
+            action: () => {
+              const store = useDataStore.getState();
+              const traj = store.selectedTrajectoryId
+                ? store.getTrajectoryById(store.selectedTrajectoryId)
+                : null;
+
+              if (!traj) {
+                alert("No trajectory selected.");
+                return;
+              }
+
+              // Directly run export — it handles filename and download
+              exportAsFtc14423RobocornsSwerve(traj);
+            },
+          },
+        ],
+      },
     ],
   },
   {
@@ -76,7 +99,11 @@ export const MENU_STRUCTURE: MenuItem[] = [
       {
         label: "FTC",
         subItems: [
-          { label: "Decode", action: () => console.log("FTC Decode") },
+          {
+            label: "Decode",
+            action: () =>
+              useFieldStore.getState().setSelectedField("FTC_DECODE"),
+          },
         ],
       },
       {

@@ -8,10 +8,9 @@ import {
   faArrowPointer,
   faCirclePlus,
   faCircleMinus,
-  faArrowTurnDown,
+  faChevronCircleDown,
   faScissors,
   faObjectGroup,
-  faPlayCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { useEditorStore } from "../../../../editor/editor-store";
 
@@ -19,10 +18,9 @@ const toolIcons: Record<Tool, any> = {
   select: faArrowPointer, // more modern pointer icon
   add: faCirclePlus, // add circle icon
   remove: faCircleMinus, // remove circle icon
-  insert: faArrowTurnDown, // insert / down-turn arrow
+  insert: faChevronCircleDown, // insert / down-turn arrow
   cut: faScissors, // cut
   merge: faObjectGroup, // merge/group icon
-  simulate: faPlayCircle, // simulate/play
 };
 
 export default function ToolBar() {

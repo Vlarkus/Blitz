@@ -1,30 +1,49 @@
-import React from "react";
-import { Image } from "react-konva";
+import React, { useMemo } from "react";
+import { Image as KonvaImage } from "react-konva";
 import useImage from "use-image";
-import "./field-image.scss";
+import {
+  useEditorStore,
+  useFieldStore,
+} from "../../../../../editor/editor-store";
 
-type Props = {
-  src?: string;
-  scale?: number; // multiply factor
-};
+/**
+ * Renders the currently selected field background image
+ * underneath all trajectories.
+ */
+export default function FieldImage() {
+  const selectedField = useFieldStore((s) => s.selectedField);
+  const activeViewport = useEditorStore((s) => s.activeViewport);
 
-export default function FieldImage({
-  src = "/assets/field.jpg",
-  scale = 1,
-}: Props) {
-  const [image] = useImage(src, "anonymous");
-  if (!image) return null;
+  // Select field image source based on state
+  const fieldSrc = useMemo(() => {
+    switch (selectedField) {
+      case "FTC_DECODE":
+        return "/assets/fields/ftc/decode/ftc-decode.jpg";
+      case "VEX_PUSHBACK":
+        return "/assets/fields/vex/pushback/vex-pushback.png";
+      case "VEX_HIGHSTAKES":
+        return "/assets/fields/vex/highstakes/vex-highstakes.png";
+      case "CUSTOM":
+        return "/assets/fields/custom/custom_field.png";
+      default:
+        return null;
+    }
+  }, [selectedField]);
 
-  const w = image.width * scale;
-  const h = image.height * scale;
+  const [image] = useImage(fieldSrc ?? "");
+
+  if (!fieldSrc || !image) return null;
+
+  // World-to-screen scaling — adjust as needed for your field units
+  const FIELD_SIZE_METERS = 3.66; // FTC field size
 
   return (
-    <Image
+    <KonvaImage
       image={image}
-      x={-w / 2}
-      y={-h / 2}
-      width={w}
-      height={h}
+      x={-FIELD_SIZE_METERS / 2}
+      y={-FIELD_SIZE_METERS / 2}
+      width={FIELD_SIZE_METERS}
+      height={FIELD_SIZE_METERS}
       listening={false}
     />
   );
