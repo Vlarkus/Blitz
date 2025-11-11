@@ -9,7 +9,13 @@ const UNIT_SCALE = 1.0; // meters → change to 39.37 for inches if needed
  * Automatically downloads a .txt file using the same naming convention as saveToJSON.
  */
 export function exportAsFtc14423RobocornsSwerve(trajectory: Trajectory) {
-  let content = `Map<String, double[][][]> trajectoryMap = new HashMap<>() {{\n`;
+  const safeMapName = trajectory.name
+    .replace(/[^a-z0-9_]/gi, "_") // Replace invalid chars with _
+    .replace(/^[0-9]/, "_$&") // Prefix with _ if starts with number
+    .replace(/_+/g, "_") // Collapse multiple underscores
+    .toLowerCase();
+
+  let content = `Map<String, double[][][]> ${safeMapName} = new HashMap<>() {{\n`;
 
   const cps = trajectory.controlPoints;
 
