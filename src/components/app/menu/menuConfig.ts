@@ -11,7 +11,27 @@ export const MENU_STRUCTURE: MenuItem[] = [
   {
     label: "File",
     subItems: [
-      { label: "New", action: () => console.log("New File") },
+      {
+        label: "New",
+        action: () => {
+          const storeState = useDataStore.getState();
+
+          const confirmed = window.confirm(
+            "Are you sure you want to start a new file?\n\n" +
+              "All unsaved trajectories will be lost. Make sure to save first."
+          );
+
+          if (!confirmed) return;
+
+          // Clear all trajectories and reset selection using the store setter
+          useDataStore.setState({
+            trajectories: [],
+            selectedTrajectoryId: null,
+            selectedControlPointId: null,
+          });
+        },
+      },
+
       {
         label: "Open",
         action: () => {
