@@ -106,17 +106,17 @@ export const MENU_STRUCTURE: MenuItem[] = [
           },
         ],
       },
-      {
-        label: "VEX V5",
-        subItems: [
-          { label: "Push Back", action: () => console.log("VEX Push Back") },
-          {
-            label: "High Stakes",
-            action: () => console.log("VEX High Stakes"),
-          },
-        ],
-      },
-      { label: "Load Custom", action: () => console.log("Load Custom") },
+      // {
+      //   label: "VEX V5",
+      //   subItems: [
+      //     { label: "Push Back", action: () => console.log("VEX Push Back") },
+      //     {
+      //       label: "High Stakes",
+      //       action: () => console.log("VEX High Stakes"),
+      //     },
+      //   ],
+      // },
+      // { label: "Load Custom", action: () => console.log("Load Custom") },
     ],
   },
 ];
