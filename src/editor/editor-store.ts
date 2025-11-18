@@ -1,10 +1,31 @@
-// src/editor/editorStore.ts
 import { create } from "zustand";
+
+/** All selectable field types */
+export type FieldType =
+  | "NONE"
+  | "FTC_DECODE"
+  | "VEX_PUSHBACK"
+  | "VEX_HIGHSTAKES"
+  | "CUSTOM";
+
+/** Field store for managing current background image */
+interface FieldState {
+  selectedField: FieldType;
+  setSelectedField: (field: FieldType) => void;
+}
+
+/** Zustand store for field selection */
+export const useFieldStore = create<FieldState>((set) => ({
+  selectedField: "NONE",
+  setSelectedField: (field) => set({ selectedField: field }),
+}));
+
+// src/editor/editorStore.ts
 import type { IEditorStore, Viewport } from "./editor-store.interface";
 import type { Tool } from "../types/types";
 
-const MIN_SCALE = 0.05; // px per meter
-const MAX_SCALE = 40; // px per meter
+const MIN_SCALE = 1; // px per meter
+const MAX_SCALE = 500; // px per meter
 const MIN_SNAP = 1e-4; // meters
 
 function clamp(n: number, min: number, max: number) {

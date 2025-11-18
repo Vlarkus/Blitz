@@ -1,7 +1,7 @@
 <div align="center">
   <img src="src/assets/app-icon.svg" alt="Blitz Logo" width="128" height="128">
   <h1>Blitz</h1>
-  <h2>Complex Made Simple</h2>
+  <h2>Easier Autonomous Trajectories</h2>
 </div>
 
 ---

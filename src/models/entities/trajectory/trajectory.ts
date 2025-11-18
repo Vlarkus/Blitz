@@ -1,3 +1,4 @@
+// src/domain/Trajectory/trajectory.ts
 import { ControlPoint } from "../control-point/controlPoint";
 import type {
   ColorHex,
@@ -13,6 +14,7 @@ import {
   normRad,
 } from "../../../utils/utils";
 import type { TrajectoryInternalAPI } from "./trajectory.interface";
+import type { HelperPoint } from "../helper-point/helperPoint";
 
 export class Trajectory {
   // properties
@@ -39,9 +41,36 @@ export class Trajectory {
     this._notifyDirty?.();
   }
 
-  // constructor
+  // --- Overloaded constructors ---
   constructor(
     name: string,
+    controlPoints?: ControlPoint[],
+    color?: ColorHex,
+    interpolationType?: InterpolationType,
+    isVisible?: boolean,
+    isLocked?: boolean
+  );
+  constructor(obj: {
+    _name?: string;
+    _controlPoints?: ControlPoint[];
+    _color?: ColorHex;
+    _interpolationType?: InterpolationType;
+    _isVisible?: boolean;
+    _isLocked?: boolean;
+  });
+
+  // --- Implementation ---
+  constructor(
+    arg1:
+      | string
+      | {
+          _name?: string;
+          _controlPoints?: ControlPoint[];
+          _color?: ColorHex;
+          _interpolationType?: InterpolationType;
+          _isVisible?: boolean;
+          _isLocked?: boolean;
+        },
     controlPoints: ControlPoint[] = [],
     color: ColorHex = getRandomColor(),
     interpolationType: InterpolationType = "EQUIDISTANT",
@@ -49,24 +78,59 @@ export class Trajectory {
     isLocked: boolean = false
   ) {
     this._id = generateId();
-    this._name = sanitizeName(name);
-    this._color = normalizeColor(color);
-    this._controlPoints = [...controlPoints];
-    this._interpolationType = interpolationType;
-    this._isVisible = isVisible;
-    this._isLocked = isLocked;
 
+    if (typeof arg1 === "object" && arg1 !== null) {
+      const obj = arg1;
+
+      // --- Only use underscored JSON fields ---
+      this._name = sanitizeName(obj._name ?? "Trajectory Default Name");
+      this._color = normalizeColor(obj._color ?? getRandomColor());
+      this._interpolationType = obj._interpolationType ?? "EQUIDISTANT";
+      this._isVisible = obj._isVisible ?? true;
+      this._isLocked = obj._isLocked ?? false;
+
+      // Map control points (each is also underscored)
+      this._controlPoints = (obj._controlPoints ?? []).map((cpObj: any) => {
+        return new ControlPoint({
+          _name: cpObj._name,
+          _x: cpObj._x,
+          _y: cpObj._y,
+          _heading: cpObj._heading,
+          _splineType: cpObj._splineType,
+          _symmetry: cpObj._symmetry,
+          _handleIn: {
+            _r: cpObj._handleIn?._r,
+            _theta: cpObj._handleIn?._theta,
+            _isLinear: cpObj._handleIn?._isLinear,
+          },
+          _handleOut: {
+            _r: cpObj._handleOut?._r,
+            _theta: cpObj._handleOut?._theta,
+            _isLinear: cpObj._handleOut?._isLinear,
+          },
+          _isLocked: cpObj._isLocked,
+          _isEvent: cpObj._isEvent,
+        });
+      });
+    } else {
+      // --- Standard creation path ---
+      this._name = sanitizeName(arg1);
+      this._color = normalizeColor(color);
+      this._interpolationType = interpolationType;
+      this._isVisible = isVisible;
+      this._isLocked = isLocked;
+      this._controlPoints = [...controlPoints];
+    }
+
+    // Keep your internal facade unchanged
     Object.defineProperty(this, "internal", {
       value: {
-        // meta
         setName: (n: string) => this.setName(n),
         setColor: (c: ColorHex) => this.setColor(c),
         setInterpolationType: (t: InterpolationType) =>
           this.setInterpolationType(t),
         setIsVisible: (v: boolean) => this.setIsVisible(v),
         setIsLocked: (v: boolean) => this.setIsLocked(v),
-
-        // CP ops
         addControlPoint: (cp: ControlPoint) => this.addControlPoint(cp),
         insertControlPoint: (cp: ControlPoint, index: number) =>
           this.insertControlPoint(cp, index),
@@ -77,22 +141,14 @@ export class Trajectory {
         removeControlPoint: (id: string) => this.removeControlPoint(id),
         removeAllControlPoints: () => this.removeAllControlPoints(),
         copyControlPoint: (id: string) => this.copyControlPoint(id),
-
-        // neighbor-aware ops (class-level for now)
         setControlPointPosition: (id: string, x: number, y: number) =>
           this.setControlPointPosition(id, x, y),
-
-        // TODO: Revisit symmetry enforcement rules; align with trajectory-level ops later
         setControlPointSymmetry: (id: string, symmetry: SymmetryType) =>
           this.setControlPointSymmetry(id, symmetry),
-
-        // TODO: Verify shared state issues when changing spline type
         setControlPointSplineType: (id: string, splineType: SplineType) =>
           this.setControlPointSplineType(id, splineType),
-
-        setControlPointLock: (cpId: string, locked: boolean) =>
+        setControlPointLock: (trajId: string, cpId: string, locked: boolean) =>
           this.setControlPointLock(cpId, locked),
-
         setHelperPointPosition: (
           cpId: string,
           handle: "in" | "out",
@@ -137,12 +193,12 @@ export class Trajectory {
   }
 
   // basic info helpers
-  // private getFirstCP(): ControlPoint | undefined {
-  //   return this._controlPoints[0];
-  // }
-  // private getLastCP(): ControlPoint | undefined {
-  //   return this._controlPoints[this._controlPoints.length - 1];
-  // }
+  private getFirstCP(): ControlPoint | undefined {
+    return this._controlPoints[0];
+  }
+  private getLastCP(): ControlPoint | undefined {
+    return this._controlPoints[this._controlPoints.length - 1];
+  }
   private getCPAfter(id: string): ControlPoint | undefined {
     const i = this.getCPIndex(id);
     return i >= 0 ? this._controlPoints[i + 1] : undefined;
@@ -154,14 +210,14 @@ export class Trajectory {
   private getCPIndex(id: string): number {
     return this._controlPoints.findIndex((cp) => cp.id === id);
   }
-  // private isFirst(id: string): boolean {
-  //   const first = this.getFirstCP();
-  //   return !!first && first.id === id;
-  // }
-  // private isLast(id: string): boolean {
-  //   const last = this.getLastCP();
-  //   return !!last && last.id === id;
-  // }
+  private isFirst(id: string): boolean {
+    const first = this.getFirstCP();
+    return !!first && first.id === id;
+  }
+  private isLast(id: string): boolean {
+    const last = this.getLastCP();
+    return !!last && last.id === id;
+  }
 
   private removeAllControlPoints(): void {
     this._controlPoints = [];
@@ -171,8 +227,8 @@ export class Trajectory {
   private copyControlPoint(id: string): ControlPoint | undefined {
     const cp = this.getControlPointById(id);
     if (!cp) return undefined;
-    const hin = cp.handleIn;
-    const hout = cp.handleOut;
+    const hin = deepCopyHandle(cp.handleIn);
+    const hout = deepCopyHandle(cp.handleOut);
     return new ControlPoint(
       cp.name,
       cp.x,
@@ -485,10 +541,10 @@ function clampIndex(n: number, min: number, max: number): number {
   return Math.max(min, Math.min(Math.floor(n), max));
 }
 
-// function deepCopyHandle(h: ControlPoint["handleIn"]): ControlPoint["handleIn"] {
-//   // HelperPoint has constructor (r, theta, isLinear)
-//   // Accessors: r, theta, isLinear
-//   // @ts-expect-error runtime class import cycle is okay; shape matches HelperPoint
-//   const { HelperPoint } = require("../HelperPoint/helperPoint");
-//   return new HelperPoint(h.r, h.theta);
-// }
+function deepCopyHandle(h: ControlPoint["handleIn"]): ControlPoint["handleIn"] {
+  // HelperPoint has constructor (r, theta, isLinear)
+  // Accessors: r, theta, isLinear
+  // @ts-expect-error runtime class import cycle is okay; shape matches HelperPoint
+  // eslint-disable-next-line new-cap
+  return new HelperPoint(h.r, h.theta);
+}

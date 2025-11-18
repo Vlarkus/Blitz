@@ -93,10 +93,9 @@ export default function TrajectoryElement({ trajId }: Props) {
       }
 
       const afterCpId = cps[best.segIndex].id;
-      const newCp = new ControlPoint(undefined, best.proj.x, best.proj.y);
+      const newCp = new ControlPoint("", best.proj.x, best.proj.y);
 
       insertControlPointAfter(trajId, afterCpId, newCp);
-      console.log(trajId + "\n" + afterCpId);
 
       setSelectedControlPointId(newCp.id);
       return;

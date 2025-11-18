@@ -1,4 +1,5 @@
-import { Circle, Rect, Group } from "react-konva";
+import React from "react";
+import { Circle, Rect, Group, Line } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useDataStore } from "../../../../../models/dataStore";
 import { useEditorStore } from "../../../../../editor/editor-store";
@@ -168,10 +169,45 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
     </Group>
   );
 
+  // --- Heading direction indicator (inside inner white circle/square) ---
+  const lineThicknessOuter = Math.min((1 / scale) * 5, 0.8); // white outline
+  const lineThicknessInner = Math.min((1 / scale) * 2.5, 0.4); // black core
+  const lineLength = innerRadius * 0.6;
+
+  const headingLine =
+    cp.heading !== null ? (
+      <Group>
+        {/* Outer white line (outline) */}
+        <Line
+          x={cp.x}
+          y={cp.y}
+          points={[0, 0, lineLength, 0]}
+          stroke="#ffffff"
+          strokeWidth={lineThicknessOuter}
+          lineCap="round"
+          rotation={(cp.heading * 180) / Math.PI}
+          listening={false}
+        />
+
+        {/* Inner black line (actual direction) */}
+        <Line
+          x={cp.x}
+          y={cp.y}
+          points={[0, 0, lineLength, 0]}
+          stroke="#000000"
+          strokeWidth={lineThicknessInner}
+          lineCap="round"
+          rotation={(cp.heading * 180) / Math.PI}
+          listening={false}
+        />
+      </Group>
+    ) : null;
+
   return (
     <>
       {outer}
       {isLast ? innerChecker : innerSolid}
+      {headingLine}
     </>
   );
 }

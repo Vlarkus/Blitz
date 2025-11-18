@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import { Stage, Layer, Rect } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import "./canvas.scss";
@@ -6,6 +6,7 @@ import { useEditorStore } from "../../../../editor/editor-store";
 import TrajectoriesLayer from "./layers/trajectories-layer";
 import { useDataStore } from "../../../../models/dataStore";
 import { ControlPoint } from "../../../../models/entities/control-point/controlPoint";
+import FieldImage from "./field-image/field-image";
 
 export default function Canvas() {
   // Select store fields individually to keep selector snapshots stable
@@ -17,12 +18,20 @@ export default function Canvas() {
   const activeTool = useEditorStore((s) => s.activeTool);
 
   const selectedTrajectoryId = useDataStore((s) => s.selectedTrajectoryId);
+  const selectedControlPointId = useDataStore((s) => s.selectedControlPointId);
+  const getTrajectoryById = useDataStore((s) => {
+    s.getTrajectoryById;
+  });
   const addControlPoint = useDataStore((s) => s.addControlPoint);
   const setSelectedControlPointId = useDataStore(
     (s) => s.setSelectedControlPointId
   );
   const setSelectedTrajectoryId = useDataStore(
     (s) => s.setSelectedTrajectoryId
+  );
+  const removeControlPoint = useDataStore((s) => s.removeControlPoint);
+  const getTrajectoryIdByControlPointId = useDataStore(
+    (s) => s.getTrajectoryIdByControlPointId
   );
 
   // Container sizing
@@ -43,6 +52,18 @@ export default function Canvas() {
   // Panning state
   const [panning, setPanning] = useState(false);
   const last = useRef<{ x: number; y: number } | null>(null);
+
+  const getClickedControlPointId = (target: any): string | null => {
+    if (!target) return null;
+    // Preferred: explicit cpId attr set on the CP node
+    if (typeof target.attrs?.cpId === "string") return target.attrs.cpId;
+
+    // Fallback: name prefix convention "cp:<id>"
+    const n = target.attrs?.name;
+    if (typeof n === "string" && n.startsWith("cp:")) return n.slice(3);
+
+    return null;
+  };
 
   // Start panning on:
   //  - Middle mouse anywhere, OR
@@ -163,6 +184,7 @@ export default function Canvas() {
             fill="rgba(0,0,0,0)"
             listening={true}
           />
+          <FieldImage />
           <TrajectoriesLayer />
         </Layer>
       </Stage>

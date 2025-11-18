@@ -1,10 +1,15 @@
 import { create } from "zustand";
-import { Trajectory } from "./entities/trajectory/trajectory";
-import type { ColorHex, ControlPointId, TrajectoryId } from "../types/types";
+import type {
+  ColorHex,
+  ControlPointId,
+  InterpolationType,
+  TrajectoryId,
+} from "../types/types";
 import { ControlPoint } from "./entities/control-point/controlPoint";
 import { HelperPoint } from "./entities/helper-point/helperPoint";
 import type { IDataStore } from "./data-store.interface";
 import { clampPositive, normRad } from "../utils/utils";
+import { Trajectory } from "./entities/trajectory/trajectory";
 
 type State = {
   // Collections
@@ -111,7 +116,7 @@ export const useDataStore = create<Store>((set, get) => ({
     set((s) => {
       const t = findTraj(s.trajectories, trajId);
       if (!t) return {};
-      t.internal.setControlPointLock(cpId, !!locked);
+      t.internal.setControlPointLock(trajId, cpId, !!locked);
       return { trajectories: [...s.trajectories] };
     });
   },
@@ -253,6 +258,72 @@ export const useDataStore = create<Store>((set, get) => ({
       t.internal.setControlPointSymmetry(cpId, symmetry);
       return { trajectories: [...s.trajectories] };
     });
+  },
+
+  saveToJSON(filename?: string) {
+    const { trajectories } = get();
+
+    // Serialize the current trajectories
+    const json = JSON.stringify({ version: 1, trajectories }, null, 2);
+
+    // Create a Blob (plain text)
+    const blob = new Blob([json], { type: "text/plain" });
+
+    // Create an object URL for the Blob
+    const url = URL.createObjectURL(blob);
+
+    // Sanitize and build the filename
+    const safeName = (filename || "trajectories").replace(/[^a-z0-9_-]/gi, "_");
+    const fullName = `${safeName}.txt`;
+
+    // Create a temporary <a> element to trigger download
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fullName;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Clean up the object URL
+    URL.revokeObjectURL(url);
+  },
+
+  loadFromJSON(jsonString: string): void {
+    try {
+      const parsed = JSON.parse(jsonString);
+
+      // Handle both old array-only and new object-with-version formats
+      const rawTrajs = Array.isArray(parsed)
+        ? parsed
+        : Array.isArray(parsed.trajectories)
+        ? parsed.trajectories
+        : null;
+
+      if (!rawTrajs) {
+        console.error("Invalid trajectory file format");
+        return;
+      }
+
+      // ✅ Hydrate each trajectory (constructor handles nested CPs & HelperPoints)
+      const newTrajectories = rawTrajs.map((t: unknown) => new Trajectory(t));
+
+      // ✅ Register dirty notifiers so UI re-renders on mutation
+      newTrajectories.forEach((traj: Trajectory) => {
+        traj.setDirtyNotifier(() => {
+          set((s) => ({ ...s, trajectories: s.trajectories.slice() }));
+        });
+      });
+
+      // ✅ Update the store state
+      set({
+        trajectories: newTrajectories,
+        selectedTrajectoryId: null,
+        selectedControlPointId: null,
+      });
+    } catch (err) {
+      console.error("Failed to load trajectories:", err);
+    }
   },
 
   setControlPointSplineType(trajId, cpId, type) {

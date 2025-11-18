@@ -1,7 +1,8 @@
 name: Deploy Blitz to GitHub Pages
-
 on:
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
   workflow_dispatch:
 
@@ -29,6 +30,12 @@ jobs:
 
       - name: Install deps
         run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm run test
 
       - name: Build
         run: npm run build

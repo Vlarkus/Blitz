@@ -59,7 +59,7 @@ export default function HandleElement({ trajId, cpId, which }: Props) {
         points={[hx, hy, cp.x, cp.y]}
         strokeWidth={strokeW}
         stroke={handleColor}
-        dash={[0.2, 0.2]}
+        dash={[0.05, 0.05]}
         listening={false}
       />
       {/* Draggable handle dot */}
