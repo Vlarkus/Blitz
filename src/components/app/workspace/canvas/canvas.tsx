@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Stage, Layer, Rect } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import "./canvas.scss";
@@ -18,10 +18,10 @@ export default function Canvas() {
   const activeTool = useEditorStore((s) => s.activeTool);
 
   const selectedTrajectoryId = useDataStore((s) => s.selectedTrajectoryId);
-  const selectedControlPointId = useDataStore((s) => s.selectedControlPointId);
-  const getTrajectoryById = useDataStore((s) => {
-    s.getTrajectoryById;
-  });
+  // const selectedControlPointId = useDataStore((s) => s.selectedControlPointId);
+  // const getTrajectoryById = useDataStore((s) => {
+  //   s.getTrajectoryById;
+  // });
   const addControlPoint = useDataStore((s) => s.addControlPoint);
   const setSelectedControlPointId = useDataStore(
     (s) => s.setSelectedControlPointId
@@ -29,10 +29,10 @@ export default function Canvas() {
   const setSelectedTrajectoryId = useDataStore(
     (s) => s.setSelectedTrajectoryId
   );
-  const removeControlPoint = useDataStore((s) => s.removeControlPoint);
-  const getTrajectoryIdByControlPointId = useDataStore(
-    (s) => s.getTrajectoryIdByControlPointId
-  );
+  // const removeControlPoint = useDataStore((s) => s.removeControlPoint);
+  // const getTrajectoryIdByControlPointId = useDataStore(
+  //   (s) => s.getTrajectoryIdByControlPointId
+  // );
 
   // Container sizing
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -53,17 +53,17 @@ export default function Canvas() {
   const [panning, setPanning] = useState(false);
   const last = useRef<{ x: number; y: number } | null>(null);
 
-  const getClickedControlPointId = (target: any): string | null => {
-    if (!target) return null;
-    // Preferred: explicit cpId attr set on the CP node
-    if (typeof target.attrs?.cpId === "string") return target.attrs.cpId;
+  // const getClickedControlPointId = (target: any): string | null => {
+  //   if (!target) return null;
+  //   // Preferred: explicit cpId attr set on the CP node
+  //   if (typeof target.attrs?.cpId === "string") return target.attrs.cpId;
 
-    // Fallback: name prefix convention "cp:<id>"
-    const n = target.attrs?.name;
-    if (typeof n === "string" && n.startsWith("cp:")) return n.slice(3);
+  //   // Fallback: name prefix convention "cp:<id>"
+  //   const n = target.attrs?.name;
+  //   if (typeof n === "string" && n.startsWith("cp:")) return n.slice(3);
 
-    return null;
-  };
+  //   return null;
+  // };
 
   // Start panning on:
   //  - Middle mouse anywhere, OR
@@ -94,7 +94,7 @@ export default function Canvas() {
         const y = (pos.y - activeViewport.originY) / activeViewport.scale;
 
         // Construct CP first so we know its id
-        const cp = new ControlPoint(undefined, x, y); // your comment hinted this ctor
+        const cp = new ControlPoint("Control Point", x, y);
         addControlPoint(selectedTrajectoryId, cp);
         setSelectedTrajectoryId(selectedTrajectoryId); // reassert selection (optional)
         setSelectedControlPointId(cp.id); // select the newly added CP

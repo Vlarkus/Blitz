@@ -1,9 +1,10 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { Image as KonvaImage } from "react-konva";
 import useImage from "use-image";
 import {
-  useEditorStore,
+  // useEditorStore,
   useFieldStore,
+  // type FieldType,
 } from "../../../../../editor/editor-store";
 
 /**
@@ -12,7 +13,7 @@ import {
  */
 export default function FieldImage() {
   const selectedField = useFieldStore((s) => s.selectedField);
-  const activeViewport = useEditorStore((s) => s.activeViewport);
+  // const activeViewport = useEditorStore((s) => s.activeViewport);
 
   // Select field image source based on state
   const fieldSrc = useMemo(() => {

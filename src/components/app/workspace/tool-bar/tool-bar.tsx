@@ -13,8 +13,9 @@ import {
   faObjectGroup,
 } from "@fortawesome/free-solid-svg-icons";
 import { useEditorStore } from "../../../../editor/editor-store";
+import type { IconProp } from "@fortawesome/fontawesome-svg-core";
 
-const toolIcons: Record<Tool, any> = {
+const toolIcons: Record<Tool, IconProp> = {
   select: faArrowPointer, // more modern pointer icon
   add: faCirclePlus, // add circle icon
   remove: faCircleMinus, // remove circle icon

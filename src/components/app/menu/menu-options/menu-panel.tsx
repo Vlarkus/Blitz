@@ -12,6 +12,7 @@ type MenuProps = {
   children: ReactNode;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export default function ({ buttonLabel, children }: MenuProps) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number; width: number }>({
