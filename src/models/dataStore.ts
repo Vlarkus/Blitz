@@ -1,10 +1,5 @@
 import { create } from "zustand";
-import type {
-  ColorHex,
-  ControlPointId,
-  InterpolationType,
-  TrajectoryId,
-} from "../types/types";
+import type { ColorHex, ControlPointId, TrajectoryId } from "../types/types";
 import { ControlPoint } from "./entities/control-point/controlPoint";
 import { HelperPoint } from "./entities/helper-point/helperPoint";
 import type { IDataStore } from "./data-store.interface";
@@ -116,7 +111,7 @@ export const useDataStore = create<Store>((set, get) => ({
     set((s) => {
       const t = findTraj(s.trajectories, trajId);
       if (!t) return {};
-      t.internal.setControlPointLock(trajId, cpId, !!locked);
+      t.internal.setControlPointLock(cpId, !!locked);
       return { trajectories: [...s.trajectories] };
     });
   },
@@ -306,7 +301,10 @@ export const useDataStore = create<Store>((set, get) => ({
       }
 
       // ✅ Hydrate each trajectory (constructor handles nested CPs & HelperPoints)
-      const newTrajectories = rawTrajs.map((t: unknown) => new Trajectory(t));
+      // Cast to a plain object shape that the Trajectory constructor can accept
+      const newTrajectories = rawTrajs.map(
+        (t: Record<string, unknown>) => new Trajectory(t)
+      );
 
       // ✅ Register dirty notifiers so UI re-renders on mutation
       newTrajectories.forEach((traj: Trajectory) => {

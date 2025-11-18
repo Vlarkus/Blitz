@@ -147,7 +147,7 @@ export class Trajectory {
           this.setControlPointSymmetry(id, symmetry),
         setControlPointSplineType: (id: string, splineType: SplineType) =>
           this.setControlPointSplineType(id, splineType),
-        setControlPointLock: (trajId: string, cpId: string, locked: boolean) =>
+        setControlPointLock: (cpId: string, locked: boolean) =>
           this.setControlPointLock(cpId, locked),
         setHelperPointPosition: (
           cpId: string,
@@ -193,12 +193,12 @@ export class Trajectory {
   }
 
   // basic info helpers
-  private getFirstCP(): ControlPoint | undefined {
-    return this._controlPoints[0];
-  }
-  private getLastCP(): ControlPoint | undefined {
-    return this._controlPoints[this._controlPoints.length - 1];
-  }
+  // private getFirstCP(): ControlPoint | undefined {
+  //   return this._controlPoints[0];
+  // }
+  // private getLastCP(): ControlPoint | undefined {
+  //   return this._controlPoints[this._controlPoints.length - 1];
+  // }
   private getCPAfter(id: string): ControlPoint | undefined {
     const i = this.getCPIndex(id);
     return i >= 0 ? this._controlPoints[i + 1] : undefined;
@@ -210,14 +210,14 @@ export class Trajectory {
   private getCPIndex(id: string): number {
     return this._controlPoints.findIndex((cp) => cp.id === id);
   }
-  private isFirst(id: string): boolean {
-    const first = this.getFirstCP();
-    return !!first && first.id === id;
-  }
-  private isLast(id: string): boolean {
-    const last = this.getLastCP();
-    return !!last && last.id === id;
-  }
+  // private isFirst(id: string): boolean {
+  //   const first = this.getFirstCP();
+  //   return !!first && first.id === id;
+  // }
+  // private isLast(id: string): boolean {
+  //   const last = this.getLastCP();
+  //   return !!last && last.id === id;
+  // }
 
   private removeAllControlPoints(): void {
     this._controlPoints = [];

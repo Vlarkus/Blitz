@@ -1,6 +1,5 @@
 // src/components/Menu/Menu.tsx
 import * as Menubar from "@radix-ui/react-menubar";
-import React from "react";
 import { MENU_STRUCTURE, type MenuItem } from "./menuConfig";
 import AppIcon from "../../../assets/app-icon.svg";
 import "./menu.scss";

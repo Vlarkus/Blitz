@@ -16,7 +16,7 @@ export const MENU_STRUCTURE: MenuItem[] = [
       {
         label: "New",
         action: () => {
-          const storeState = useDataStore.getState();
+          // const storeState = useDataStore.getState();
 
           const confirmed = window.confirm(
             "Are you sure you want to start a new file?\n\n" +
