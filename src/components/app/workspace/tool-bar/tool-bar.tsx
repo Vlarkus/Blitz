@@ -21,7 +21,7 @@ const toolIcons: Record<Tool, IconProp> = {
   remove: faCircleMinus, // remove circle icon
   insert: faChevronCircleDown, // insert / down-turn arrow
   cut: faScissors, // cut
-  merge: faObjectGroup, // merge/group icon
+  show_robot: faObjectGroup,
 };
 
 export default function ToolBar() {

@@ -17,7 +17,13 @@ export const INTERPOLATION_TYPES: InterpolationType[] = [
 ];
 
 // Tool
-export type Tool = "select" | "add" | "remove" | "insert" | "cut" | "merge";
+export type Tool =
+  | "select"
+  | "add"
+  | "remove"
+  | "insert"
+  | "cut"
+  | "show_robot";
 
 export type HandlePosInput =
   | { type?: "polar"; r: number; theta: number } // default

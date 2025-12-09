@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Circle, Rect, Group, Line } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useDataStore } from "../../../../../models/dataStore";
@@ -21,6 +22,8 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
   const scale = useEditorStore((s) => s.activeViewport.scale);
   const activeTool = useEditorStore((s) => s.activeTool);
 
+  const [hovered, setHovered] = useState(false);
+
   if (!cp || !traj) return null;
 
   const radius = Math.min((1 / scale) * 10, 2);
@@ -42,7 +45,6 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       case "remove":
         e.evt.preventDefault();
         e.target.stopDrag?.();
-
         removeControlPoint(trajId, cpId);
         setSelectedTrajectoryId(trajId);
         return;
@@ -52,7 +54,6 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
         return;
     }
 
-    // Default (select) behavior
     setSelectedControlPointId(cpId);
   };
 
@@ -61,7 +62,43 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
     useDataStore.getState().moveControlPoint(trajId, cpId, p.x, p.y);
   };
 
-  // Outer shape (event -> square, else circle)
+  // --- Robot hover preview (world-space) ---
+  const robotStroke = Math.min((1 / scale) * 2.5, 0.5);
+  const INCH_TO_M = 0.0254;
+
+  const robotSizeM = 18 * INCH_TO_M; // 0.4572 m
+  const robotRadiusM = (robotSizeM * Math.SQRT2) / 2; // 0.3232 m
+
+  const robotHoverGhost =
+    hovered && activeTool === "show_robot" ? (
+      <Group
+        x={cp.x}
+        y={cp.y}
+        rotation={cp.heading ? (cp.heading * 180) / Math.PI : 0}
+        listening={false}
+      >
+        {/* Reach circle (9 in radius) */}
+        <Circle
+          radius={robotRadiusM}
+          stroke="#ffffff"
+          strokeWidth={robotStroke}
+          // dash={[robotRadiusM * 0.25, robotRadiusM * 0.25]}
+        />
+
+        {/* Robot footprint (18 in × 18 in) */}
+        <Rect
+          x={-robotSizeM / 2}
+          y={-robotSizeM / 2}
+          width={robotSizeM}
+          height={robotSizeM}
+          stroke="#ffffff"
+          strokeWidth={robotStroke}
+          dash={[robotSizeM * 0.15, robotSizeM * 0.15]}
+        />
+      </Group>
+    ) : null;
+
+  // --- Outer shape ---
   const outer = cp.isEvent ? (
     <Rect
       name={`cp:${trajId}:${cpId}`}
@@ -76,6 +113,8 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       hitStrokeWidth={12}
       onDragMove={onDragMove}
       onMouseDown={onMouseDown}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       onTouchStart={() =>
         useDataStore.getState().setSelectedControlPointId(cpId)
       }
@@ -91,13 +130,15 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       hitStrokeWidth={12}
       onDragMove={onDragMove}
       onMouseDown={onMouseDown}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       onTouchStart={() =>
         useDataStore.getState().setSelectedControlPointId(cpId)
       }
     />
   );
 
-  // Inner content: checker (2×2) if last; else solid white
+  // --- Inner fill ---
   const innerSolid = cp.isEvent ? (
     <Rect
       x={cp.x}
@@ -127,16 +168,10 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       offsetY={innerSize / 2}
       listening={false}
       clipFunc={(ctx) => {
-        if (cp.isEvent) {
-          // square clip
-          ctx.rect(0, 0, innerSize, innerSize);
-        } else {
-          // circle clip
-          ctx.arc(innerSize / 2, innerSize / 2, innerRadius, 0, Math.PI * 2);
-        }
+        if (cp.isEvent) ctx.rect(0, 0, innerSize, innerSize);
+        else ctx.arc(innerSize / 2, innerSize / 2, innerRadius, 0, Math.PI * 2);
       }}
     >
-      {/* 2×2 tiles: TL black, TR white, BL white, BR black */}
       <Rect
         x={0}
         y={0}
@@ -168,15 +203,14 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
     </Group>
   );
 
-  // --- Heading direction indicator (inside inner white circle/square) ---
-  const lineThicknessOuter = Math.min((1 / scale) * 5, 0.8); // white outline
-  const lineThicknessInner = Math.min((1 / scale) * 2.5, 0.4); // black core
+  // --- Heading indicator ---
+  const lineThicknessOuter = Math.min((1 / scale) * 5, 0.8);
+  const lineThicknessInner = Math.min((1 / scale) * 2.5, 0.4);
   const lineLength = innerRadius * 0.6;
 
   const headingLine =
     cp.heading !== null ? (
       <Group>
-        {/* Outer white line (outline) */}
         <Line
           x={cp.x}
           y={cp.y}
@@ -187,8 +221,6 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
           rotation={(cp.heading * 180) / Math.PI}
           listening={false}
         />
-
-        {/* Inner black line (actual direction) */}
         <Line
           x={cp.x}
           y={cp.y}
@@ -204,6 +236,7 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
 
   return (
     <>
+      {robotHoverGhost}
       {outer}
       {isLast ? innerChecker : innerSolid}
       {headingLine}
