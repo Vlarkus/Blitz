@@ -62,6 +62,10 @@ export default function ControlPointInfo() {
       : false
   );
 
+  // At the top of the file (or just above the component):
+  const radToDeg = (rad: number) => (-rad * 180) / Math.PI;
+  const degToRad = (deg: number) => -(deg * Math.PI) / 180;
+
   // setters
   const setControlPointSymmetry = useDataStore(
     (s) => s.setControlPointSymmetry
@@ -166,35 +170,47 @@ export default function ControlPointInfo() {
                 onChange={(e) => {
                   if (!selectedTrajectoryId || !selectedControlPointId) return;
 
+                  useDataStore.getState().setControlPointHeading(
+                    selectedTrajectoryId,
+                    selectedControlPointId,
+                    e.target.checked ? 0 : null // 0 rad = 0°
+                  );
+                }}
+              />
+
+              <EditableLabel<number>
+                // Display in degrees
+                value={cpHeading !== null ? radToDeg(cpHeading) : 0}
+                maxIntegerDigits={3}
+                maxDecimalDigits={2}
+                inputRules={{
+                  type: "number",
+                  min: -180, // or 0 if you prefer 0–360
+                  max: 180, // or 360
+                  decimals: 2,
+                  allowNegative: true, // needed for negative degrees
+                }}
+                ariaLabel="Heading (degrees)"
+                className={cpHeading === null ? "label-disabled" : undefined}
+                onCommit={(nextHeadingDeg) => {
+                  const headingDeg =
+                    typeof nextHeadingDeg === "number"
+                      ? nextHeadingDeg
+                      : Number(nextHeadingDeg);
+
+                  if (!Number.isFinite(headingDeg)) return;
+
+                  // Convert back to radians for the store
+                  const headingRad = degToRad(headingDeg);
+
+                  if (!selectedTrajectoryId || !selectedControlPointId) return;
+
                   useDataStore
                     .getState()
                     .setControlPointHeading(
                       selectedTrajectoryId,
                       selectedControlPointId,
-                      e.target.checked ? 0 : null
-                    );
-                }}
-              />
-              <EditableLabel<number>
-                value={cpHeading !== null ? cpHeading : 0}
-                maxIntegerDigits={3}
-                maxDecimalDigits={2}
-                inputRules={{ type: "number" }}
-                ariaLabel="Heading"
-                className={cpHeading === null ? "label-disabled" : undefined}
-                onCommit={(nextHeading) => {
-                  const heading =
-                    typeof nextHeading === "number"
-                      ? nextHeading
-                      : Number(nextHeading);
-                  if (!Number.isFinite(heading)) return;
-
-                  useDataStore
-                    .getState()
-                    .setControlPointHeading(
-                      selectedTrajectoryId!,
-                      selectedControlPointId,
-                      Number(heading)
+                      headingRad
                     );
                 }}
               />

@@ -155,7 +155,7 @@ export function useEditableLabel<T extends string | number = string | number>(
       return;
     }
     // allow only digits, dot, minus (evaluation handles positions)
-    if (!/^[0-9.]$/.test(data)) {
+    if (!/^[0-9.-]$/.test(data)) {
       e.preventDefault();
       return;
     }
