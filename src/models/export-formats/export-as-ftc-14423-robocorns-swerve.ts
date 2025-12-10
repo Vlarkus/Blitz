@@ -1,13 +1,9 @@
-// src/utils/exportAsFtc14423RobocornsSwerve.ts
 import type { Trajectory } from "../entities/trajectory/trajectory";
 
-const UNIT_SCALE = 1.0; // meters → change to 39.37 for inches if needed
+// 1 m = 39.37007874 in
+const METERS_TO_INCHES = 39.37007874;
+const radToDeg = (rad: number) => (rad * 180) / Math.PI;
 
-/**
- * Export trajectory into a Java map format
- * compatible with FTC 14423 Robocorns Swerve.
- * Automatically downloads a .txt file using the same naming convention as saveToJSON.
- */
 export function exportAsFtc14423RobocornsSwerve(trajectory: Trajectory) {
   const safeMapName = trajectory.name
     .replace(/[^a-z0-9_]/gi, "_") // Replace invalid chars with _
@@ -23,53 +19,77 @@ export function exportAsFtc14423RobocornsSwerve(trajectory: Trajectory) {
     const cp = cps[i];
     const next = cps[i + 1];
 
-    // Compute handle positions in absolute coordinates
+    // --- heading: radians -> degrees ---
+    const headingDeg = radToDeg(next.heading ?? 0);
+
+    // --- positions in inches, assuming cp.x / cp.y / r are in meters ---
+
+    // handleOut absolute (in inches)
     const handleOutAbs = cp.handleOut
       ? {
-          x: cp.x + cp.handleOut.r * Math.cos(cp.handleOut.theta) * UNIT_SCALE,
-          y: cp.y + cp.handleOut.r * Math.sin(cp.handleOut.theta) * UNIT_SCALE,
+          x:
+            -(cp.x + cp.handleOut.r * Math.cos(cp.handleOut.theta)) *
+            METERS_TO_INCHES,
+          y:
+            -(cp.y + cp.handleOut.r * Math.sin(cp.handleOut.theta)) *
+            METERS_TO_INCHES,
         }
       : null;
 
+    // handleIn absolute (in inches)
     const handleInAbs = next.handleIn
       ? {
           x:
-            next.x +
-            next.handleIn.r * Math.cos(next.handleIn.theta) * UNIT_SCALE,
+            -(next.x + next.handleIn.r * Math.cos(next.handleIn.theta)) *
+            METERS_TO_INCHES,
           y:
-            next.y +
-            next.handleIn.r * Math.sin(next.handleIn.theta) * UNIT_SCALE,
+            -(next.y + next.handleIn.r * Math.sin(next.handleIn.theta)) *
+            METERS_TO_INCHES,
         }
       : null;
 
-    // Build point list
+    // Build point list in inches
     let points: { x: number; y: number }[] = [];
 
     if (cp.splineType === "BEZIER" && handleOutAbs && handleInAbs) {
       points = [
-        { x: next.x * UNIT_SCALE, y: next.y * UNIT_SCALE },
+        {
+          x: -(next.x * METERS_TO_INCHES),
+          y: -(next.y * METERS_TO_INCHES),
+        },
         handleInAbs,
         handleOutAbs,
-        { x: cp.x * UNIT_SCALE, y: cp.y * UNIT_SCALE },
+        {
+          x: -(cp.x * METERS_TO_INCHES),
+          y: -(cp.y * METERS_TO_INCHES),
+        },
       ];
     } else {
       points = [
-        { x: next.x * UNIT_SCALE, y: next.y * UNIT_SCALE },
-        { x: cp.x * UNIT_SCALE, y: cp.y * UNIT_SCALE },
+        {
+          x: -(next.x * METERS_TO_INCHES),
+          y: -(next.y * METERS_TO_INCHES),
+        },
+        {
+          x: -(cp.x * METERS_TO_INCHES),
+          y: -(cp.y * METERS_TO_INCHES),
+        },
       ];
     }
 
-    const heading = (next.heading ?? 0).toFixed(5);
     const pointsStr = points
       .map((p) => `{ ${p.x.toFixed(3)}, ${p.y.toFixed(3)} }`)
       .join(", ");
 
-    content += `    put("${cp.name}", new double[][][]{ { ${pointsStr} }, { { ${heading} } } });\n`;
+    content += `    put("${
+      cp.name
+    }", new double[][][]{ { ${pointsStr} }, { { ${headingDeg.toFixed(
+      5
+    )} } } });\n`;
   }
 
   content += `}};\n`;
 
-  // --- Save as file (same as saveToJSON style) ---
   const blob = new Blob([content], { type: "text/plain" });
   const url = URL.createObjectURL(blob);
 

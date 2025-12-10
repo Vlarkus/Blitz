@@ -63,8 +63,8 @@ export default function ControlPointInfo() {
   );
 
   // At the top of the file (or just above the component):
-  const radToDeg = (rad: number) => (-rad * 180) / Math.PI;
-  const degToRad = (deg: number) => -(deg * Math.PI) / 180;
+  const radToDeg = (rad: number) => (rad * 180) / Math.PI;
+  const degToRad = (deg: number) => (deg * Math.PI) / 180;
 
   // setters
   const setControlPointSymmetry = useDataStore(
@@ -185,8 +185,8 @@ export default function ControlPointInfo() {
                 maxDecimalDigits={2}
                 inputRules={{
                   type: "number",
-                  min: -180, // or 0 if you prefer 0–360
-                  max: 180, // or 360
+                  // min: -180, // or 0 if you prefer 0–360
+                  // max: 180, // or 360
                   decimals: 2,
                   allowNegative: true, // needed for negative degrees
                 }}
