@@ -95,6 +95,37 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
           strokeWidth={robotStroke}
           dash={[robotSizeM * 0.15, robotSizeM * 0.15]}
         />
+        {/* Front indicator - shaft + arrowhead */}
+        <Line
+          points={[
+            0,
+            0, // Start at center
+            robotSizeM * 0.45,
+            0, // Shaft ENDPOINT like heading line
+          ]}
+          stroke="#ffffff"
+          strokeWidth={robotStroke * 1.5}
+          lineCap="round"
+          lineJoin="round"
+        />
+        {/* Arrowhead */}
+        <Line
+          points={[
+            robotSizeM * 0.45,
+            0, // Arrow tip (matches shaft end)
+            robotSizeM * 0.35,
+            -robotSizeM * 0.08, // Left barb
+            robotSizeM * 0.45,
+            0, // Back to tip
+            robotSizeM * 0.35,
+            robotSizeM * 0.08, // Right barb
+          ]}
+          stroke="#ffffff"
+          strokeWidth={robotStroke * 1.2}
+          lineCap="round"
+          lineJoin="round"
+          closed
+        />
       </Group>
     ) : null;
 
