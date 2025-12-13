@@ -25,16 +25,25 @@ export default function TrajectoryInfo() {
   const setTrajectoryInterpolation = useDataStore(
     (state) => state.setTrajectoryInterpolation
   );
+  const execute = useDataStore((state) => state.execute);
 
   return (
     <div className="tr-info">
       <ColorPicker
         onClick={(value) => {
           if (!selectedTrajectoryId) return;
-          const color = (
+          const newColor = (
             value.startsWith("#") ? value : `#${value}`
           ) as `#${string}`;
-          setTrajectoryColor(selectedTrajectoryId, color);
+          const prevColor = color;
+          execute({
+            redo: () => {
+              setTrajectoryColor(selectedTrajectoryId, newColor);
+            },
+            undo: () => {
+              setTrajectoryColor(selectedTrajectoryId, prevColor);
+            },
+          });
         }}
         value={color}
       />
@@ -51,10 +60,22 @@ export default function TrajectoryInfo() {
           value={interpolation}
           onChange={(e) => {
             if (!selectedTrajectoryId) return;
-            setTrajectoryInterpolation(
-              selectedTrajectoryId,
-              e.target.value as InterpolationType
-            );
+            const prevInterpolation = interpolation;
+            const newInterpolation = e.target.value as InterpolationType;
+            execute({
+              redo: () => {
+                setTrajectoryInterpolation(
+                  selectedTrajectoryId,
+                  newInterpolation
+                );
+              },
+              undo: () => {
+                setTrajectoryInterpolation(
+                  selectedTrajectoryId,
+                  prevInterpolation as InterpolationType
+                );
+              },
+            });
           }}
         >
           {INTERPOLATION_TYPES.map((option) => {

@@ -2,7 +2,7 @@ import { create } from "zustand";
 import type { ColorHex, ControlPointId, TrajectoryId } from "../types/types";
 import { ControlPoint } from "./entities/control-point/controlPoint";
 import { HelperPoint } from "./entities/helper-point/helperPoint";
-import type { IDataStore } from "./data-store.interface";
+import type { IDataStore, Command } from "./data-store.interface";
 import { clampPositive, normRad } from "../utils/utils";
 import { Trajectory } from "./entities/trajectory/trajectory";
 
@@ -13,6 +13,12 @@ type State = {
   // Selection
   selectedTrajectoryId: TrajectoryId | null;
   selectedControlPointId: ControlPointId | null;
+
+  // Undo / Redo
+  history: {
+    past: Command[];
+    future: Command[];
+  };
 };
 
 type Actions = IDataStore;
@@ -26,6 +32,47 @@ export const useDataStore = create<Store>((set, get) => ({
   trajectories: [],
   selectedTrajectoryId: null,
   selectedControlPointId: null,
+  history: { past: [], future: [] },
+
+  /* =========================
+   * Undo / Redo
+   * ========================= */
+  execute(cmd) {
+    cmd.redo();
+    set((s) => ({
+      history: {
+        past: [...s.history.past, cmd],
+        future: [],
+      },
+    }));
+  },
+
+  undo() {
+    const cmd = get().history.past.at(-1);
+
+    if (!cmd) return;
+
+    cmd.undo();
+    set((s) => ({
+      history: {
+        past: s.history.past.slice(0, -1),
+        future: [cmd, ...s.history.future],
+      },
+    }));
+  },
+
+  redo() {
+    const cmd = get().history.future[0];
+    if (!cmd) return;
+
+    cmd.redo();
+    set((s) => ({
+      history: {
+        past: [...s.history.past, cmd],
+        future: s.history.future.slice(1),
+      },
+    }));
+  },
 
   /* =========================
    * Selection
@@ -227,21 +274,16 @@ export const useDataStore = create<Store>((set, get) => ({
   },
 
   setControlPointHeading(trajId, cpId, heading) {
-    // validate early if you want
     if (heading !== null && !Number.isFinite(heading as number)) return;
 
     set((s) => {
       const t = findTraj(s.trajectories, trajId);
       if (!t) return {};
 
-      // Prefer a trajectory-level method if you have it:
-
-      // Fallback: direct CP call (still ok)
       const cp = t.controlPoints.find((c) => c.id === cpId);
       if (!cp) return {};
       cp.internal.setHeading(heading);
 
-      // Notify subscribers by changing reference(s)
       return { trajectories: [...s.trajectories] };
     });
   },
@@ -257,21 +299,13 @@ export const useDataStore = create<Store>((set, get) => ({
 
   saveToJSON(filename?: string) {
     const { trajectories } = get();
-
-    // Serialize the current trajectories
     const json = JSON.stringify({ version: 1, trajectories }, null, 2);
-
-    // Create a Blob (plain text)
     const blob = new Blob([json], { type: "text/plain" });
-
-    // Create an object URL for the Blob
     const url = URL.createObjectURL(blob);
 
-    // Sanitize and build the filename
     const safeName = (filename || "trajectories").replace(/[^a-z0-9_-]/gi, "_");
     const fullName = `${safeName}.txt`;
 
-    // Create a temporary <a> element to trigger download
     const a = document.createElement("a");
     a.href = url;
     a.download = fullName;
@@ -280,7 +314,6 @@ export const useDataStore = create<Store>((set, get) => ({
     a.click();
     document.body.removeChild(a);
 
-    // Clean up the object URL
     URL.revokeObjectURL(url);
   },
 
@@ -288,7 +321,6 @@ export const useDataStore = create<Store>((set, get) => ({
     try {
       const parsed = JSON.parse(jsonString);
 
-      // Handle both old array-only and new object-with-version formats
       const rawTrajs = Array.isArray(parsed)
         ? parsed
         : Array.isArray(parsed.trajectories)
@@ -300,20 +332,16 @@ export const useDataStore = create<Store>((set, get) => ({
         return;
       }
 
-      // ✅ Hydrate each trajectory (constructor handles nested CPs & HelperPoints)
-      // Cast to a plain object shape that the Trajectory constructor can accept
       const newTrajectories = rawTrajs.map(
         (t: Record<string, unknown>) => new Trajectory(t)
       );
 
-      // ✅ Register dirty notifiers so UI re-renders on mutation
       newTrajectories.forEach((traj: Trajectory) => {
         traj.setDirtyNotifier(() => {
           set((s) => ({ ...s, trajectories: s.trajectories.slice() }));
         });
       });
 
-      // ✅ Update the store state
       set({
         trajectories: newTrajectories,
         selectedTrajectoryId: null,
@@ -328,7 +356,6 @@ export const useDataStore = create<Store>((set, get) => ({
     set((s) => {
       const t = findTraj(s.trajectories, trajId);
       if (!t) return {};
-      // TODO in model: verify shared state issues when changing spline type
       t.internal.setControlPointSplineType(cpId, type);
       return { trajectories: [...s.trajectories] };
     });
@@ -341,9 +368,6 @@ export const useDataStore = create<Store>((set, get) => ({
 
       const cp = t.controlPoints.find((c) => c.id === cpId);
       if (!cp) return {};
-
-      // if you have an internal API for cp, call it here instead:
-      // cp.internal.setEvent(event);
 
       cp.internal.setIsEvent(event);
 
@@ -359,7 +383,6 @@ export const useDataStore = create<Store>((set, get) => ({
       const t = findTraj(s.trajectories, trajId);
       if (!t) return {};
 
-      // If it's absolute, ensure numbers are finite
       if (pos.type === "absolute") {
         pos = {
           type: "absolute",
@@ -373,11 +396,7 @@ export const useDataStore = create<Store>((set, get) => ({
     });
   },
 
-  getHandlePosition(
-    trajId: TrajectoryId,
-    cpId: ControlPointId,
-    which: "in" | "out"
-  ) {
+  getHandlePosition(trajId, cpId, which) {
     const cp = findCP(get().trajectories, trajId, cpId);
     if (!cp) return null;
     const h = which === "in" ? cp.handleIn : cp.handleOut;
@@ -389,11 +408,7 @@ export const useDataStore = create<Store>((set, get) => ({
     };
   },
 
-  getHandlePolar(
-    trajId: TrajectoryId,
-    cpId: ControlPointId,
-    which: "in" | "out"
-  ) {
+  getHandlePolar(trajId, cpId, which) {
     const cp = findCP(get().trajectories, trajId, cpId);
     if (!cp) return null;
     const h = which === "in" ? cp.handleIn : cp.handleOut;
@@ -423,7 +438,7 @@ export const useDataStore = create<Store>((set, get) => ({
     const splitIndex = src["controlPoints"].findIndex(
       (c: ControlPoint) => c.id === cpId
     );
-    if (splitIndex <= 0 || splitIndex >= src.length - 1) return null; // require interior split
+    if (splitIndex <= 0 || splitIndex >= src.length - 1) return null;
 
     const first = new Trajectory(
       src.name,
@@ -444,10 +459,10 @@ export const useDataStore = create<Store>((set, get) => ({
     );
 
     first.setDirtyNotifier(() => {
-      set((s) => ({ ...s, trajectories: s.trajectories.slice() })); // <- publish new array ref
+      set((s) => ({ ...s, trajectories: s.trajectories.slice() }));
     });
     second.setDirtyNotifier(() => {
-      set((s) => ({ ...s, trajectories: s.trajectories.slice() })); // <- publish new array ref
+      set((s) => ({ ...s, trajectories: s.trajectories.slice() }));
     });
 
     set((s) => {
@@ -462,7 +477,6 @@ export const useDataStore = create<Store>((set, get) => ({
     };
   },
 
-  // dataStore.ts (inside your create<IDataStore>((set, get) => ({ ... })))
   getTrajectoryIdByControlPointId: (cpId) => {
     const { trajectories } = get();
     const traj = trajectories.find((t) =>
@@ -495,7 +509,7 @@ export const useDataStore = create<Store>((set, get) => ({
     );
 
     merged.setDirtyNotifier(() => {
-      set((s) => ({ ...s, trajectories: s.trajectories.slice() })); // <- publish new array ref
+      set((s) => ({ ...s, trajectories: s.trajectories.slice() }));
     });
 
     set((s) => {
@@ -568,7 +582,6 @@ function assertFinite(n: number, label: string): number {
   return n;
 }
 
-// deep copy a ControlPoint, including HelperPoints
 function deepCopyControlPoint(cp: ControlPoint): ControlPoint {
   const hin = new HelperPoint(
     cp.handleIn.r,

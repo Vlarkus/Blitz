@@ -23,6 +23,8 @@ export default function Canvas() {
   //   s.getTrajectoryById;
   // });
   const addControlPoint = useDataStore((s) => s.addControlPoint);
+  const removeControlPoint = useDataStore((s) => s.removeControlPoint);
+  const execute = useDataStore((s) => s.execute);
   const setSelectedControlPointId = useDataStore(
     (s) => s.setSelectedControlPointId
   );
@@ -95,9 +97,20 @@ export default function Canvas() {
 
         // Construct CP first so we know its id
         const cp = new ControlPoint("Control Point", x, y);
-        addControlPoint(selectedTrajectoryId, cp);
-        setSelectedTrajectoryId(selectedTrajectoryId); // reassert selection (optional)
-        setSelectedControlPointId(cp.id); // select the newly added CP
+        const trajId = selectedTrajectoryId;
+        const cpId = cp.id;
+
+        // Create undoable command
+        execute({
+          redo: () => {
+            addControlPoint(trajId, cp);
+            setSelectedTrajectoryId(trajId); // reassert selection (optional)
+            setSelectedControlPointId(cpId); // select the newly added CP
+          },
+          undo: () => {
+            removeControlPoint(trajId, cpId);
+          },
+        });
 
         return;
       }

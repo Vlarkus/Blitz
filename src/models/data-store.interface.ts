@@ -10,6 +10,12 @@ import type {
 import type { ControlPoint } from "./entities/control-point/controlPoint";
 import { Trajectory } from "./entities/trajectory/trajectory";
 
+/* ───── Undo / Redo Command ───── */
+export interface Command {
+  undo(): void;
+  redo(): void;
+}
+
 export interface IDataStore {
   /** ───── Selection ───── */
   setSelectedTrajectoryId(id: TrajectoryId | null): void;
@@ -33,15 +39,15 @@ export interface IDataStore {
     beforeCpId: ControlPointId,
     cp: ControlPoint
   ): void;
-  setControlPointLock(
-    trajId: TrajectoryId,
-    cpId: ControlPointId,
-    locked: boolean
-  ): void;
   insertControlPointAfter(
     trajId: TrajectoryId,
     afterCpId: ControlPointId,
     cp: ControlPoint
+  ): void;
+  setControlPointLock(
+    trajId: TrajectoryId,
+    cpId: ControlPointId,
+    locked: boolean
   ): void;
   removeControlPoint(trajId: TrajectoryId, cpId: ControlPointId): void;
   renameControlPoint(
@@ -70,9 +76,13 @@ export interface IDataStore {
     cpId: ControlPointId,
     type: SplineType
   ): void;
-  setControlPointEvent(trajId: string, cpId: string, event: boolean): void;
+  setControlPointEvent(
+    trajId: TrajectoryId,
+    cpId: ControlPointId,
+    event: boolean
+  ): void;
 
-  /** ───── Helper Points (Handles) ───── */
+  /** ───── Helper Points ───── */
   setHandlePosition(
     trajId: TrajectoryId,
     cpId: ControlPointId,
@@ -107,6 +117,12 @@ export interface IDataStore {
     firstId: TrajectoryId,
     secondId: TrajectoryId
   ): TrajectoryId | null;
+
   saveToJSON(filename: string): void;
   loadFromJSON(data: string): void;
+
+  /** ───── Undo / Redo ───── */
+  execute(cmd: Command): void;
+  undo(): void;
+  redo(): void;
 }

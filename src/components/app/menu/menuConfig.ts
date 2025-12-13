@@ -93,6 +93,30 @@ export const MENU_STRUCTURE: MenuItem[] = [
       },
     ],
   },
+
+  {
+    label: "Edit",
+    subItems: [
+      {
+        label: "Undo",
+        action: () => {
+          const store = useDataStore.getState();
+          store.undo();
+          console.log("Pressed Undo Button");
+        },
+      },
+      {
+        label: "Redo",
+        action: () => {
+          const store = useDataStore.getState();
+          console.log("Pressed Redo Button");
+
+          store.redo();
+        },
+      },
+    ],
+  },
+
   {
     label: "Field",
     subItems: [

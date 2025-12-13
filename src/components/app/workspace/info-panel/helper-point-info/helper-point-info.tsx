@@ -101,6 +101,7 @@ export default function HelperPointInfo() {
 
   // setters (stable)
   const setHandlePosition = useDataStore((s) => s.setHandlePosition);
+  const execute = useDataStore((s) => s.execute);
 
   // UI mode
   const [coordMode, setCoordMode] = React.useState<CoordMode>("polar");
@@ -164,7 +165,19 @@ export default function HelperPointInfo() {
       const curThDeg = which === "in" ? thIn : thOut;
       const r = part === "primary" ? val : curR;
       const theta = ((part === "secondary" ? val : curThDeg) * Math.PI) / 180;
-      setHandlePosition(trajId, cpId, which, { type: "polar", r, theta });
+      const prevPos = {
+        type: "polar" as const,
+        r: curR,
+        theta: (curThDeg * Math.PI) / 180,
+      };
+      execute({
+        redo: () => {
+          setHandlePosition(trajId, cpId, which, { type: "polar", r, theta });
+        },
+        undo: () => {
+          setHandlePosition(trajId, cpId, which, prevPos);
+        },
+      });
       return;
     }
 
@@ -174,7 +187,15 @@ export default function HelperPointInfo() {
       const curDy = which === "in" ? dyIn : dyOut;
       const dx = part === "primary" ? val : curDx;
       const dy = part === "secondary" ? val : curDy;
-      setHandlePosition(trajId, cpId, which, { type: "relative", dx, dy });
+      const prevPos = { type: "relative" as const, dx: curDx, dy: curDy };
+      execute({
+        redo: () => {
+          setHandlePosition(trajId, cpId, which, { type: "relative", dx, dy });
+        },
+        undo: () => {
+          setHandlePosition(trajId, cpId, which, prevPos);
+        },
+      });
       return;
     }
 
@@ -183,7 +204,15 @@ export default function HelperPointInfo() {
     const curY = which === "in" ? yInAbs : yOutAbs;
     const x = part === "primary" ? val : curX;
     const y = part === "secondary" ? val : curY;
-    setHandlePosition(trajId, cpId, which, { type: "absolute", x, y });
+    const prevPos = { type: "absolute" as const, x: curX, y: curY };
+    execute({
+      redo: () => {
+        setHandlePosition(trajId, cpId, which, { type: "absolute", x, y });
+      },
+      undo: () => {
+        setHandlePosition(trajId, cpId, which, prevPos);
+      },
+    });
   };
 
   return (

@@ -73,6 +73,10 @@ export default function ControlPointInfo() {
   const setControlPointSplineType = useDataStore(
     (s) => s.setControlPointSplineType
   );
+  const moveControlPoint = useDataStore((s) => s.moveControlPoint);
+  const setControlPointHeading = useDataStore((s) => s.setControlPointHeading);
+  const setControlPointEvent = useDataStore((s) => s.setControlPointEvent);
+  const execute = useDataStore((s) => s.execute);
 
   return (
     <div className="control-point-info">
@@ -98,12 +102,22 @@ export default function ControlPointInfo() {
                   const x = typeof nextX === "number" ? nextX : Number(nextX);
                   if (!Number.isFinite(x)) return; // ignore invalid commits
 
-                  useDataStore.getState().moveControlPoint(
-                    selectedTrajectoryId,
-                    cp.id, // prefer the cp you already have
-                    x,
-                    Number.isFinite(cp.y) ? cp.y : 0 // keep current Y
-                  );
+                  const prevX = cp.x;
+                  const prevY = Number.isFinite(cp.y) ? cp.y : 0;
+
+                  execute({
+                    redo: () => {
+                      moveControlPoint(selectedTrajectoryId, cp.id, x, prevY);
+                    },
+                    undo: () => {
+                      moveControlPoint(
+                        selectedTrajectoryId,
+                        cp.id,
+                        prevX,
+                        prevY
+                      );
+                    },
+                  });
                 }}
                 inputRules={{ type: "number" }} // helps prevent invalid text
                 ariaLabel="X position"
@@ -135,12 +149,22 @@ export default function ControlPointInfo() {
                   const y = typeof nextY === "number" ? nextY : Number(nextY);
                   if (!Number.isFinite(y)) return; // ignore invalid commits
 
-                  useDataStore.getState().moveControlPoint(
-                    selectedTrajectoryId,
-                    cp.id, // prefer the cp you already have
-                    Number.isFinite(cp.x) ? cp.x : 0, // keep current Y
-                    y
-                  );
+                  const prevX = Number.isFinite(cp.x) ? cp.x : 0;
+                  const prevY = cp.y;
+
+                  execute({
+                    redo: () => {
+                      moveControlPoint(selectedTrajectoryId, cp.id, prevX, y);
+                    },
+                    undo: () => {
+                      moveControlPoint(
+                        selectedTrajectoryId,
+                        cp.id,
+                        prevX,
+                        prevY
+                      );
+                    },
+                  });
                 }}
                 inputRules={{ type: "number" }} // helps prevent invalid text
                 ariaLabel="Y position"
@@ -170,11 +194,25 @@ export default function ControlPointInfo() {
                 onChange={(e) => {
                   if (!selectedTrajectoryId || !selectedControlPointId) return;
 
-                  useDataStore.getState().setControlPointHeading(
-                    selectedTrajectoryId,
-                    selectedControlPointId,
-                    e.target.checked ? 0 : null // 0 rad = 0°
-                  );
+                  const prevHeading = cpHeading;
+                  const newHeading = e.target.checked ? 0 : null;
+
+                  execute({
+                    redo: () => {
+                      setControlPointHeading(
+                        selectedTrajectoryId,
+                        selectedControlPointId,
+                        newHeading
+                      );
+                    },
+                    undo: () => {
+                      setControlPointHeading(
+                        selectedTrajectoryId,
+                        selectedControlPointId,
+                        prevHeading
+                      );
+                    },
+                  });
                 }}
               />
 
@@ -205,13 +243,24 @@ export default function ControlPointInfo() {
 
                   if (!selectedTrajectoryId || !selectedControlPointId) return;
 
-                  useDataStore
-                    .getState()
-                    .setControlPointHeading(
-                      selectedTrajectoryId,
-                      selectedControlPointId,
-                      headingRad
-                    );
+                  const prevHeading = cpHeading;
+
+                  execute({
+                    redo: () => {
+                      setControlPointHeading(
+                        selectedTrajectoryId,
+                        selectedControlPointId,
+                        headingRad
+                      );
+                    },
+                    undo: () => {
+                      setControlPointHeading(
+                        selectedTrajectoryId,
+                        selectedControlPointId,
+                        prevHeading
+                      );
+                    },
+                  });
                 }}
               />
             </>
@@ -235,13 +284,26 @@ export default function ControlPointInfo() {
               checked={cpIsEvent} // ✅ use actual store value
               onChange={(e) => {
                 if (!selectedTrajectoryId || !selectedControlPointId) return;
-                useDataStore
-                  .getState()
-                  .setControlPointEvent(
-                    selectedTrajectoryId,
-                    selectedControlPointId,
-                    e.target.checked
-                  );
+
+                const prevIsEvent = cpIsEvent;
+                const newIsEvent = e.target.checked;
+
+                execute({
+                  redo: () => {
+                    setControlPointEvent(
+                      selectedTrajectoryId,
+                      selectedControlPointId,
+                      newIsEvent
+                    );
+                  },
+                  undo: () => {
+                    setControlPointEvent(
+                      selectedTrajectoryId,
+                      selectedControlPointId,
+                      prevIsEvent
+                    );
+                  },
+                });
               }}
             />
           ) : (
@@ -268,11 +330,26 @@ export default function ControlPointInfo() {
             value={cpSymmetry}
             onChange={(e) => {
               if (!selectedTrajectoryId || !selectedControlPointId) return;
-              setControlPointSymmetry(
-                selectedTrajectoryId,
-                selectedControlPointId,
-                e.target.value.toUpperCase() as SymmetryType
-              );
+
+              const prevSymmetry = cpSymmetry;
+              const newSymmetry = e.target.value.toUpperCase() as SymmetryType;
+
+              execute({
+                redo: () => {
+                  setControlPointSymmetry(
+                    selectedTrajectoryId,
+                    selectedControlPointId,
+                    newSymmetry
+                  );
+                },
+                undo: () => {
+                  setControlPointSymmetry(
+                    selectedTrajectoryId,
+                    selectedControlPointId,
+                    prevSymmetry.toUpperCase() as SymmetryType
+                  );
+                },
+              });
             }}
           >
             {SYMMETRY_TYPES.map((option) => {
@@ -305,11 +382,26 @@ export default function ControlPointInfo() {
             value={cpSplineType}
             onChange={(e) => {
               if (!selectedTrajectoryId || !selectedControlPointId) return;
-              setControlPointSplineType(
-                selectedTrajectoryId,
-                selectedControlPointId,
-                e.target.value.toUpperCase() as SplineType
-              );
+
+              const prevSplineType = cpSplineType;
+              const newSplineType = e.target.value.toUpperCase() as SplineType;
+
+              execute({
+                redo: () => {
+                  setControlPointSplineType(
+                    selectedTrajectoryId,
+                    selectedControlPointId,
+                    newSplineType
+                  );
+                },
+                undo: () => {
+                  setControlPointSplineType(
+                    selectedTrajectoryId,
+                    selectedControlPointId,
+                    prevSplineType.toUpperCase() as SplineType
+                  );
+                },
+              });
             }}
           >
             {SPLINE_TYPES.map((option) => {
