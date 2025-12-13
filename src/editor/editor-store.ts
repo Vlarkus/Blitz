@@ -4,8 +4,10 @@ import { create } from "zustand";
 export type FieldType =
   | "NONE"
   | "FTC_DECODE"
-  | "VEX_PUSHBACK"
-  | "VEX_HIGHSTAKES"
+  | "V5RC_PUSHBACK_MATCH"
+  | "V5RC_PUSHBACK_SKILLS"
+  | "VURC_PUSHBACK"
+  | "12X12_EMPTY"
   | "CUSTOM";
 
 /** Field store for managing current background image */

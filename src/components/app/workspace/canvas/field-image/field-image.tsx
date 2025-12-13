@@ -20,12 +20,16 @@ export default function FieldImage() {
     switch (selectedField) {
       case "FTC_DECODE":
         return "/assets/fields/ftc/decode/ftc-decode.jpg";
-      case "VEX_PUSHBACK":
-        return "/assets/fields/vex/pushback/vex-pushback.png";
-      case "VEX_HIGHSTAKES":
-        return "/assets/fields/vex/highstakes/vex-highstakes.png";
-      case "CUSTOM":
-        return "/assets/fields/custom/custom_field.png";
+      case "V5RC_PUSHBACK_MATCH":
+        return "/assets/fields/vex/v5/pushover/V5RC-PushBack-H2H-TopDownHighlighted-TileColor66_71@0.1+2000px.png";
+      case "V5RC_PUSHBACK_SKILLS":
+        return "/assets/fields/vex/v5/pushover/V5RC-PushBack-Skills-TopDownHighlighted-TileColor66_71@0.1+2000px.png";
+      case "VURC_PUSHBACK":
+        return "/assets/fields/vex/u/pushover/VURC-PushBack-H2H-TopDownHighlighted-TileColor66_71@0.1+2000px.png";
+      case "12X12_EMPTY":
+        return "/assets/fields/other/V5RC-FieldPerimeter-12ft12ft-TopDown-TileColor66_71@1.0.png";
+      case "NONE":
+        return null;
       default:
         return null;
     }

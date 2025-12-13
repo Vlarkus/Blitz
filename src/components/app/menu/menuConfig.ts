@@ -130,17 +130,43 @@ export const MENU_STRUCTURE: MenuItem[] = [
           },
         ],
       },
-      // {
-      //   label: "VEX V5",
-      //   subItems: [
-      //     { label: "Push Back", action: () => console.log("VEX Push Back") },
-      //     {
-      //       label: "High Stakes",
-      //       action: () => console.log("VEX High Stakes"),
-      //     },
-      //   ],
-      // },
-      // { label: "Load Custom", action: () => console.log("Load Custom") },
+
+      {
+        label: "V5RC",
+        subItems: [
+          {
+            label: "Push Back (Match)",
+            action: () =>
+              useFieldStore.getState().setSelectedField("V5RC_PUSHBACK_MATCH"),
+          },
+          {
+            label: "Push Back (Skills)",
+            action: () =>
+              useFieldStore.getState().setSelectedField("V5RC_PUSHBACK_SKILLS"),
+          },
+        ],
+      },
+
+      {
+        label: "VURC",
+        subItems: [
+          {
+            label: "Push Back",
+            action: () =>
+              useFieldStore.getState().setSelectedField("VURC_PUSHBACK"),
+          },
+        ],
+      },
+      {
+        label: "Empty",
+        subItems: [
+          {
+            label: "12x12",
+            action: () =>
+              useFieldStore.getState().setSelectedField("12X12_EMPTY"),
+          },
+        ],
+      },
     ],
   },
 ];
