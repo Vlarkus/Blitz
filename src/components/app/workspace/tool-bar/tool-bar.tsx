@@ -11,6 +11,7 @@ import {
   faChevronCircleDown,
   faScissors,
   faObjectGroup,
+  faHand,
 } from "@fortawesome/free-solid-svg-icons";
 import { useEditorStore } from "../../../../editor/editor-store";
 import type { IconProp } from "@fortawesome/fontawesome-svg-core";
@@ -22,6 +23,7 @@ const toolIcons: Record<Tool, IconProp> = {
   insert: faChevronCircleDown, // insert / down-turn arrow
   cut: faScissors, // cut
   show_robot: faObjectGroup,
+  pan: faHand, // pan/grab hand
 };
 
 export default function ToolBar() {

@@ -4,10 +4,10 @@ import Canvas from "./canvas/canvas";
 import StatusBar from "./status-bar/status-bar";
 import InfoPanel from "./info-panel/info-panel";
 import TrajectoriesPanel from "./trajectories-panel/trajectories-panel";
-import { useUndoRedoHotkeys } from "../../../editor/useUndoRedoHotkeys";
+import { useKeybinds } from "../../../editor/useKeybinds";
 
 export default function Workspace() {
-  useUndoRedoHotkeys();
+  useKeybinds();
   return (
     <main className="workspace">
       <ToolBar />

@@ -23,6 +23,7 @@ export type Tool =
   | "remove"
   | "insert"
   | "cut"
+  | "pan"
   | "show_robot";
 
 export type HandlePosInput =

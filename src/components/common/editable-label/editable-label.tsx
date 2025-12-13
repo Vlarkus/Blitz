@@ -182,7 +182,7 @@ export default function EditableLabel<
         onPaste={handlePaste}
         inputMode={isNumberMode ? "decimal" : undefined}
         disabled={disabled}
-        style={{ width: `${ch + 1}ch` }}
+        style={{ width: `${ch + 1}ch`, fontStyle: "italic" }}
       />
     </span>
   );
