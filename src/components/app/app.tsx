@@ -5,6 +5,7 @@
 import "./app.scss";
 import Menu from "./menu/menu";
 import Workspace from "./workspace/workspace";
+import InputCapabilityOverlay from "../input-capability-overlay/input-capability-overlay";
 
 // function demo() {
 //   const store = useDataStore.getState();
@@ -41,6 +42,7 @@ export default function App() {
   // demo();
   return (
     <div className="app">
+      <InputCapabilityOverlay />
       <Menu />
       <Workspace />
     </div>
