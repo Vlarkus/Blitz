@@ -98,6 +98,17 @@
     inset 0 0 0 1px rgba(251, 191, 36, 0.45);
 }
 
+.input-capability-backdrop {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  z-index: -1;
+}
+
 /* =========================================================
    Responsive adjustments
    ========================================================= */
