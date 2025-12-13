@@ -1,5 +1,5 @@
 // src/.../StatusBar.tsx
-import { useEditorStore } from "../../../../editor/editor-store";
+import { useEditorStore, SCALE_COEFF } from "../../../../editor/editor-store";
 import "./status-bar.scss";
 
 const COORD_PRECISION = 2; // ← change to control digits after the decimal
@@ -9,7 +9,7 @@ export default function StatusBar() {
   const scale = useEditorStore((s) => s.activeViewport.scale); // px per meter
 
   const fmt = (n: number) => n.toFixed(COORD_PRECISION);
-  const zoomPercent = Math.round(scale * 100); // 1.0 => 100%
+  const zoomPercent = Math.round((scale / SCALE_COEFF) * 100); // 180 => 100%
 
   return (
     <div className="status-bar">

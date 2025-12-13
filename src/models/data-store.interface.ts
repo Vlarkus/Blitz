@@ -23,6 +23,7 @@ export interface IDataStore {
 
   /** ───── Trajectories ───── */
   addTrajectory(traj: Trajectory): void;
+  getVisibleTrajectories(): Trajectory[];
   removeTrajectory(id: TrajectoryId): void;
   renameTrajectory(id: TrajectoryId, name: string): void;
   setTrajectoryColor(id: TrajectoryId, color: ColorHex): void;

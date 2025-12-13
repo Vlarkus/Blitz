@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Line, Circle } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useDataStore } from "../../../../../models/dataStore";
@@ -15,6 +16,8 @@ export default function HandleElement({ trajId, cpId, which }: Props) {
   const scale = useEditorStore((s) => s.activeViewport.scale);
   const activeTool = useEditorStore((s) => s.activeTool);
   const setHandlePosition = useDataStore((s) => s.setHandlePosition);
+  const execute = useDataStore((s) => s.execute);
+  const dragStartPos = useRef<{ x: number; y: number } | null>(null);
 
   if (!cp || !traj) return null;
 
@@ -50,7 +53,33 @@ export default function HandleElement({ trajId, cpId, which }: Props) {
     setHandlePosition(trajId, cpId, which, { type: "absolute", x, y }); // store converts to polar internally
   };
 
+  const onDragEnd = (e: KonvaEventObject<DragEvent>) => {
+    const { x, y } = e.target.position();
+    const startPos = dragStartPos.current;
+    dragStartPos.current = null;
+
+    // Only push a command if position actually changed
+    if (startPos && (startPos.x !== x || startPos.y !== y)) {
+      execute({
+        redo: () => {
+          setHandlePosition(trajId, cpId, which, { type: "absolute", x, y });
+        },
+        undo: () => {
+          setHandlePosition(trajId, cpId, which, {
+            type: "absolute",
+            x: startPos.x,
+            y: startPos.y,
+          });
+        },
+      });
+    }
+  };
+
   const draggable = !cp.isLocked && !traj.isLocked && activeTool === "select";
+
+  const onDragStart = () => {
+    dragStartPos.current = { x: hx, y: hy };
+  };
 
   return (
     <>
@@ -69,7 +98,9 @@ export default function HandleElement({ trajId, cpId, which }: Props) {
         radius={radius}
         fill={handleColor}
         draggable={draggable}
+        onDragStart={onDragStart}
         onDragMove={onDragMove}
+        onDragEnd={onDragEnd}
         // don't steal CP selection; only the dot is draggable
       />
     </>

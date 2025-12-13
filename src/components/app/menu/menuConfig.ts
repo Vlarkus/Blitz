@@ -1,6 +1,8 @@
 import { useFieldStore } from "../../../editor/editor-store";
 import { useDataStore } from "../../../models/dataStore";
 import { exportAsFtc14423RobocornsSwerve } from "../../../models/export-formats/export-as-ftc-14423-robocorns-swerve";
+import { exportAsLemLib } from "../../../models/export-formats/export-as-v5rc-lemlib-v0.5";
+import { exportAsLemLibTarball } from "../../../models/export-formats/export-as-v5rc-lemlib-v0.5-tarball";
 
 // src/components/Menu/menuConfig.ts
 export interface MenuItem {
@@ -87,6 +89,36 @@ export const MENU_STRUCTURE: MenuItem[] = [
 
               // Directly run export — it handles filename and download
               exportAsFtc14423RobocornsSwerve(traj);
+            },
+          },
+
+          {
+            label: "LemLib v0.5",
+            action: () => {
+              const store = useDataStore.getState();
+              const traj = store.selectedTrajectoryId
+                ? store.getTrajectoryById(store.selectedTrajectoryId)
+                : null;
+
+              if (!traj) {
+                alert("No trajectory selected.");
+                return;
+              }
+
+              exportAsLemLib(traj);
+            },
+          },
+          {
+            label: "LemLib Tarball v0.5",
+            action: () => {
+              const store = useDataStore.getState();
+              const trajs = store.getVisibleTrajectories();
+              if (!trajs) {
+                alert("No trajectory selected.");
+                return;
+              }
+
+              exportAsLemLibTarball(trajs);
             },
           },
         ],

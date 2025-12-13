@@ -26,9 +26,10 @@ export const useFieldStore = create<FieldState>((set) => ({
 import type { IEditorStore, Viewport } from "./editor-store.interface";
 import type { Tool } from "../types/types";
 
-const MIN_SCALE = 1; // px per meter
+const MIN_SCALE = 10; // px per meter
 const MAX_SCALE = 500; // px per meter
 const MIN_SNAP = 1e-4; // meters
+export const SCALE_COEFF = 180; // user scale 1 (100%) = 180 px per meter
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
@@ -38,9 +39,9 @@ export const useEditorStore = create<IEditorStore>((set, get) => ({
   // State
   activeTool: "select" as Tool,
   activeViewport: {
-    scale: 1,
-    originX: 0,
-    originY: 0,
+    scale: SCALE_COEFF, // trueScale = 1 * SCALE_COEFF
+    originX: 400, // center of 800px wide canvas
+    originY: 300, // center of 600px tall canvas
     stageWidth: 800,
     stageHeight: 600,
     snappingEnabled: true,
@@ -71,6 +72,8 @@ export const useEditorStore = create<IEditorStore>((set, get) => ({
         ...s.activeViewport,
         stageWidth: width,
         stageHeight: height,
+        originX: width / 2, // keep world (0,0) centered
+        originY: height / 2, // keep world (0,0) centered
       },
     }));
   },

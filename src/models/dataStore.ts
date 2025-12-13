@@ -425,6 +425,10 @@ export const useDataStore = create<Store>((set, get) => ({
     return findTraj(get().trajectories, id);
   },
 
+  getVisibleTrajectories() {
+    return get().trajectories.filter((t) => t.isVisible);
+  },
+
   getControlPoint(trajId, cpId) {
     return findCP(get().trajectories, trajId, cpId);
   },

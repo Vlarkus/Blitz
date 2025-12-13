@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Circle, Rect, Group, Line } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useDataStore } from "../../../../../models/dataStore";
@@ -18,11 +18,14 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
     (s) => s.setSelectedTrajectoryId
   );
   const cutTrajectoryAt = useDataStore((s) => s.cutTrajectoryAt);
+  const moveControlPoint = useDataStore((s) => s.moveControlPoint);
+  const execute = useDataStore((s) => s.execute);
 
   const scale = useEditorStore((s) => s.activeViewport.scale);
   const activeTool = useEditorStore((s) => s.activeTool);
 
   const [hovered, setHovered] = useState(false);
+  const dragStartPos = useRef<{ x: number; y: number } | null>(null);
 
   if (!cp || !traj) return null;
 
@@ -54,12 +57,35 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
         return;
     }
 
+    // Store initial drag position for undo/redo
+    if (activeTool === "select" && !cp?.isLocked && !traj?.isLocked) {
+      dragStartPos.current = { x: cp!.x, y: cp!.y };
+    }
+
     setSelectedControlPointId(cpId);
   };
 
   const onDragMove = (e: KonvaEventObject<DragEvent>) => {
     const p = e.target.position();
-    useDataStore.getState().moveControlPoint(trajId, cpId, p.x, p.y);
+    moveControlPoint(trajId, cpId, p.x, p.y);
+  };
+
+  const onDragEnd = (e: KonvaEventObject<DragEvent>) => {
+    const p = e.target.position();
+    const startPos = dragStartPos.current;
+    dragStartPos.current = null;
+
+    // Only push a command if position actually changed
+    if (startPos && (startPos.x !== p.x || startPos.y !== p.y)) {
+      execute({
+        redo: () => {
+          moveControlPoint(trajId, cpId, p.x, p.y);
+        },
+        undo: () => {
+          moveControlPoint(trajId, cpId, startPos.x, startPos.y);
+        },
+      });
+    }
   };
 
   // --- Robot hover preview (world-space) ---
@@ -143,6 +169,7 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       draggable={draggable}
       hitStrokeWidth={12}
       onDragMove={onDragMove}
+      onDragEnd={onDragEnd}
       onMouseDown={onMouseDown}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -160,6 +187,7 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       draggable={draggable}
       hitStrokeWidth={12}
       onDragMove={onDragMove}
+      onDragEnd={onDragEnd}
       onMouseDown={onMouseDown}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
