@@ -71,7 +71,7 @@ const buildCurvePoints = (
     which: "in" | "out",
   ) => Pt | null,
   spacing: number,
-  vectorToHeadingNoDir: (dx: number, dy: number) => number,
+  vectorToHeadingCw: (dx: number, dy: number) => number,
 ): CurvePoint[] => {
   const cps = traj.controlPoints ?? [];
   const points: CurvePoint[] = [];
@@ -172,7 +172,7 @@ const buildCurvePoints = (
         const vy = v1y / n1 + v2y / n2;
         const useX = vx || v1x || v2x;
         const useY = vy || v1y || v2y;
-        p.heading = vectorToHeadingNoDir(useX, useY);
+        p.heading = vectorToHeadingCw(useX, useY);
       });
     }
 
@@ -201,20 +201,13 @@ export default function TrajectoryElement({ trajId }: Props) {
   const canvasConfig = useEditorStore((s) => s.canvasConfig);
 
   // ----- Geometry helpers (local) -----
-  const noDirConfig = {
-    ...canvasConfig,
-    coordinateSystem: {
-      ...canvasConfig.coordinateSystem,
-      rotationDirection: "CCW" as const,
-    },
-  };
-  const coordSysNoDir = new CanvasCoordinateSystem(noDirConfig);
-  const vectorToHeadingNoDir = (dx: number, dy: number) => {
+  const coordSys = new CanvasCoordinateSystem(canvasConfig);
+  const vectorToHeadingCw = (dx: number, dy: number) => {
     if (dx === 0 && dy === 0) return 0;
-    const v = coordSysNoDir.fromUser(dx, dy);
+    const v = coordSys.fromUser(dx, dy);
     const screenAngleDeg = (Math.atan2(v.y, v.x) * 180) / Math.PI;
     const cwScreenDeg = screenAngleDeg + 90;
-    return coordSysNoDir.mapHeadingFromScreen(cwScreenDeg);
+    return coordSys.mapHeadingFromScreen(cwScreenDeg);
   };
 
   const shouldRenderCurvePoints =
@@ -226,14 +219,14 @@ export default function TrajectoryElement({ trajId }: Props) {
       traj,
       getHandlePosition,
       CURVE_POINT_SPACING_M,
-      vectorToHeadingNoDir,
+      vectorToHeadingCw,
     );
   }, [
     shouldRenderCurvePoints,
     traj,
     getHandlePosition,
     canvasConfig,
-    vectorToHeadingNoDir,
+    vectorToHeadingCw,
   ]);
 
   if (!traj) return null;

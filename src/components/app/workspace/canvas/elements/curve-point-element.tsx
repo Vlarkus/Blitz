@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Circle, Group, Line, Rect } from "react-konva";
 import { useEditorStore } from "../../../../../editor/editor-store";
-import { CanvasCoordinateSystem } from "../canvas-coordinate-helper";
+import { useCanvasCoordinates } from "../canvas-coordinate-helper";
 
 const CURVE_POINT_RADIUS = 1.6;
 const CURVE_POINT_RADIUS_SHOW_ROBOT = 2;
@@ -53,14 +53,7 @@ export default function CurvePointElement({
   const robotRadiusM = Math.sqrt(widthM * widthM + heightM * heightM) / 2;
 
   const canvasConfig = useEditorStore((s) => s.canvasConfig);
-  const noDirConfig = {
-    ...canvasConfig,
-    coordinateSystem: {
-      ...canvasConfig.coordinateSystem,
-      rotationDirection: "CCW" as const,
-    },
-  };
-  const noDirTransform = new CanvasCoordinateSystem(noDirConfig);
+  const transform = useCanvasCoordinates(canvasConfig);
 
   const isHovered = activeTool === "show_robot" && hoveredElementName === name;
 
@@ -113,7 +106,7 @@ export default function CurvePointElement({
     <Group
       x={ghostPose.x}
       y={ghostPose.y}
-      rotation={noDirTransform.mapHeadingToScreen(ghostPose.heading)}
+        rotation={transform.mapHeading(ghostPose.heading)}
       listening={false}
     >
       <Circle

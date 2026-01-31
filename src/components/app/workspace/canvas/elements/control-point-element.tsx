@@ -4,7 +4,7 @@ import Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useDataStore } from "../../../../../models/dataStore";
 import { useEditorStore } from "../../../../../editor/editor-store";
-import { CanvasCoordinateSystem, useCanvasCoordinates } from "../canvas-coordinate-helper";
+import { useCanvasCoordinates } from "../canvas-coordinate-helper";
 
 type Props = { trajId: string; cpId: string };
 
@@ -44,14 +44,6 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
   );
   const hoverClearTimer = useRef<number | null>(null);
   const transform = useCanvasCoordinates(canvasConfig);
-  const noDirConfig = {
-    ...canvasConfig,
-    coordinateSystem: {
-      ...canvasConfig.coordinateSystem,
-      rotationDirection: "CCW" as const,
-    },
-  };
-  const noDirTransform = new CanvasCoordinateSystem(noDirConfig);
 
   const dragStartPos = useRef<Record<string, { x: number; y: number }> | null>(
     null
@@ -224,7 +216,7 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       <Group
         x={cp.x}
         y={cp.y}
-        rotation={cp.heading ? noDirTransform.mapHeadingToScreen(cp.heading) : 0}
+        rotation={cp.heading ? transform.mapHeading(cp.heading) : 0}
         listening={false}
       >
         {/* Reach circle (circumcribed) */}
