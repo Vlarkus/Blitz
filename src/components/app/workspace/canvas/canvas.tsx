@@ -8,14 +8,20 @@ import { useDataStore } from "../../../../models/dataStore";
 import { ControlPoint } from "../../../../models/entities/control-point/controlPoint";
 import FieldImage from "./field-image/field-image";
 
+import { useCanvasCoordinates } from "./canvas-coordinate-helper";
+import { Group } from "react-konva";
+
 export default function Canvas() {
   // Select store fields individually to keep selector snapshots stable
   const activeViewport = useEditorStore((s) => s.activeViewport);
+  const canvasConfig = useEditorStore((s) => s.canvasConfig);
+  const transform = useCanvasCoordinates(canvasConfig);
+
   const setStageSize = useEditorStore((s) => s.setStageSize);
   const panBy = useEditorStore((s) => s.panBy);
   const zoomBy = useEditorStore((s) => s.zoomBy);
 
-  const activeTool = useEditorStore((s) => s.activeTool);
+  const activeTool = useEditorStore((s) => s.activeTool); // ...
 
   const selectedTrajectoryId = useDataStore((s) => s.selectedTrajectoryId);
   // const selectedControlPointId = useDataStore((s) => s.selectedControlPointId);
@@ -28,9 +34,19 @@ export default function Canvas() {
   const setSelectedControlPointId = useDataStore(
     (s) => s.setSelectedControlPointId
   );
+  const setSelectedControlPointIds = useDataStore(
+    (s) => s.setSelectedControlPointIds
+  );
+  const addSelectedControlPointIds = useDataStore(
+    (s) => s.addSelectedControlPointIds
+  );
+  const clearSelectedControlPoints = useDataStore(
+    (s) => s.clearSelectedControlPoints
+  );
   const setSelectedTrajectoryId = useDataStore(
     (s) => s.setSelectedTrajectoryId
   );
+  const trajectories = useDataStore((s) => s.trajectories);
   // const removeControlPoint = useDataStore((s) => s.removeControlPoint);
   // const getTrajectoryIdByControlPointId = useDataStore(
   //   (s) => s.getTrajectoryIdByControlPointId
@@ -54,6 +70,18 @@ export default function Canvas() {
   // Panning state
   const [panning, setPanning] = useState(false);
   const last = useRef<{ x: number; y: number } | null>(null);
+  const selectionStart = useRef<{
+    x: number;
+    y: number;
+    additive: boolean;
+  } | null>(null);
+  const [selectionBox, setSelectionBox] = useState<{
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+    additive: boolean;
+  } | null>(null);
 
   // const getClickedControlPointId = (target: any): string | null => {
   //   if (!target) return null;
@@ -91,9 +119,8 @@ export default function Canvas() {
         if (!pos) return; // no pointer -> nothing to do
         if (!selectedTrajectoryId) return; // no selected trajectory -> no-op
 
-        // screen -> world
-        const x = (pos.x - activeViewport.originX) / activeViewport.scale;
-        const y = (pos.y - activeViewport.originY) / activeViewport.scale;
+        // screen -> world (user coords)
+        const { x, y } = transform.screenToUser(pos.x, pos.y, activeViewport);
 
         // Construct CP first so we know its id
         const cp = new ControlPoint("Control Point", x, y);
@@ -132,16 +159,100 @@ export default function Canvas() {
       panBy(pos.x - last.current.x, pos.y - last.current.y);
       last.current = { x: pos.x, y: pos.y };
     }
+
+    if (selectionStart.current && pos) {
+      setSelectionBox((prev) =>
+        prev
+          ? { ...prev, x2: pos.x, y2: pos.y }
+          : {
+              x1: selectionStart.current!.x,
+              y1: selectionStart.current!.y,
+              x2: pos.x,
+              y2: pos.y,
+              additive: selectionStart.current!.additive,
+            }
+      );
+    }
   };
 
   const onMouseLeave = () => {
     endPan();
+    endSelection();
     clearHover();
   };
 
   const endPan = () => {
     setPanning(false);
     last.current = null;
+  };
+
+  const endSelection = () => {
+    if (!selectionStart.current || !selectionBox) return;
+
+    const dx = Math.abs(selectionBox.x2 - selectionBox.x1);
+    const dy = Math.abs(selectionBox.y2 - selectionBox.y1);
+    const isClick = dx < 3 && dy < 3;
+
+    if (isClick) {
+      if (!selectionBox.additive) clearSelectedControlPoints();
+      selectionStart.current = null;
+      setSelectionBox(null);
+      return;
+    }
+
+    const p1 = transform.screenToUser(
+      selectionBox.x1,
+      selectionBox.y1,
+      activeViewport
+    );
+    const p2 = transform.screenToUser(
+      selectionBox.x2,
+      selectionBox.y2,
+      activeViewport
+    );
+    const minX = Math.min(p1.x, p2.x);
+    const maxX = Math.max(p1.x, p2.x);
+    const minY = Math.min(p1.y, p2.y);
+    const maxY = Math.max(p1.y, p2.y);
+
+    const selectedIds: string[] = [];
+    trajectories.forEach((traj) => {
+      traj.controlPoints.forEach((cp) => {
+        if (
+          cp.x >= minX &&
+          cp.x <= maxX &&
+          cp.y >= minY &&
+          cp.y <= maxY
+        ) {
+          selectedIds.push(cp.id);
+        }
+      });
+    });
+
+    if (selectionBox.additive) {
+      addSelectedControlPointIds(selectedIds);
+    } else {
+      setSelectedControlPointIds(selectedIds, selectedIds[0] ?? null);
+    }
+
+    selectionStart.current = null;
+    setSelectionBox(null);
+  };
+
+  const onBackgroundMouseDown = (e: KonvaEventObject<MouseEvent>) => {
+    if (e.evt.button !== 0) return;
+    if (activeTool !== "select") return;
+    const stage = e.target.getStage();
+    const pos = stage?.getPointerPosition();
+    if (!pos) return;
+    selectionStart.current = { x: pos.x, y: pos.y, additive: e.evt.shiftKey };
+    setSelectionBox({
+      x1: pos.x,
+      y1: pos.y,
+      x2: pos.x,
+      y2: pos.y,
+      additive: e.evt.shiftKey,
+    });
   };
 
   // Wheel zoom (keeps pointer anchored)
@@ -176,7 +287,10 @@ export default function Canvas() {
         onWheel={onWheel}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
-        onMouseUp={endPan}
+        onMouseUp={() => {
+          endPan();
+          endSelection();
+        }}
         onMouseLeave={onMouseLeave}
         onContextMenu={(e) => e.evt.preventDefault()}
       >
@@ -196,10 +310,31 @@ export default function Canvas() {
             height={worldHeight}
             fill="rgba(0,0,0,0)"
             listening={true}
+            onMouseDown={onBackgroundMouseDown}
           />
           <FieldImage />
-          <TrajectoriesLayer />
+          <Group
+            rotation={transform.groupProps.rotation}
+            scaleX={transform.groupProps.scaleX}
+            scaleY={transform.groupProps.scaleY}
+          >
+            <TrajectoriesLayer />
+          </Group>
         </Layer>
+        {selectionBox && (
+          <Layer listening={false}>
+            <Rect
+              x={Math.min(selectionBox.x1, selectionBox.x2)}
+              y={Math.min(selectionBox.y1, selectionBox.y2)}
+              width={Math.abs(selectionBox.x2 - selectionBox.x1)}
+              height={Math.abs(selectionBox.y2 - selectionBox.y1)}
+              stroke="#4da3ff"
+              strokeWidth={1}
+              dash={[4, 4]}
+              fill="rgba(77, 163, 255, 0.15)"
+            />
+          </Layer>
+        )}
       </Stage>
     </section>
   );

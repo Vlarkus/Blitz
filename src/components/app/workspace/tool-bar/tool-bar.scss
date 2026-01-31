@@ -12,3 +12,42 @@ $spacing: 0.5rem;
   padding: $spacing;
   gap: $spacing;
 }
+
+.tool-bar-spacer {
+  flex: 1 1 auto;
+}
+
+.tool-bar-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 0.15rem 0 0.25rem;
+}
+
+.tool-bar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.tool-bar-action-btn,
+.tool-bar-settings-btn {
+  background: none;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #fff;
+  }
+
+  &:disabled {
+    color: rgba(255, 255, 255, 0.35);
+    cursor: not-allowed;
+  }
+}

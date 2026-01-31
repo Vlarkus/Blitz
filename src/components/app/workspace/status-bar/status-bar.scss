@@ -27,4 +27,10 @@
   margin-left: auto;
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+
+  .status-zoom {
+    min-width: 3rem;
+    text-align: right;
+  }
 }

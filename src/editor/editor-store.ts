@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 /** All selectable field types */
 export type FieldType =
@@ -17,10 +18,20 @@ interface FieldState {
 }
 
 /** Zustand store for field selection */
-export const useFieldStore = create<FieldState>((set) => ({
-  selectedField: "NONE",
-  setSelectedField: (field) => set({ selectedField: field }),
-}));
+export const useFieldStore = create<FieldState>()(
+  persist(
+    (set) => ({
+      selectedField: "NONE",
+      setSelectedField: (field) => set({ selectedField: field }),
+    }),
+    {
+      name: "blitz:field",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ selectedField: state.selectedField }),
+      version: 1,
+    },
+  ),
+);
 
 // src/editor/editorStore.ts
 import type { IEditorStore, Viewport } from "./editor-store.interface";
@@ -35,7 +46,9 @@ function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
-export const useEditorStore = create<IEditorStore>((set, get) => ({
+export const useEditorStore = create<IEditorStore>()(
+  persist(
+    (set, get) => ({
   // State
   activeTool: "select" as Tool,
   activeViewport: {
@@ -161,4 +174,61 @@ export const useEditorStore = create<IEditorStore>((set, get) => ({
     const { scale, originX, originY } = get().activeViewport;
     return { xM: (xPx - originX) / scale, yM: (yPx - originY) / scale };
   },
-}));
+
+  // Settings
+  robotConfig: {
+    widthM: 0.4572, // 18 inches
+    heightM: 0.4572, // 18 inches
+  },
+  setRobotConfig(config) {
+    set((s) => ({
+      robotConfig: { ...s.robotConfig, ...config },
+    }));
+  },
+
+  canvasConfig: {
+    coordinateSystem: {
+      positiveX: "RIGHT",
+      positiveY: "UP",
+      zeroAngle: "RIGHT",
+      rotationDirection: "CCW",
+    },
+    units: {
+      angle: "DEGREES",
+      distance: "INCHES",
+    },
+  },
+  setCanvasConfig(config) {
+    set((s) => {
+      const newConfig =
+        typeof config === "function" ? config(s.canvasConfig) : config;
+
+      // Deep merge for nested objects
+      return {
+        canvasConfig: {
+          ...s.canvasConfig,
+          ...newConfig,
+          coordinateSystem: {
+            ...s.canvasConfig.coordinateSystem,
+            ...(newConfig.coordinateSystem || {}),
+          },
+          units: {
+            ...s.canvasConfig.units,
+            ...(newConfig.units || {}),
+          },
+        },
+      };
+    });
+  },
+    }),
+    {
+      name: "blitz:settings",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        canvasConfig: state.canvasConfig,
+        robotConfig: state.robotConfig,
+      }),
+      version: 1,
+    },
+  ),
+);

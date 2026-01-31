@@ -5,6 +5,13 @@ import "./helper-point-info.scss";
 import RadioButtonGroup from "./coord-mode-radio-selector/coord-mode-radio-selector";
 import CoordLabel from "./coord-label/coord-label";
 import { polarToCartesian } from "../../../../../utils/utils";
+import {
+  angleToRadians,
+  distanceToMeters,
+  metersToDistance,
+  radiansToAngle,
+} from "../../../../../utils/unit-conversion";
+import { useEditorStore } from "../../../../../editor/editor-store";
 
 type CoordMode = "polar" | "relative" | "absolute";
 
@@ -12,6 +19,8 @@ export default function HelperPointInfo() {
   const selectedTrajectoryId = useDataStore((s) => s.selectedTrajectoryId);
   const selectedControlPointId = useDataStore((s) => s.selectedControlPointId);
   const hasSel = !!(selectedTrajectoryId && selectedControlPointId);
+  const distanceUnit = useEditorStore((s) => s.canvasConfig.units.distance);
+  const angleUnit = useEditorStore((s) => s.canvasConfig.units.angle);
 
   // ---- Subscribe to primitives only (avoid new object snapshots) ----
   const baseX = useDataStore((s) =>
@@ -36,10 +45,8 @@ export default function HelperPointInfo() {
 
   const thIn = useDataStore((s) =>
     hasSel
-      ? ((s.getHandlePolar(selectedTrajectoryId!, selectedControlPointId!, "in")
-          ?.theta ?? 0) *
-          180) /
-        Math.PI
+      ? s.getHandlePolar(selectedTrajectoryId!, selectedControlPointId!, "in")
+          ?.theta ?? 0
       : 0
   );
 
@@ -52,13 +59,11 @@ export default function HelperPointInfo() {
 
   const thOut = useDataStore((s) =>
     hasSel
-      ? ((s.getHandlePolar(
+      ? s.getHandlePolar(
           selectedTrajectoryId!,
           selectedControlPointId!,
           "out"
-        )?.theta ?? 0) *
-          180) /
-        Math.PI
+        )?.theta ?? 0
       : 0
   );
 
@@ -133,19 +138,19 @@ export default function HelperPointInfo() {
     const dy = which === "in" ? dyIn : dyOut;
 
     if (mode === "polar") {
-      return part === "primary" ? r : th;
+      return part === "primary"
+        ? metersToDistance(r, distanceUnit)
+        : radiansToAngle(th, angleUnit);
     }
     if (mode === "relative") {
-      return part === "primary" ? dx : dy;
+      return part === "primary"
+        ? metersToDistance(dx, distanceUnit)
+        : metersToDistance(dy, distanceUnit);
     }
     // absolute
     return part === "primary"
-      ? which === "in"
-        ? baseX + dxIn
-        : baseX + dxOut
-      : which === "in"
-      ? baseY + dyIn
-      : baseY + dyOut;
+      ? metersToDistance(which === "in" ? baseX + dxIn : baseX + dxOut, distanceUnit)
+      : metersToDistance(which === "in" ? baseY + dyIn : baseY + dyOut, distanceUnit);
   };
 
   // ---- Write updates back via store (no objects returned) ----
@@ -160,15 +165,18 @@ export default function HelperPointInfo() {
     const cpId = selectedControlPointId!;
 
     if (mode === "polar") {
-      // UI shows degrees for theta; convert to radians before sending.
+      // UI shows the selected angle unit; convert to radians before sending.
       const curR = which === "in" ? rIn : rOut;
-      const curThDeg = which === "in" ? thIn : thOut;
-      const r = part === "primary" ? val : curR;
-      const theta = ((part === "secondary" ? val : curThDeg) * Math.PI) / 180;
+      const curTheta = which === "in" ? thIn : thOut;
+      const r = part === "primary" ? distanceToMeters(val, distanceUnit) : curR;
+      const theta = angleToRadians(
+        part === "secondary" ? val : curTheta,
+        angleUnit
+      );
       const prevPos = {
         type: "polar" as const,
         r: curR,
-        theta: (curThDeg * Math.PI) / 180,
+        theta: curTheta,
       };
       execute({
         redo: () => {
@@ -185,8 +193,10 @@ export default function HelperPointInfo() {
       // dx/dy relative to CP
       const curDx = which === "in" ? dxIn : dxOut;
       const curDy = which === "in" ? dyIn : dyOut;
-      const dx = part === "primary" ? val : curDx;
-      const dy = part === "secondary" ? val : curDy;
+      const dx =
+        part === "primary" ? distanceToMeters(val, distanceUnit) : curDx;
+      const dy =
+        part === "secondary" ? distanceToMeters(val, distanceUnit) : curDy;
       const prevPos = { type: "relative" as const, dx: curDx, dy: curDy };
       execute({
         redo: () => {
@@ -202,8 +212,10 @@ export default function HelperPointInfo() {
     // absolute
     const curX = which === "in" ? xInAbs : xOutAbs;
     const curY = which === "in" ? yInAbs : yOutAbs;
-    const x = part === "primary" ? val : curX;
-    const y = part === "secondary" ? val : curY;
+    const x =
+      part === "primary" ? distanceToMeters(val, distanceUnit) : curX;
+    const y =
+      part === "secondary" ? distanceToMeters(val, distanceUnit) : curY;
     const prevPos = { type: "absolute" as const, x: curX, y: curY };
     execute({
       redo: () => {
@@ -258,7 +270,7 @@ export default function HelperPointInfo() {
           />
           {selectedControlPointId ? (
             <EditableLabel<number>
-              inputRules={{ type: "number" }}
+              inputRules={{ type: "number", decimals: 3, allowNegative: true }}
               value={getHandleValue("in", "secondary", coordMode)}
               maxIntegerDigits={4}
               maxDecimalDigits={3}
@@ -302,7 +314,7 @@ export default function HelperPointInfo() {
           />
           {selectedControlPointId ? (
             <EditableLabel<number>
-              inputRules={{ type: "number" }}
+              inputRules={{ type: "number", decimals: 3, allowNegative: true }}
               value={getHandleValue("out", "secondary", coordMode)}
               maxIntegerDigits={4}
               maxDecimalDigits={3}

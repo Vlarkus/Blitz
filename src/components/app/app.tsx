@@ -6,6 +6,7 @@ import "./app.scss";
 import Menu from "./menu/menu";
 import Workspace from "./workspace/workspace";
 import InputCapabilityOverlay from "../input-capability-overlay/input-capability-overlay";
+import { useEffect } from "react";
 
 // function demo() {
 //   const store = useDataStore.getState();
@@ -40,6 +41,18 @@ import InputCapabilityOverlay from "../input-capability-overlay/input-capability
 
 export default function App() {
   // demo();
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
+
   return (
     <div className="app">
       <InputCapabilityOverlay />

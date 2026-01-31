@@ -14,10 +14,35 @@ export interface Viewport {
   snapGridM: number; // grid pitch in meters
 }
 
+export type AxisDirection = "UP" | "DOWN" | "LEFT" | "RIGHT";
+export type RotationDirection = "CW" | "CCW";
+export type AngleUnit = "DEGREES" | "RADIANS" | "ROTATIONS";
+export type DistanceUnit = "METERS" | "INCHES" | "FEET";
+
+export interface CanvasConfig {
+  coordinateSystem: {
+    positiveX: AxisDirection;
+    positiveY: AxisDirection;
+    zeroAngle: AxisDirection;
+    rotationDirection: RotationDirection;
+  };
+  units: {
+    angle: AngleUnit;
+    distance: DistanceUnit;
+  };
+}
+
+export interface RobotConfig {
+  widthM: number;
+  heightM: number;
+}
+
 export interface IEditorStore {
   // State
   activeTool: Tool;
   activeViewport: Viewport;
+  robotConfig: RobotConfig;
+  canvasConfig: CanvasConfig;
 
   // Hover indicator (null = not hovering the canvas)
   hoverWorld: { xM: number; yM: number } | null;
@@ -46,4 +71,8 @@ export interface IEditorStore {
   // Transforms
   worldToScreen(xM: number, yM: number): { xPx: number; yPx: number };
   screenToWorld(xPx: number, yPx: number): { xM: number; yM: number };
+
+  // Settings
+  setRobotConfig(config: Partial<RobotConfig>): void;
+  setCanvasConfig(config: Partial<CanvasConfig> | ((prev: CanvasConfig) => Partial<CanvasConfig>)): void;
 }

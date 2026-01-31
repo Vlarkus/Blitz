@@ -18,11 +18,13 @@ export default function CpCard({ trajId, cpId }: CpCardProps) {
   );
   const setControlPointLock = useDataStore((s) => s.setControlPointLock);
   const renameControlPoint = useDataStore((s) => s.renameControlPoint);
-  const selectedControlPointId = useDataStore((s) => s.selectedControlPointId);
+  const selectedControlPointIds = useDataStore(
+    (s) => s.selectedControlPointIds
+  );
 
   if (!traj || !cp) return null;
 
-  const selected = selectedControlPointId === cpId;
+  const selected = selectedControlPointIds.includes(cpId);
 
   const handleToggleLocked = () => {
     setControlPointLock(traj.id, cp.id, !cp.isLocked);

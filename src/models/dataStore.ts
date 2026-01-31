@@ -13,6 +13,7 @@ type State = {
   // Selection
   selectedTrajectoryId: TrajectoryId | null;
   selectedControlPointId: ControlPointId | null;
+  selectedControlPointIds: ControlPointId[];
 
   // Undo / Redo
   history: {
@@ -32,6 +33,7 @@ export const useDataStore = create<Store>((set, get) => ({
   trajectories: [],
   selectedTrajectoryId: null,
   selectedControlPointId: null,
+  selectedControlPointIds: [],
   history: { past: [], future: [] },
 
   /* =========================
@@ -78,19 +80,66 @@ export const useDataStore = create<Store>((set, get) => ({
    * Selection
    * ========================= */
   setSelectedTrajectoryId(id) {
-    set({ selectedTrajectoryId: id, selectedControlPointId: null });
+    set({
+      selectedTrajectoryId: id,
+      selectedControlPointId: null,
+      selectedControlPointIds: [],
+    });
   },
 
   setSelectedControlPointId(id: ControlPointId | null) {
     if (id === null) {
-      set({ selectedControlPointId: null, selectedTrajectoryId: null });
+      set({
+        selectedControlPointId: null,
+        selectedControlPointIds: [],
+        selectedTrajectoryId: null,
+      });
       return;
     }
 
     const trId = get().getTrajectoryIdByControlPointId(id);
     set({
       selectedControlPointId: id,
+      selectedControlPointIds: [id],
       selectedTrajectoryId: trId ?? null,
+    });
+  },
+
+  setSelectedControlPointIds(ids, primaryId) {
+    const unique = Array.from(new Set(ids));
+    const single = unique.length === 1 ? unique[0] : null;
+    const primary = primaryId ?? single;
+    const trId = primary
+      ? get().getTrajectoryIdByControlPointId(primary)
+      : null;
+
+    set({
+      selectedControlPointIds: unique,
+      selectedControlPointId: single,
+      selectedTrajectoryId: unique.length === 0 ? null : trId ?? null,
+    });
+  },
+
+  addSelectedControlPointIds(ids) {
+    const current = get().selectedControlPointIds;
+    const next = [...current, ...ids];
+    const primary = get().selectedControlPointId ?? null;
+    get().setSelectedControlPointIds(next, primary);
+  },
+
+  toggleSelectedControlPointId(id) {
+    const current = get().selectedControlPointIds;
+    const isSelected = current.includes(id);
+    const next = isSelected ? current.filter((cpId) => cpId !== id) : [...current, id];
+    const primary = !isSelected ? id : next.length === 1 ? next[0] : null;
+    get().setSelectedControlPointIds(next, primary);
+  },
+
+  clearSelectedControlPoints() {
+    set({
+      selectedControlPointId: null,
+      selectedControlPointIds: [],
+      selectedTrajectoryId: null,
     });
   },
 
@@ -105,13 +154,29 @@ export const useDataStore = create<Store>((set, get) => ({
   },
 
   removeTrajectory(id) {
-    set((s) => ({
-      trajectories: s.trajectories.filter((t) => t.id !== id),
-      selectedTrajectoryId:
-        s.selectedTrajectoryId === id ? null : s.selectedTrajectoryId,
-      selectedControlPointId:
-        s.selectedTrajectoryId === id ? null : s.selectedControlPointId,
-    }));
+    set((s) => {
+      const nextTrajectories = s.trajectories.filter((t) => t.id !== id);
+      const nextSelectedIds = filterSelectedControlPointIds(
+        nextTrajectories,
+        s.selectedControlPointIds
+      );
+      const singleId = nextSelectedIds.length === 1 ? nextSelectedIds[0] : null;
+      const nextSelectedTrajectoryId =
+        singleId != null
+          ? findTrajectoryIdByControlPointId(nextTrajectories, singleId)
+          : nextSelectedIds.length === 0 && s.selectedTrajectoryId === id
+          ? null
+          : nextSelectedIds.length > 1
+          ? null
+          : s.selectedTrajectoryId;
+
+      return {
+        trajectories: nextTrajectories,
+        selectedTrajectoryId: nextSelectedTrajectoryId,
+        selectedControlPointId: singleId,
+        selectedControlPointIds: nextSelectedIds,
+      };
+    });
   },
 
   renameTrajectory(id, name) {
@@ -243,10 +308,21 @@ export const useDataStore = create<Store>((set, get) => ({
       const t = findTraj(s.trajectories, trajId);
       if (!t) return {};
       t.internal.removeControlPoint(cpId);
+      const nextSelectedIds = s.selectedControlPointIds.filter(
+        (id) => id !== cpId
+      );
+      const singleId = nextSelectedIds.length === 1 ? nextSelectedIds[0] : null;
+      const nextSelectedTrajectoryId =
+        singleId != null
+          ? findTrajectoryIdByControlPointId(s.trajectories, singleId)
+          : nextSelectedIds.length > 1
+          ? null
+          : s.selectedTrajectoryId;
       return {
         trajectories: [...s.trajectories],
-        selectedControlPointId:
-          s.selectedControlPointId === cpId ? null : s.selectedControlPointId,
+        selectedControlPointId: singleId,
+        selectedControlPointIds: nextSelectedIds,
+        selectedTrajectoryId: nextSelectedTrajectoryId,
       };
     });
   },
@@ -346,6 +422,7 @@ export const useDataStore = create<Store>((set, get) => ({
         trajectories: newTrajectories,
         selectedTrajectoryId: null,
         selectedControlPointId: null,
+        selectedControlPointIds: [],
       });
     } catch (err) {
       console.error("Failed to load trajectories:", err);
@@ -541,6 +618,31 @@ function findTraj(
 
 function findTrajIndex(trajectories: Trajectory[], id: TrajectoryId): number {
   return trajectories.findIndex((t) => t.id === id);
+}
+
+function findTrajectoryIdByControlPointId(
+  trajectories: Trajectory[],
+  cpId: ControlPointId
+): TrajectoryId | null {
+  for (const t of trajectories) {
+    if (t.controlPoints.some((cp) => cp.id === cpId)) return t.id as TrajectoryId;
+  }
+  return null;
+}
+
+function filterSelectedControlPointIds(
+  trajectories: Trajectory[],
+  ids: ControlPointId[]
+): ControlPointId[] {
+  if (ids.length === 0) return [];
+  const wanted = new Set(ids);
+  const next: ControlPointId[] = [];
+  trajectories.forEach((t) => {
+    t.controlPoints.forEach((cp) => {
+      if (wanted.has(cp.id)) next.push(cp.id);
+    });
+  });
+  return next;
 }
 
 function findCP(

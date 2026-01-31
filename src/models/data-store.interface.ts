@@ -20,6 +20,13 @@ export interface IDataStore {
   /** ───── Selection ───── */
   setSelectedTrajectoryId(id: TrajectoryId | null): void;
   setSelectedControlPointId(id: ControlPointId | null): void;
+  setSelectedControlPointIds(
+    ids: ControlPointId[],
+    primaryId?: ControlPointId | null
+  ): void;
+  addSelectedControlPointIds(ids: ControlPointId[]): void;
+  toggleSelectedControlPointId(id: ControlPointId): void;
+  clearSelectedControlPoints(): void;
 
   /** ───── Trajectories ───── */
   addTrajectory(traj: Trajectory): void;

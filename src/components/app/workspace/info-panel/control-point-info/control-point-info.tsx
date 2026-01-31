@@ -1,4 +1,5 @@
 import { useDataStore } from "../../../../../models/dataStore";
+import { useEditorStore } from "../../../../../editor/editor-store";
 import {
   SPLINE_TYPES,
   SYMMETRY_TYPES,
@@ -7,6 +8,12 @@ import {
 } from "../../../../../types/types";
 import { EditableLabel } from "../../../../common/editable-label";
 import "./control-point-info.scss";
+import {
+  angleToRadians,
+  distanceToMeters,
+  metersToDistance,
+  radiansToAngle,
+} from "../../../../../utils/unit-conversion";
 
 export default function ControlPointInfo() {
   // ALL HOOKS AT THE TOP LEVEL
@@ -40,6 +47,9 @@ export default function ControlPointInfo() {
       : null
   );
 
+  const distanceUnit = useEditorStore((s) => s.canvasConfig.units.distance);
+  const angleUnit = useEditorStore((s) => s.canvasConfig.units.angle);
+
   const cpSymmetry = useDataStore((s) => {
     if (!selectedTrajectoryId || !selectedControlPointId) return "";
     return (
@@ -61,10 +71,6 @@ export default function ControlPointInfo() {
           ?.isEvent ?? false
       : false
   );
-
-  // At the top of the file (or just above the component):
-  const radToDeg = (rad: number) => (rad * 180) / Math.PI;
-  const degToRad = (deg: number) => (deg * Math.PI) / 180;
 
   // setters
   const setControlPointSymmetry = useDataStore(
@@ -92,14 +98,16 @@ export default function ControlPointInfo() {
           {selectedControlPointId ? (
             <>
               <EditableLabel<number>
-                value={cpX}
+                value={metersToDistance(cpX, distanceUnit)}
                 maxIntegerDigits={4}
                 maxDecimalDigits={3}
                 onCommit={(nextX) => {
                   if (!selectedTrajectoryId || !cp) return;
 
                   // Coerce to number, guard against NaN/undefined
-                  const x = typeof nextX === "number" ? nextX : Number(nextX);
+                  const xUnits =
+                    typeof nextX === "number" ? nextX : Number(nextX);
+                  const x = distanceToMeters(xUnits, distanceUnit);
                   if (!Number.isFinite(x)) return; // ignore invalid commits
 
                   const prevX = cp.x;
@@ -139,14 +147,16 @@ export default function ControlPointInfo() {
           {selectedControlPointId ? (
             <>
               <EditableLabel<number>
-                value={cpY}
+                value={metersToDistance(cpY, distanceUnit)}
                 maxIntegerDigits={4}
                 maxDecimalDigits={3}
                 onCommit={(nextY) => {
                   if (!selectedTrajectoryId || !cp) return;
 
                   // Coerce to number, guard against NaN/undefined
-                  const y = typeof nextY === "number" ? nextY : Number(nextY);
+                  const yUnits =
+                    typeof nextY === "number" ? nextY : Number(nextY);
+                  const y = distanceToMeters(yUnits, distanceUnit);
                   if (!Number.isFinite(y)) return; // ignore invalid commits
 
                   const prevX = Number.isFinite(cp.x) ? cp.x : 0;
@@ -218,7 +228,9 @@ export default function ControlPointInfo() {
 
               <EditableLabel<number>
                 // Display in degrees
-                value={cpHeading !== null ? radToDeg(cpHeading) : 0}
+                value={
+                  cpHeading !== null ? radiansToAngle(cpHeading, angleUnit) : 0
+                }
                 maxIntegerDigits={3}
                 maxDecimalDigits={2}
                 inputRules={{
@@ -231,15 +243,15 @@ export default function ControlPointInfo() {
                 ariaLabel="Heading (degrees)"
                 className={cpHeading === null ? "label-disabled" : undefined}
                 onCommit={(nextHeadingDeg) => {
-                  const headingDeg =
+                  const headingVal =
                     typeof nextHeadingDeg === "number"
                       ? nextHeadingDeg
                       : Number(nextHeadingDeg);
 
-                  if (!Number.isFinite(headingDeg)) return;
+                  if (!Number.isFinite(headingVal)) return;
 
                   // Convert back to radians for the store
-                  const headingRad = degToRad(headingDeg);
+                  const headingRad = angleToRadians(headingVal, angleUnit);
 
                   if (!selectedTrajectoryId || !selectedControlPointId) return;
 
