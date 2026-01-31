@@ -42,8 +42,9 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
   const dragAnchorPos = useRef<{ x: number; y: number } | null>(null);
   const dragDidMove = useRef(false);
   const selectionRingRef = useRef<Konva.Group | null>(null);
-
-  if (!cp || !traj) return null;
+  const { widthM, heightM } = useEditorStore((s) => s.robotConfig);
+  const canvasConfig = useEditorStore((s) => s.canvasConfig);
+  const transform = useCanvasCoordinates(canvasConfig);
 
   const radius = Math.min((1 / scale) * 10, 2);
   const size = radius * 2;
@@ -70,6 +71,8 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       anim.stop();
     };
   }, [isSelected]);
+
+  if (!cp || !traj) return null;
 
   const isLast =
     traj.controlPoints.length > 0 &&
@@ -189,11 +192,7 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
   const robotStroke = Math.min((1 / scale) * 2.5, 0.5);
   // const INCH_TO_M = 0.0254;
 
-  const { widthM, heightM } = useEditorStore((s) => s.robotConfig);
   const robotRadiusM = Math.sqrt(widthM * widthM + heightM * heightM) / 2;
-
-  const canvasConfig = useEditorStore((s) => s.canvasConfig);
-  const transform = useCanvasCoordinates(canvasConfig);
 
   const robotHoverGhost =
     hovered && activeTool === "show_robot" ? (

@@ -37,7 +37,7 @@ export class CanvasCoordinateSystem {
         const yAng = this.dirToAngle(positiveY);
 
         // Relative angle of Y from X
-        let relY = (yAng - xAng + 360) % 360;
+        const relY = (yAng - xAng + 360) % 360;
         if (relY === 90) {
             scaleY = 1; // Normal (Y is 90 deg "down" from X if X is 0)
         } else {
@@ -104,7 +104,7 @@ export class CanvasCoordinateSystem {
 
         // Inverse Group Transform:
         // 1. ScaleY
-        let cy = canvasY * this.scaleY;
+        const cy = canvasY * this.scaleY;
 
         // 2. Rotation (-groupRotation)
         const rad = (-this.groupRotation * Math.PI) / 180;
@@ -125,7 +125,7 @@ export class CanvasCoordinateSystem {
         const cos = Math.cos(rad);
         const sin = Math.sin(rad);
 
-        let cx = userX * cos - userY * sin;
+        const cx = userX * cos - userY * sin;
         let cy = userX * sin + userY * cos;
 
         // 2. ScaleY
@@ -144,8 +144,8 @@ export function useCanvasCoordinates(config: CanvasConfig): CanvasTransform {
     // Legacy support for the pixel-based helper
     const screenToUser = (stageX: number, stageY: number, viewport: { originX: number; originY: number; scale: number }) => {
         // To "Standard Canvas Meters"
-        let cx = (stageX - viewport.originX) / viewport.scale;
-        let cy = (stageY - viewport.originY) / viewport.scale;
+        const cx = (stageX - viewport.originX) / viewport.scale;
+        const cy = (stageY - viewport.originY) / viewport.scale;
 
         return sys.toUser(cx, cy);
     };

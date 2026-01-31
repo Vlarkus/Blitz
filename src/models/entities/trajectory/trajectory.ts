@@ -546,6 +546,5 @@ function deepCopyHandle(h: ControlPoint["handleIn"]): ControlPoint["handleIn"] {
   // HelperPoint has constructor (r, theta, isLinear)
   // Accessors: r, theta, isLinear
   // @ts-expect-error runtime class import cycle is okay; shape matches HelperPoint
-  // eslint-disable-next-line new-cap
   return new HelperPoint(h.r, h.theta);
 }

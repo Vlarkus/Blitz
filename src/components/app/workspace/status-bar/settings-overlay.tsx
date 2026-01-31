@@ -6,6 +6,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import CoordinatePreview from "./coordinate-preview";
 import { useEditorStore } from "../../../../editor/editor-store";
+import type {
+  AngleUnit,
+  AxisDirection,
+  DistanceUnit,
+  RotationDirection,
+} from "../../../../editor/editor-store.interface";
 import {
   distanceToMeters,
   metersToDistance,
@@ -110,7 +116,7 @@ export default function SettingsOverlay({ onClose }: Props) {
                                         <select
                                             value={stagedConfig.coordinateSystem.positiveX}
                                             onChange={(e) => {
-                                                const newX = e.target.value as any;
+                                                const newX = e.target.value as AxisDirection;
                                                 let newY = stagedConfig.coordinateSystem.positiveY;
 
                                                 // If switching to vertical/horizontal, ensure Y is opposite axis type
@@ -141,7 +147,7 @@ export default function SettingsOverlay({ onClose }: Props) {
                                         <select
                                             value={stagedConfig.coordinateSystem.positiveY}
                                             onChange={(e) => {
-                                                const newY = e.target.value as any;
+                                                const newY = e.target.value as AxisDirection;
                                                 let newX = stagedConfig.coordinateSystem.positiveX;
 
                                                 if (["UP", "DOWN"].includes(newY)) {
@@ -175,7 +181,7 @@ export default function SettingsOverlay({ onClose }: Props) {
                                                     ...prev,
                                                     coordinateSystem: {
                                                         ...prev.coordinateSystem,
-                                                        zeroAngle: e.target.value as any,
+                                                        zeroAngle: e.target.value as AxisDirection,
                                                     },
                                                 }))
                                             }
@@ -195,7 +201,7 @@ export default function SettingsOverlay({ onClose }: Props) {
                                                     ...prev,
                                                     coordinateSystem: {
                                                         ...prev.coordinateSystem,
-                                                        rotationDirection: e.target.value as any,
+                                                        rotationDirection: e.target.value as RotationDirection,
                                                     },
                                                 }))
                                             }
@@ -219,7 +225,7 @@ export default function SettingsOverlay({ onClose }: Props) {
                                                     ...prev,
                                                     units: {
                                                         ...prev.units,
-                                                        distance: e.target.value as any,
+                                                        distance: e.target.value as DistanceUnit,
                                                     },
                                                 }))
                                             }
@@ -238,7 +244,7 @@ export default function SettingsOverlay({ onClose }: Props) {
                                                     ...prev,
                                                     units: {
                                                         ...prev.units,
-                                                        angle: e.target.value as any,
+                                                        angle: e.target.value as AngleUnit,
                                                     },
                                                 }))
                                             }
