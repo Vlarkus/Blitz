@@ -23,6 +23,7 @@ import type { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { useState } from "react";
 import SettingsOverlay from "../status-bar/settings-overlay";
 import { useDataStore } from "../../../../models/dataStore";
+import { CanvasCoordinateSystem } from "../canvas/canvas-coordinate-helper";
 
 const toolIcons: Record<Tool, IconProp> = {
   select: faArrowPointer, // more modern pointer icon
@@ -46,16 +47,18 @@ export default function ToolBar() {
   const setControlPointHeading = useDataStore((s) => s.setControlPointHeading);
   const setHandlePosition = useDataStore((s) => s.setHandlePosition);
   const execute = useDataStore((s) => s.execute);
+  const canvasConfig = useEditorStore((s) => s.canvasConfig);
 
   const actionsEnabled = selectedControlPointIds.length > 1;
 
-  const normalizeRad = (theta: number) =>
-    Math.atan2(Math.sin(theta), Math.cos(theta));
+  const normalizeDeg = (deg: number) => ((deg % 360) + 360) % 360;
 
   const applyTransform = (
     kind: "mirror-x" | "mirror-y" | "rotate-cw" | "rotate-ccw"
   ) => {
     if (!actionsEnabled) return;
+
+    const coordSys = new CanvasCoordinateSystem(canvasConfig);
 
     const selected: {
       trajId: string;
@@ -65,6 +68,10 @@ export default function ToolBar() {
       heading: number | null;
       inAbs: { x: number; y: number };
       outAbs: { x: number; y: number };
+      canvasPos: { x: number; y: number };
+      canvasIn: { x: number; y: number };
+      canvasOut: { x: number; y: number };
+      headingScreenDeg: number | null;
     }[] = [];
     trajectories.forEach((traj) => {
       traj.controlPoints.forEach((cp) => {
@@ -77,6 +84,9 @@ export default function ToolBar() {
             x: cp.x + cp.handleOut.r * Math.cos(cp.handleOut.theta),
             y: cp.y + cp.handleOut.r * Math.sin(cp.handleOut.theta),
           };
+          const canvasPos = coordSys.fromUser(cp.x, cp.y);
+          const canvasIn = coordSys.fromUser(inAbs.x, inAbs.y);
+          const canvasOut = coordSys.fromUser(outAbs.x, outAbs.y);
           selected.push({
             trajId: traj.id,
             cpId: cp.id,
@@ -85,6 +95,11 @@ export default function ToolBar() {
             heading: cp.heading,
             inAbs,
             outAbs,
+            canvasPos,
+            canvasIn,
+            canvasOut,
+            headingScreenDeg:
+              cp.heading !== null ? coordSys.mapHeadingToScreen(cp.heading) : null,
           });
         }
       });
@@ -97,10 +112,10 @@ export default function ToolBar() {
     let minY = Infinity;
     let maxY = -Infinity;
     selected.forEach((cp) => {
-      if (cp.x < minX) minX = cp.x;
-      if (cp.x > maxX) maxX = cp.x;
-      if (cp.y < minY) minY = cp.y;
-      if (cp.y > maxY) maxY = cp.y;
+      if (cp.canvasPos.x < minX) minX = cp.canvasPos.x;
+      if (cp.canvasPos.x > maxX) maxX = cp.canvasPos.x;
+      if (cp.canvasPos.y < minY) minY = cp.canvasPos.y;
+      if (cp.canvasPos.y > maxY) maxY = cp.canvasPos.y;
     });
     const cx = (minX + maxX) / 2;
     const cy = (minY + maxY) / 2;
@@ -114,34 +129,42 @@ export default function ToolBar() {
         case "mirror-y":
           return { x, y: cy - dy };
         case "rotate-cw":
-          return { x: cx + dy, y: cy - dx };
-        case "rotate-ccw":
           return { x: cx - dy, y: cy + dx };
+        case "rotate-ccw":
+          return { x: cx + dy, y: cy - dx };
       }
     };
 
-    const transformHeading = (heading: number) => {
+    const transformHeading = (headingScreenDeg: number) => {
       switch (kind) {
         case "mirror-x":
-          return normalizeRad(Math.PI - heading);
+          return normalizeDeg(180 - headingScreenDeg);
         case "mirror-y":
-          return normalizeRad(-heading);
+          return normalizeDeg(-headingScreenDeg);
         case "rotate-cw":
-          return normalizeRad(heading - Math.PI / 2);
+          return normalizeDeg(headingScreenDeg - 90);
         case "rotate-ccw":
-          return normalizeRad(heading + Math.PI / 2);
+          return normalizeDeg(headingScreenDeg + 90);
       }
     };
 
     const next = selected.map((cp) => {
-      const nextPos = transformPoint(cp.x, cp.y);
-      const nextIn = transformPoint(cp.inAbs.x, cp.inAbs.y);
-      const nextOut = transformPoint(cp.outAbs.x, cp.outAbs.y);
+      const nextPosCanvas = transformPoint(cp.canvasPos.x, cp.canvasPos.y);
+      const nextInCanvas = transformPoint(cp.canvasIn.x, cp.canvasIn.y);
+      const nextOutCanvas = transformPoint(cp.canvasOut.x, cp.canvasOut.y);
+      const nextPos = coordSys.toUser(nextPosCanvas.x, nextPosCanvas.y);
+      const nextIn = coordSys.toUser(nextInCanvas.x, nextInCanvas.y);
+      const nextOut = coordSys.toUser(nextOutCanvas.x, nextOutCanvas.y);
       return {
         ...cp,
         x: nextPos.x,
         y: nextPos.y,
-        heading: cp.heading !== null ? transformHeading(cp.heading) : null,
+        heading:
+          cp.headingScreenDeg !== null
+            ? coordSys.mapHeadingFromScreen(
+                transformHeading(cp.headingScreenDeg)
+              )
+            : null,
         inAbs: nextIn,
         outAbs: nextOut,
       };

@@ -126,10 +126,7 @@ export class CanvasCoordinateSystem {
         const sin = Math.sin(rad);
 
         const cx = userX * cos - userY * sin;
-        let cy = userX * sin + userY * cos;
-
-        // 2. ScaleY
-        cy = cy * this.scaleY;
+        const cy = (userX * sin + userY * cos) * this.scaleY;
 
         return { x: cx, y: cy };
     }

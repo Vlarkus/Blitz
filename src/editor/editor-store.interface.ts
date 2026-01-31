@@ -46,10 +46,20 @@ export interface IEditorStore {
 
   // Hover indicator (null = not hovering the canvas)
   hoverWorld: { xM: number; yM: number } | null;
+  hoveredElementName: string | null;
+  hoveredCurvePoint:
+    | { trajId: string; index: number; x: number; y: number; heading: number }
+    | null;
 
   // Hover helpers
   setHoverFromScreen(xPx: number, yPx: number): void;
   clearHover(): void;
+  setHoveredElementName(name: string | null): void;
+  setHoveredCurvePoint(
+    point:
+      | { trajId: string; index: number; x: number; y: number; heading: number }
+      | null
+  ): void;
 
   // Tool
   setActiveTool(tool: Tool): void;

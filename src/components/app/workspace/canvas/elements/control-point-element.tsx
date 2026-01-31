@@ -1,12 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Circle, Rect, Group, Line } from "react-konva";
 import Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useDataStore } from "../../../../../models/dataStore";
 import { useEditorStore } from "../../../../../editor/editor-store";
-import { useCanvasCoordinates } from "../canvas-coordinate-helper";
+import { CanvasCoordinateSystem, useCanvasCoordinates } from "../canvas-coordinate-helper";
 
 type Props = { trajId: string; cpId: string };
+
+const ROBOT_HOVER_FADE_MS = 350;
 
 export default function ControlPointElement({ trajId, cpId }: Props) {
   const cp = useDataStore((s) => s.getControlPoint(trajId, cpId));
@@ -31,20 +33,32 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
 
   const scale = useEditorStore((s) => s.activeViewport.scale);
   const activeTool = useEditorStore((s) => s.activeTool);
+  const { widthM, heightM } = useEditorStore((s) => s.robotConfig);
+  const canvasConfig = useEditorStore((s) => s.canvasConfig);
+  const hoveredElementName = useEditorStore((s) => s.hoveredElementName);
   const selectedControlPointIds = useDataStore(
     (s) => s.selectedControlPointIds
   );
+  const setHoveredElementName = useEditorStore(
+    (s) => s.setHoveredElementName
+  );
+  const hoverClearTimer = useRef<number | null>(null);
+  const transform = useCanvasCoordinates(canvasConfig);
+  const noDirConfig = {
+    ...canvasConfig,
+    coordinateSystem: {
+      ...canvasConfig.coordinateSystem,
+      rotationDirection: "CCW" as const,
+    },
+  };
+  const noDirTransform = new CanvasCoordinateSystem(noDirConfig);
 
-  const [hovered, setHovered] = useState(false);
   const dragStartPos = useRef<Record<string, { x: number; y: number }> | null>(
     null
   );
   const dragAnchorPos = useRef<{ x: number; y: number } | null>(null);
   const dragDidMove = useRef(false);
   const selectionRingRef = useRef<Konva.Group | null>(null);
-  const { widthM, heightM } = useEditorStore((s) => s.robotConfig);
-  const canvasConfig = useEditorStore((s) => s.canvasConfig);
-  const transform = useCanvasCoordinates(canvasConfig);
 
   const radius = Math.min((1 / scale) * 10, 2);
   const size = radius * 2;
@@ -54,6 +68,14 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
   const isSelected = selectedControlPointIds.includes(cpId);
   const selectionGap = Math.min((1 / scale) * 2.5, 0.6);
   const selectionStroke = isSelected ? Math.min((1 / scale) * 2, 0.5) : 0;
+
+  useEffect(() => {
+    return () => {
+      if (hoverClearTimer.current !== null) {
+        window.clearTimeout(hoverClearTimer.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const node = selectionRingRef.current;
@@ -194,12 +216,15 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
 
   const robotRadiusM = Math.sqrt(widthM * widthM + heightM * heightM) / 2;
 
-  const robotHoverGhost =
-    hovered && activeTool === "show_robot" ? (
+  const isRobotHover =
+    activeTool === "show_robot" &&
+    hoveredElementName === `cp:${trajId}:${cpId}`;
+
+  const robotHoverGhost = isRobotHover ? (
       <Group
         x={cp.x}
         y={cp.y}
-        rotation={cp.heading ? transform.mapHeading(cp.heading) : 0}
+        rotation={cp.heading ? noDirTransform.mapHeadingToScreen(cp.heading) : 0}
         listening={false}
       >
         {/* Reach circle (circumcribed) */}
@@ -299,8 +324,28 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       onDragEnd={onDragEnd}
       onMouseDown={onMouseDown}
       onMouseUp={onMouseUp}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={() => {
+        if (activeTool === "show_robot") {
+          if (hoverClearTimer.current !== null) {
+            window.clearTimeout(hoverClearTimer.current);
+            hoverClearTimer.current = null;
+          }
+          setHoveredElementName(`cp:${trajId}:${cpId}`);
+        }
+      }}
+      onMouseLeave={() => {
+        if (activeTool === "show_robot") {
+          if (hoverClearTimer.current !== null) {
+            window.clearTimeout(hoverClearTimer.current);
+          }
+          const name = `cp:${trajId}:${cpId}`;
+          hoverClearTimer.current = window.setTimeout(() => {
+            if (useEditorStore.getState().hoveredElementName === name) {
+              setHoveredElementName(null);
+            }
+          }, ROBOT_HOVER_FADE_MS);
+        }
+      }}
       onTouchStart={() =>
         useDataStore.getState().setSelectedControlPointId(cpId)
       }
@@ -318,8 +363,28 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       onDragEnd={onDragEnd}
       onMouseDown={onMouseDown}
       onMouseUp={onMouseUp}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={() => {
+        if (activeTool === "show_robot") {
+          if (hoverClearTimer.current !== null) {
+            window.clearTimeout(hoverClearTimer.current);
+            hoverClearTimer.current = null;
+          }
+          setHoveredElementName(`cp:${trajId}:${cpId}`);
+        }
+      }}
+      onMouseLeave={() => {
+        if (activeTool === "show_robot") {
+          if (hoverClearTimer.current !== null) {
+            window.clearTimeout(hoverClearTimer.current);
+          }
+          const name = `cp:${trajId}:${cpId}`;
+          hoverClearTimer.current = window.setTimeout(() => {
+            if (useEditorStore.getState().hoveredElementName === name) {
+              setHoveredElementName(null);
+            }
+          }, ROBOT_HOVER_FADE_MS);
+        }
+      }}
       onTouchStart={() =>
         useDataStore.getState().setSelectedControlPointId(cpId)
       }
@@ -406,7 +471,7 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
           stroke="#ffffff"
           strokeWidth={lineThicknessOuter}
           lineCap="round"
-          rotation={(cp.heading * 180) / Math.PI}
+          rotation={transform.mapHeading(cp.heading)}
           listening={false}
         />
         <Line
@@ -416,7 +481,7 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
           stroke="#000000"
           strokeWidth={lineThicknessInner}
           lineCap="round"
-          rotation={(cp.heading * 180) / Math.PI}
+          rotation={transform.mapHeading(cp.heading)}
           listening={false}
         />
       </Group>

@@ -63,6 +63,8 @@ export const useEditorStore = create<IEditorStore>()(
 
   // --- state ---
   hoverWorld: null,
+  hoveredElementName: null,
+  hoveredCurvePoint: null,
 
   // --- actions ---
   setHoverFromScreen(xPx, yPx) {
@@ -71,6 +73,12 @@ export const useEditorStore = create<IEditorStore>()(
   },
   clearHover() {
     set({ hoverWorld: null });
+  },
+  setHoveredElementName(name) {
+    set({ hoveredElementName: name });
+  },
+  setHoveredCurvePoint(point) {
+    set({ hoveredCurvePoint: point });
   },
 
   // Tool

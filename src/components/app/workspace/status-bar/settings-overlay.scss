@@ -96,6 +96,15 @@
                 flex-direction: column;
                 gap: 1rem;
 
+                &.horizontal {
+                    flex-direction: row;
+                    flex-wrap: wrap;
+
+                    .control-item {
+                        flex: 1 1 160px;
+                    }
+                }
+
                 .control-item {
                     display: flex;
                     flex-direction: column;
@@ -120,6 +129,45 @@
                             outline: none;
                             border-color: #007acc;
                         }
+                    }
+                }
+            }
+        }
+
+        .settings-actions {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #333;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            width: 100%;
+
+            button {
+                padding: 0.5rem 1rem;
+                border-radius: 4px;
+                font-weight: 500;
+                cursor: pointer;
+                border: none;
+                transition: all 0.2s;
+
+                &.apply-button {
+                    background: #3A86FF;
+                    color: white;
+
+                    &:hover {
+                        background: #2a6edb;
+                    }
+                }
+
+                &.discard-button {
+                    background: transparent;
+                    border: 1px solid #555;
+                    color: #ccc;
+
+                    &:hover {
+                        background: #333;
+                        color: white;
                     }
                 }
             }
@@ -167,44 +215,6 @@
                 }
             }
 
-            .settings-actions {
-                margin-top: 2rem;
-                padding-top: 1rem;
-                border-top: 1px solid #333;
-                display: flex;
-                justify-content: flex-end;
-                gap: 1rem;
-                width: 100%;
-
-                button {
-                    padding: 0.5rem 1rem;
-                    border-radius: 4px;
-                    font-weight: 500;
-                    cursor: pointer;
-                    border: none;
-                    transition: all 0.2s;
-
-                    &.apply-button {
-                        background: #3A86FF;
-                        color: white;
-
-                        &:hover {
-                            background: #2a6edb;
-                        }
-                    }
-
-                    &.discard-button {
-                        background: transparent;
-                        border: 1px solid #555;
-                        color: #ccc;
-
-                        &:hover {
-                            background: #333;
-                            color: white;
-                        }
-                    }
-                }
-            }
         }
 
         .placeholder-text {

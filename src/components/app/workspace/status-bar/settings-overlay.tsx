@@ -34,16 +34,16 @@ export default function SettingsOverlay({ onClose }: Props) {
     const setCanvasConfig = useEditorStore((s) => s.setCanvasConfig);
     const robotConfig = useEditorStore((s) => s.robotConfig);
     const setRobotConfig = useEditorStore((s) => s.setRobotConfig);
-    const distanceUnit = useEditorStore((s) => s.canvasConfig.units.distance);
+
+    // Staged Config
+    const [stagedConfig, setStagedConfig] = useState(canvasConfig);
+    const distanceUnit = stagedConfig.units.distance;
     const distanceUnitLabel =
         distanceUnit === "INCHES"
             ? "in"
             : distanceUnit === "FEET"
             ? "ft"
             : "m";
-
-    // Staged Config
-    const [stagedConfig, setStagedConfig] = useState(canvasConfig);
 
     // Access to Data
     const trajectories = useDataStore((s) => s.trajectories);
@@ -172,6 +172,12 @@ export default function SettingsOverlay({ onClose }: Props) {
                                             <option value="LEFT">Left</option>
                                         </select>
                                     </div>
+                                </div>
+                            </div>
+
+                            <div className="settings-section">
+                                <h3>Heading</h3>
+                                <div className="control-group">
                                     <div className="control-item">
                                         <label>0 Degrees Direction</label>
                                         <select
@@ -212,50 +218,6 @@ export default function SettingsOverlay({ onClose }: Props) {
                                     </div>
                                 </div>
                             </div>
-
-                            <div className="settings-section">
-                                <h3>Units</h3>
-                                <div className="control-group">
-                                    <div className="control-item">
-                                        <label>Distance Units</label>
-                                        <select
-                                            value={stagedConfig.units.distance}
-                                            onChange={(e) =>
-                                                setStagedConfig((prev) => ({
-                                                    ...prev,
-                                                    units: {
-                                                        ...prev.units,
-                                                        distance: e.target.value as DistanceUnit,
-                                                    },
-                                                }))
-                                            }
-                                        >
-                                            <option value="INCHES">Inches</option>
-                                            <option value="METERS">Meters</option>
-                                            <option value="FEET">Feet</option>
-                                        </select>
-                                    </div>
-                                    <div className="control-item">
-                                        <label>Angle Units</label>
-                                        <select
-                                            value={stagedConfig.units.angle}
-                                            onChange={(e) =>
-                                                setStagedConfig((prev) => ({
-                                                    ...prev,
-                                                    units: {
-                                                        ...prev.units,
-                                                        angle: e.target.value as AngleUnit,
-                                                    },
-                                                }))
-                                            }
-                                        >
-                                            <option value="DEGREES">Degrees</option>
-                                            <option value="RADIANS">Radians</option>
-                                            <option value="ROTATIONS">Rotations</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
                         {/* Action Buttons */}
@@ -292,8 +254,52 @@ export default function SettingsOverlay({ onClose }: Props) {
                         <h2>Defaults</h2>
 
                         <div className="settings-section">
-                            <h3>Robot Dimensions</h3>
+                            <h3>Units</h3>
                             <div className="control-group">
+                                <div className="control-item">
+                                    <label>Distance Units</label>
+                                    <select
+                                        value={stagedConfig.units.distance}
+                                        onChange={(e) =>
+                                            setStagedConfig((prev) => ({
+                                                ...prev,
+                                                units: {
+                                                    ...prev.units,
+                                                    distance: e.target.value as DistanceUnit,
+                                                },
+                                            }))
+                                        }
+                                    >
+                                        <option value="INCHES">Inches</option>
+                                        <option value="METERS">Meters</option>
+                                        <option value="FEET">Feet</option>
+                                    </select>
+                                </div>
+                                <div className="control-item">
+                                    <label>Angle Units</label>
+                                    <select
+                                        value={stagedConfig.units.angle}
+                                        onChange={(e) =>
+                                            setStagedConfig((prev) => ({
+                                                ...prev,
+                                                units: {
+                                                    ...prev.units,
+                                                    angle: e.target.value as AngleUnit,
+                                                },
+                                            }))
+                                        }
+                                    >
+                                        <option value="DEGREES">Degrees</option>
+                                        <option value="RADIANS">Radians</option>
+                                        <option value="ROTATIONS">Rotations</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="settings-section">
+                            <h3>Robot Dimensions</h3>
+                            <div className="control-group horizontal">
                                 <div className="control-item">
                                     <label>Robot Width ({distanceUnitLabel})</label>
                                     <input
@@ -336,6 +342,23 @@ export default function SettingsOverlay({ onClose }: Props) {
                                 </div>
                             </div>
                         </div>
+
+                        {hasChanges && (
+                            <div className="settings-actions">
+                                <button
+                                    className="apply-button"
+                                    onClick={applyChanges}
+                                >
+                                    Apply Changes
+                                </button>
+                                <button
+                                    className="discard-button"
+                                    onClick={() => setStagedConfig(canvasConfig)}
+                                >
+                                    Discard
+                                </button>
+                            </div>
+                        )}
                     </div>
                 );
             default:
