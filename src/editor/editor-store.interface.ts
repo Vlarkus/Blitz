@@ -17,7 +17,8 @@ export interface Viewport {
 export type AxisDirection = "UP" | "DOWN" | "LEFT" | "RIGHT";
 export type RotationDirection = "CW" | "CCW";
 export type AngleUnit = "DEGREES" | "RADIANS" | "ROTATIONS";
-export type DistanceUnit = "METERS" | "INCHES" | "FEET";
+export type BuiltInDistanceUnit = "METERS" | "INCHES" | "FEET";
+export type DistanceUnit = BuiltInDistanceUnit | "CUSTOM";
 
 export interface CanvasConfig {
   coordinateSystem: {
@@ -29,6 +30,12 @@ export interface CanvasConfig {
   units: {
     angle: AngleUnit;
     distance: DistanceUnit;
+    customDistance: {
+      // 1 custom unit = factor * baseUnit
+      factor: number;
+      baseUnit: BuiltInDistanceUnit;
+      name: string;
+    };
   };
 }
 

@@ -48,6 +48,7 @@ export default function ControlPointInfo() {
   );
 
   const distanceUnit = useEditorStore((s) => s.canvasConfig.units.distance);
+  const unitsConfig = useEditorStore((s) => s.canvasConfig.units);
   const angleUnit = useEditorStore((s) => s.canvasConfig.units.angle);
 
   const cpSymmetry = useDataStore((s) => {
@@ -98,7 +99,7 @@ export default function ControlPointInfo() {
           {selectedControlPointId ? (
             <>
               <EditableLabel<number>
-                value={metersToDistance(cpX, distanceUnit)}
+                value={metersToDistance(cpX, distanceUnit, unitsConfig)}
                 maxIntegerDigits={4}
                 maxDecimalDigits={3}
                 onCommit={(nextX) => {
@@ -107,7 +108,7 @@ export default function ControlPointInfo() {
                   // Coerce to number, guard against NaN/undefined
                   const xUnits =
                     typeof nextX === "number" ? nextX : Number(nextX);
-                  const x = distanceToMeters(xUnits, distanceUnit);
+                  const x = distanceToMeters(xUnits, distanceUnit, unitsConfig);
                   if (!Number.isFinite(x)) return; // ignore invalid commits
 
                   const prevX = cp.x;
@@ -147,7 +148,7 @@ export default function ControlPointInfo() {
           {selectedControlPointId ? (
             <>
               <EditableLabel<number>
-                value={metersToDistance(cpY, distanceUnit)}
+                value={metersToDistance(cpY, distanceUnit, unitsConfig)}
                 maxIntegerDigits={4}
                 maxDecimalDigits={3}
                 onCommit={(nextY) => {
@@ -156,7 +157,7 @@ export default function ControlPointInfo() {
                   // Coerce to number, guard against NaN/undefined
                   const yUnits =
                     typeof nextY === "number" ? nextY : Number(nextY);
-                  const y = distanceToMeters(yUnits, distanceUnit);
+                  const y = distanceToMeters(yUnits, distanceUnit, unitsConfig);
                   if (!Number.isFinite(y)) return; // ignore invalid commits
 
                   const prevX = Number.isFinite(cp.x) ? cp.x : 0;

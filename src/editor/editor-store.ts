@@ -204,6 +204,11 @@ export const useEditorStore = create<IEditorStore>()(
     units: {
       angle: "DEGREES",
       distance: "INCHES",
+      customDistance: {
+        factor: 1,
+        baseUnit: "INCHES",
+        name: "custom",
+      },
     },
   },
   setCanvasConfig(config) {
@@ -223,6 +228,10 @@ export const useEditorStore = create<IEditorStore>()(
           units: {
             ...s.canvasConfig.units,
             ...(newConfig.units || {}),
+            customDistance: {
+              ...s.canvasConfig.units.customDistance,
+              ...(newConfig.units?.customDistance || {}),
+            },
           },
         },
       };
@@ -236,7 +245,29 @@ export const useEditorStore = create<IEditorStore>()(
         canvasConfig: state.canvasConfig,
         robotConfig: state.robotConfig,
       }),
-      version: 1,
+      version: 2,
+      migrate: (persistedState: unknown) => {
+        const state = persistedState as Partial<IEditorStore> | undefined;
+        if (!state) return state as IEditorStore;
+
+        const units = state.canvasConfig?.units;
+        if (!units) return state as IEditorStore;
+
+        return {
+          ...state,
+          canvasConfig: {
+            ...state.canvasConfig,
+            units: {
+              ...units,
+              customDistance: {
+                factor: units.customDistance?.factor ?? 1,
+                baseUnit: units.customDistance?.baseUnit ?? "INCHES",
+                name: units.customDistance?.name ?? "custom",
+              },
+            },
+          },
+        } as IEditorStore;
+      },
     },
   ),
 );

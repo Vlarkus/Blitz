@@ -9,6 +9,7 @@ export default function StatusBar() {
   const hover = useEditorStore((s) => s.hoverWorld); // { xM, yM } | null
   const scale = useEditorStore((s) => s.activeViewport.scale); // px per meter
   const distanceUnit = useEditorStore((s) => s.canvasConfig.units.distance);
+  const unitsConfig = useEditorStore((s) => s.canvasConfig.units);
 
   const emptyValue = "-";
   const fmt = (n: number) => n.toFixed(COORD_PRECISION);
@@ -19,12 +20,12 @@ export default function StatusBar() {
       <div className="status-cluster status-cluster-left">
         <div className="status-segment side-panel-element status-segment-pos">
           <span className="status-pos-item">
-            x: {hover ? fmt(metersToDistance(hover.xM, distanceUnit)) : emptyValue}
+            x: {hover ? fmt(metersToDistance(hover.xM, distanceUnit, unitsConfig)) : emptyValue}
           </span>
         </div>
         <div className="status-segment side-panel-element status-segment-pos">
           <span className="status-pos-item">
-            y: {hover ? fmt(metersToDistance(hover.yM, distanceUnit)) : emptyValue}
+            y: {hover ? fmt(metersToDistance(hover.yM, distanceUnit, unitsConfig)) : emptyValue}
           </span>
         </div>
       </div>
