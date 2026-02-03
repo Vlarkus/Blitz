@@ -4,7 +4,10 @@ import Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useDataStore } from "../../../../../models/dataStore";
 import { useEditorStore } from "../../../../../editor/editor-store";
-import { useCanvasCoordinates } from "../canvas-coordinate-helper";
+import {
+  CanvasCoordinateSystem,
+  useCanvasCoordinates,
+} from "../canvas-coordinate-helper";
 
 type Props = { trajId: string; cpId: string };
 
@@ -27,6 +30,7 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
   const cutTrajectoryAt = useDataStore((s) => s.cutTrajectoryAt);
   const moveControlPoint = useDataStore((s) => s.moveControlPoint);
   const execute = useDataStore((s) => s.execute);
+  const getHandlePosition = useDataStore((s) => s.getHandlePosition);
   const getTrajectoryIdByControlPointId = useDataStore(
     (s) => s.getTrajectoryIdByControlPointId,
   );
@@ -42,6 +46,7 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
   const setHoveredElementName = useEditorStore((s) => s.setHoveredElementName);
   const hoverClearTimer = useRef<number | null>(null);
   const transform = useCanvasCoordinates(canvasConfig);
+  const coordSys = new CanvasCoordinateSystem(canvasConfig);
 
   const dragStartPos = useRef<Record<string, { x: number; y: number }> | null>(
     null,
@@ -107,6 +112,65 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
   const isLast =
     traj.controlPoints.length > 0 &&
     traj.controlPoints[traj.controlPoints.length - 1].id === cp.id;
+
+  const inferredHeading = (() => {
+    if (cp.heading !== null) return cp.heading;
+
+    const vectorToHeadingCw = (dx: number, dy: number) => {
+      if (dx === 0 && dy === 0) return 0;
+      const v = coordSys.fromUser(dx, dy);
+      const screenAngleDeg = (Math.atan2(v.y, v.x) * 180) / Math.PI;
+      const cwScreenDeg = screenAngleDeg + 90;
+      return coordSys.mapHeadingFromScreen(cwScreenDeg);
+    };
+
+    const cps = traj.controlPoints;
+    const idx = cps.findIndex((p) => p.id === cp.id);
+    if (idx < 0) return 0;
+
+    const prev = idx > 0 ? cps[idx - 1] : null;
+    const next = idx < cps.length - 1 ? cps[idx + 1] : null;
+
+    // Build local tangents from the visible path (Bezier handles when applicable).
+    const incoming = (() => {
+      if (!prev) return null as { x: number; y: number } | null;
+      if (prev.splineType === "BEZIER") {
+        const hIn = getHandlePosition(traj.id, cp.id, "in");
+        if (hIn) return { x: cp.x - hIn.x, y: cp.y - hIn.y };
+      }
+      return { x: cp.x - prev.x, y: cp.y - prev.y };
+    })();
+
+    const outgoing = (() => {
+      if (!next) return null as { x: number; y: number } | null;
+      if (cp.splineType === "BEZIER") {
+        const hOut = getHandlePosition(traj.id, cp.id, "out");
+        if (hOut) return { x: hOut.x - cp.x, y: hOut.y - cp.y };
+      }
+      return { x: next.x - cp.x, y: next.y - cp.y };
+    })();
+
+    // Middle CP: average inbound and outbound tangent directions.
+    if (prev && next) {
+      const v1x = incoming?.x ?? 0;
+      const v1y = incoming?.y ?? 0;
+      const v2x = outgoing?.x ?? 0;
+      const v2y = outgoing?.y ?? 0;
+      const n1 = Math.hypot(v1x, v1y) || 1;
+      const n2 = Math.hypot(v2x, v2y) || 1;
+      const vx = v1x / n1 + v2x / n2;
+      const vy = v1y / n1 + v2y / n2;
+      if (vx !== 0 || vy !== 0) return vectorToHeadingCw(vx, vy);
+      if (v2x !== 0 || v2y !== 0) return vectorToHeadingCw(v2x, v2y);
+      if (v1x !== 0 || v1y !== 0) return vectorToHeadingCw(v1x, v1y);
+      return 0;
+    }
+
+    // Endpoints: use the only adjacent segment direction.
+    if (outgoing) return vectorToHeadingCw(outgoing.x, outgoing.y);
+    if (incoming) return vectorToHeadingCw(incoming.x, incoming.y);
+    return 0;
+  })();
 
   const draggable = !cp.isLocked && !traj.isLocked && activeTool === "select";
 
@@ -227,12 +291,12 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
     hoveredElementName === `cp:${trajId}:${cpId}`;
 
   const robotHoverGhost = isRobotHover ? (
-    <Group
-      x={cp.x}
-      y={cp.y}
-      rotation={cp.heading ? transform.mapHeading(cp.heading) : 0}
-      listening={false}
-    >
+      <Group
+        x={cp.x}
+        y={cp.y}
+        rotation={transform.mapHeading(inferredHeading)}
+        listening={false}
+      >
       {/* Reach circle (circumcribed) */}
       <Circle
         radius={robotRadiusM}
