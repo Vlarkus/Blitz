@@ -16,19 +16,19 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
 
   const removeControlPoint = useDataStore((s) => s.removeControlPoint);
   const setSelectedControlPointId = useDataStore(
-    (s) => s.setSelectedControlPointId
+    (s) => s.setSelectedControlPointId,
   );
   const toggleSelectedControlPointId = useDataStore(
-    (s) => s.toggleSelectedControlPointId
+    (s) => s.toggleSelectedControlPointId,
   );
   const setSelectedTrajectoryId = useDataStore(
-    (s) => s.setSelectedTrajectoryId
+    (s) => s.setSelectedTrajectoryId,
   );
   const cutTrajectoryAt = useDataStore((s) => s.cutTrajectoryAt);
   const moveControlPoint = useDataStore((s) => s.moveControlPoint);
   const execute = useDataStore((s) => s.execute);
   const getTrajectoryIdByControlPointId = useDataStore(
-    (s) => s.getTrajectoryIdByControlPointId
+    (s) => s.getTrajectoryIdByControlPointId,
   );
 
   const scale = useEditorStore((s) => s.activeViewport.scale);
@@ -37,20 +37,18 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
   const canvasConfig = useEditorStore((s) => s.canvasConfig);
   const hoveredElementName = useEditorStore((s) => s.hoveredElementName);
   const selectedControlPointIds = useDataStore(
-    (s) => s.selectedControlPointIds
+    (s) => s.selectedControlPointIds,
   );
-  const setHoveredElementName = useEditorStore(
-    (s) => s.setHoveredElementName
-  );
+  const setHoveredElementName = useEditorStore((s) => s.setHoveredElementName);
   const hoverClearTimer = useRef<number | null>(null);
   const transform = useCanvasCoordinates(canvasConfig);
 
   const dragStartPos = useRef<Record<string, { x: number; y: number }> | null>(
-    null
+    null,
   );
   const dragAnchorPos = useRef<{ x: number; y: number } | null>(null);
   const dragDidMove = useRef(false);
-  const selectionRingRef = useRef<Konva.Group | null>(null);
+  const selectionRingStrokeRef = useRef<Konva.Shape | null>(null);
 
   const radius = Math.min((1 / scale) * 10, 2);
   const size = radius * 2;
@@ -60,6 +58,21 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
   const isSelected = selectedControlPointIds.includes(cpId);
   const selectionGap = Math.min((1 / scale) * 2.5, 0.6);
   const selectionStroke = isSelected ? Math.min((1 / scale) * 2, 0.5) : 0;
+  const selectionRingSize = size + selectionGap * 2;
+  const selectionRingRadius = radius + selectionGap;
+  const selectionPerimeter = cp?.isEvent
+    ? 4 * selectionRingSize
+    : 2 * Math.PI * selectionRingRadius;
+  const targetDashCycle = Math.max(selectionGap * 3.2, 0.001);
+  const dashRepeatCount = Math.max(
+    8,
+    Math.round(selectionPerimeter / targetDashCycle),
+  );
+  const selectionDashCycle = selectionPerimeter / dashRepeatCount;
+  const selectionDash: [number, number] = [
+    selectionDashCycle / 2,
+    selectionDashCycle / 2,
+  ];
 
   useEffect(() => {
     return () => {
@@ -70,21 +83,24 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
   }, []);
 
   useEffect(() => {
-    const node = selectionRingRef.current;
+    const node = selectionRingStrokeRef.current;
     if (!node || !isSelected) return;
     const layer = node.getLayer();
     if (!layer) return;
 
+    const dashSpeed = selectionDashCycle * 1.5;
     const anim = new Konva.Animation((frame) => {
       const t = (frame?.time ?? 0) / 1000;
-      node.rotation((t * 10) % 360);
+      const ring = selectionRingStrokeRef.current;
+      if (!ring) return;
+      ring.dashOffset((t * dashSpeed) % selectionDashCycle);
     }, layer);
 
     anim.start();
     return () => {
       anim.stop();
     };
-  }, [isSelected]);
+  }, [isSelected, selectionDashCycle, cp?.isEvent]);
 
   if (!cp || !traj) return null;
 
@@ -121,9 +137,7 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       }
 
       if (!shift && !cp?.isLocked && !traj?.isLocked) {
-        const idsToMove = alreadySelected
-          ? selectedControlPointIds
-          : [cpId];
+        const idsToMove = alreadySelected ? selectedControlPointIds : [cpId];
         const startPositions: Record<string, { x: number; y: number }> = {};
         idsToMove.forEach((id) => {
           const tId = getTrajectoryIdByControlPointId(id);
@@ -213,87 +227,89 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
     hoveredElementName === `cp:${trajId}:${cpId}`;
 
   const robotHoverGhost = isRobotHover ? (
-      <Group
-        x={cp.x}
-        y={cp.y}
-        rotation={cp.heading ? transform.mapHeading(cp.heading) : 0}
-        listening={false}
-      >
-        {/* Reach circle (circumcribed) */}
-        <Circle
-          radius={robotRadiusM}
-          stroke="#ffffff"
-          strokeWidth={robotStroke}
+    <Group
+      x={cp.x}
+      y={cp.y}
+      rotation={cp.heading ? transform.mapHeading(cp.heading) : 0}
+      listening={false}
+    >
+      {/* Reach circle (circumcribed) */}
+      <Circle
+        radius={robotRadiusM}
+        stroke="#ffffff"
+        strokeWidth={robotStroke}
         // dash={[robotRadiusM * 0.25, robotRadiusM * 0.25]}
-        />
+      />
 
-        {/* Robot footprint (Configurable) */}
-        <Rect
-          x={-widthM / 2}
-          y={-heightM / 2}
-          width={widthM}
-          height={heightM}
-          stroke="#ffffff"
-          strokeWidth={robotStroke}
-          dash={[widthM * 0.15, heightM * 0.15]}
-        />
-        {/* Front indicator - shaft + arrowhead */}
-        <Line
-          points={[
-            0,
-            0, // Start at center
-            widthM * 0.45,
-            0, // Shaft ENDPOINT like heading line
-          ]}
-          stroke="#ffffff"
-          strokeWidth={robotStroke * 1.5}
-          lineCap="round"
-          lineJoin="round"
-        />
-        {/* Arrowhead */}
-        <Line
-          points={[
-            widthM * 0.45,
-            0, // Arrow tip (matches shaft end)
-            widthM * 0.35,
-            -widthM * 0.08, // Left barb
-            widthM * 0.45,
-            0, // Back to tip
-            widthM * 0.35,
-            widthM * 0.08, // Right barb
-          ]}
-          stroke="#ffffff"
-          strokeWidth={robotStroke * 1.2}
-          lineCap="round"
-          lineJoin="round"
-          closed
-        />
-      </Group>
-    ) : null;
+      {/* Robot footprint (Configurable) */}
+      <Rect
+        x={-widthM / 2}
+        y={-heightM / 2}
+        width={widthM}
+        height={heightM}
+        stroke="#ffffff"
+        strokeWidth={robotStroke}
+        dash={[widthM * 0.15, heightM * 0.15]}
+      />
+      {/* Front indicator - shaft + arrowhead */}
+      <Line
+        points={[
+          0,
+          0, // Start at center
+          widthM * 0.45,
+          0, // Shaft ENDPOINT like heading line
+        ]}
+        stroke="#ffffff"
+        strokeWidth={robotStroke * 1.5}
+        lineCap="round"
+        lineJoin="round"
+      />
+      {/* Arrowhead */}
+      <Line
+        points={[
+          widthM * 0.45,
+          0, // Arrow tip (matches shaft end)
+          widthM * 0.35,
+          -widthM * 0.08, // Left barb
+          widthM * 0.45,
+          0, // Back to tip
+          widthM * 0.35,
+          widthM * 0.08, // Right barb
+        ]}
+        stroke="#ffffff"
+        strokeWidth={robotStroke * 1.2}
+        lineCap="round"
+        lineJoin="round"
+        closed
+      />
+    </Group>
+  ) : null;
 
   // --- Selection ring ---
   const selectionRing = isSelected ? (
-    <Group x={cp.x} y={cp.y} ref={selectionRingRef} listening={false}>
+    <Group x={cp.x} y={cp.y} listening={false}>
       {cp.isEvent ? (
         <Rect
+          ref={selectionRingStrokeRef}
           x={0}
           y={0}
-          width={size + selectionGap * 2}
-          height={size + selectionGap * 2}
-          offsetX={(size + selectionGap * 2) / 2}
-          offsetY={(size + selectionGap * 2) / 2}
+          width={selectionRingSize}
+          height={selectionRingSize}
+          offsetX={selectionRingSize / 2}
+          offsetY={selectionRingSize / 2}
           stroke="#ffffff"
           strokeWidth={selectionStroke}
-          dash={[selectionGap * 2, selectionGap * 1.2]}
+          dash={selectionDash}
         />
       ) : (
         <Circle
+          ref={selectionRingStrokeRef}
           x={0}
           y={0}
-          radius={radius + selectionGap}
+          radius={selectionRingRadius}
           stroke="#ffffff"
           strokeWidth={selectionStroke}
-          dash={[selectionGap * 2, selectionGap * 1.2]}
+          dash={selectionDash}
         />
       )}
     </Group>
@@ -311,7 +327,7 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       offsetY={size / 2}
       fill={traj.color}
       draggable={draggable}
-      hitStrokeWidth={12}
+      hitStrokeWidth={0}
       onDragMove={onDragMove}
       onDragEnd={onDragEnd}
       onMouseDown={onMouseDown}
