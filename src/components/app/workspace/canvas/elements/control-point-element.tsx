@@ -4,7 +4,10 @@ import Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useDataStore } from "../../../../../models/dataStore";
 import { useEditorStore } from "../../../../../editor/editor-store";
-import { useCanvasCoordinates } from "../canvas-coordinate-helper";
+import {
+  CanvasCoordinateSystem,
+  useCanvasCoordinates,
+} from "../canvas-coordinate-helper";
 
 type Props = { trajId: string; cpId: string };
 
@@ -16,19 +19,20 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
 
   const removeControlPoint = useDataStore((s) => s.removeControlPoint);
   const setSelectedControlPointId = useDataStore(
-    (s) => s.setSelectedControlPointId
+    (s) => s.setSelectedControlPointId,
   );
   const toggleSelectedControlPointId = useDataStore(
-    (s) => s.toggleSelectedControlPointId
+    (s) => s.toggleSelectedControlPointId,
   );
   const setSelectedTrajectoryId = useDataStore(
-    (s) => s.setSelectedTrajectoryId
+    (s) => s.setSelectedTrajectoryId,
   );
   const cutTrajectoryAt = useDataStore((s) => s.cutTrajectoryAt);
   const moveControlPoint = useDataStore((s) => s.moveControlPoint);
   const execute = useDataStore((s) => s.execute);
+  const getHandlePosition = useDataStore((s) => s.getHandlePosition);
   const getTrajectoryIdByControlPointId = useDataStore(
-    (s) => s.getTrajectoryIdByControlPointId
+    (s) => s.getTrajectoryIdByControlPointId,
   );
 
   const scale = useEditorStore((s) => s.activeViewport.scale);
@@ -37,20 +41,20 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
   const canvasConfig = useEditorStore((s) => s.canvasConfig);
   const hoveredElementName = useEditorStore((s) => s.hoveredElementName);
   const selectedControlPointIds = useDataStore(
-    (s) => s.selectedControlPointIds
+    (s) => s.selectedControlPointIds,
   );
-  const setHoveredElementName = useEditorStore(
-    (s) => s.setHoveredElementName
-  );
+  const setHoveredElementName = useEditorStore((s) => s.setHoveredElementName);
   const hoverClearTimer = useRef<number | null>(null);
   const transform = useCanvasCoordinates(canvasConfig);
+  const coordSys = new CanvasCoordinateSystem(canvasConfig);
 
   const dragStartPos = useRef<Record<string, { x: number; y: number }> | null>(
-    null
+    null,
   );
   const dragAnchorPos = useRef<{ x: number; y: number } | null>(null);
   const dragDidMove = useRef(false);
-  const selectionRingRef = useRef<Konva.Group | null>(null);
+  const selectionRingRectRef = useRef<Konva.Rect | null>(null);
+  const selectionRingCircleRef = useRef<Konva.Circle | null>(null);
 
   const radius = Math.min((1 / scale) * 10, 2);
   const size = radius * 2;
@@ -60,6 +64,21 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
   const isSelected = selectedControlPointIds.includes(cpId);
   const selectionGap = Math.min((1 / scale) * 2.5, 0.6);
   const selectionStroke = isSelected ? Math.min((1 / scale) * 2, 0.5) : 0;
+  const selectionRingSize = size + selectionGap * 2;
+  const selectionRingRadius = radius + selectionGap;
+  const selectionPerimeter = cp?.isEvent
+    ? 4 * selectionRingSize
+    : 2 * Math.PI * selectionRingRadius;
+  const targetDashCycle = Math.max(selectionGap * 3.2, 0.001);
+  const dashRepeatCount = Math.max(
+    8,
+    Math.round(selectionPerimeter / targetDashCycle),
+  );
+  const selectionDashCycle = selectionPerimeter / dashRepeatCount;
+  const selectionDash: [number, number] = [
+    selectionDashCycle / 2,
+    selectionDashCycle / 2,
+  ];
 
   useEffect(() => {
     return () => {
@@ -70,27 +89,93 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
   }, []);
 
   useEffect(() => {
-    const node = selectionRingRef.current;
+    const node = cp?.isEvent
+      ? selectionRingRectRef.current
+      : selectionRingCircleRef.current;
     if (!node || !isSelected) return;
     const layer = node.getLayer();
     if (!layer) return;
 
+    const dashSpeed = selectionDashCycle * 1.5;
     const anim = new Konva.Animation((frame) => {
       const t = (frame?.time ?? 0) / 1000;
-      node.rotation((t * 10) % 360);
+      const ring = cp?.isEvent
+        ? selectionRingRectRef.current
+        : selectionRingCircleRef.current;
+      if (!ring) return;
+      ring.dashOffset((t * dashSpeed) % selectionDashCycle);
     }, layer);
 
     anim.start();
     return () => {
       anim.stop();
     };
-  }, [isSelected]);
+  }, [isSelected, selectionDashCycle, cp?.isEvent]);
 
   if (!cp || !traj) return null;
 
   const isLast =
     traj.controlPoints.length > 0 &&
     traj.controlPoints[traj.controlPoints.length - 1].id === cp.id;
+
+  const inferredHeading = (() => {
+    if (cp.heading !== null) return cp.heading;
+
+    const vectorToHeadingCw = (dx: number, dy: number) => {
+      if (dx === 0 && dy === 0) return 0;
+      const v = coordSys.fromUser(dx, dy);
+      const screenAngleDeg = (Math.atan2(v.y, v.x) * 180) / Math.PI;
+      const cwScreenDeg = screenAngleDeg + 90;
+      return coordSys.mapHeadingFromScreen(cwScreenDeg);
+    };
+
+    const cps = traj.controlPoints;
+    const idx = cps.findIndex((p) => p.id === cp.id);
+    if (idx < 0) return 0;
+
+    const prev = idx > 0 ? cps[idx - 1] : null;
+    const next = idx < cps.length - 1 ? cps[idx + 1] : null;
+
+    // Build local tangents from the visible path (Bezier handles when applicable).
+    const incoming = (() => {
+      if (!prev) return null as { x: number; y: number } | null;
+      if (prev.splineType === "BEZIER") {
+        const hIn = getHandlePosition(traj.id, cp.id, "in");
+        if (hIn) return { x: cp.x - hIn.x, y: cp.y - hIn.y };
+      }
+      return { x: cp.x - prev.x, y: cp.y - prev.y };
+    })();
+
+    const outgoing = (() => {
+      if (!next) return null as { x: number; y: number } | null;
+      if (cp.splineType === "BEZIER") {
+        const hOut = getHandlePosition(traj.id, cp.id, "out");
+        if (hOut) return { x: hOut.x - cp.x, y: hOut.y - cp.y };
+      }
+      return { x: next.x - cp.x, y: next.y - cp.y };
+    })();
+
+    // Middle CP: average inbound and outbound tangent directions.
+    if (prev && next) {
+      const v1x = incoming?.x ?? 0;
+      const v1y = incoming?.y ?? 0;
+      const v2x = outgoing?.x ?? 0;
+      const v2y = outgoing?.y ?? 0;
+      const n1 = Math.hypot(v1x, v1y) || 1;
+      const n2 = Math.hypot(v2x, v2y) || 1;
+      const vx = v1x / n1 + v2x / n2;
+      const vy = v1y / n1 + v2y / n2;
+      if (vx !== 0 || vy !== 0) return vectorToHeadingCw(vx, vy);
+      if (v2x !== 0 || v2y !== 0) return vectorToHeadingCw(v2x, v2y);
+      if (v1x !== 0 || v1y !== 0) return vectorToHeadingCw(v1x, v1y);
+      return 0;
+    }
+
+    // Endpoints: use the only adjacent segment direction.
+    if (outgoing) return vectorToHeadingCw(outgoing.x, outgoing.y);
+    if (incoming) return vectorToHeadingCw(incoming.x, incoming.y);
+    return 0;
+  })();
 
   const draggable = !cp.isLocked && !traj.isLocked && activeTool === "select";
 
@@ -121,9 +206,7 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       }
 
       if (!shift && !cp?.isLocked && !traj?.isLocked) {
-        const idsToMove = alreadySelected
-          ? selectedControlPointIds
-          : [cpId];
+        const idsToMove = alreadySelected ? selectedControlPointIds : [cpId];
         const startPositions: Record<string, { x: number; y: number }> = {};
         idsToMove.forEach((id) => {
           const tId = getTrajectoryIdByControlPointId(id);
@@ -216,84 +299,86 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       <Group
         x={cp.x}
         y={cp.y}
-        rotation={cp.heading ? transform.mapHeading(cp.heading) : 0}
+        rotation={transform.mapHeading(inferredHeading)}
         listening={false}
       >
-        {/* Reach circle (circumcribed) */}
-        <Circle
-          radius={robotRadiusM}
-          stroke="#ffffff"
-          strokeWidth={robotStroke}
+      {/* Reach circle (circumcribed) */}
+      <Circle
+        radius={robotRadiusM}
+        stroke="#ffffff"
+        strokeWidth={robotStroke}
         // dash={[robotRadiusM * 0.25, robotRadiusM * 0.25]}
-        />
+      />
 
-        {/* Robot footprint (Configurable) */}
-        <Rect
-          x={-widthM / 2}
-          y={-heightM / 2}
-          width={widthM}
-          height={heightM}
-          stroke="#ffffff"
-          strokeWidth={robotStroke}
-          dash={[widthM * 0.15, heightM * 0.15]}
-        />
-        {/* Front indicator - shaft + arrowhead */}
-        <Line
-          points={[
-            0,
-            0, // Start at center
-            widthM * 0.45,
-            0, // Shaft ENDPOINT like heading line
-          ]}
-          stroke="#ffffff"
-          strokeWidth={robotStroke * 1.5}
-          lineCap="round"
-          lineJoin="round"
-        />
-        {/* Arrowhead */}
-        <Line
-          points={[
-            widthM * 0.45,
-            0, // Arrow tip (matches shaft end)
-            widthM * 0.35,
-            -widthM * 0.08, // Left barb
-            widthM * 0.45,
-            0, // Back to tip
-            widthM * 0.35,
-            widthM * 0.08, // Right barb
-          ]}
-          stroke="#ffffff"
-          strokeWidth={robotStroke * 1.2}
-          lineCap="round"
-          lineJoin="round"
-          closed
-        />
-      </Group>
-    ) : null;
+      {/* Robot footprint (Configurable) */}
+      <Rect
+        x={-widthM / 2}
+        y={-heightM / 2}
+        width={widthM}
+        height={heightM}
+        stroke="#ffffff"
+        strokeWidth={robotStroke}
+        dash={[widthM * 0.15, heightM * 0.15]}
+      />
+      {/* Front indicator - shaft + arrowhead */}
+      <Line
+        points={[
+          0,
+          0, // Start at center
+          widthM * 0.45,
+          0, // Shaft ENDPOINT like heading line
+        ]}
+        stroke="#ffffff"
+        strokeWidth={robotStroke * 1.5}
+        lineCap="round"
+        lineJoin="round"
+      />
+      {/* Arrowhead */}
+      <Line
+        points={[
+          widthM * 0.45,
+          0, // Arrow tip (matches shaft end)
+          widthM * 0.35,
+          -widthM * 0.08, // Left barb
+          widthM * 0.45,
+          0, // Back to tip
+          widthM * 0.35,
+          widthM * 0.08, // Right barb
+        ]}
+        stroke="#ffffff"
+        strokeWidth={robotStroke * 1.2}
+        lineCap="round"
+        lineJoin="round"
+        closed
+      />
+    </Group>
+  ) : null;
 
   // --- Selection ring ---
   const selectionRing = isSelected ? (
-    <Group x={cp.x} y={cp.y} ref={selectionRingRef} listening={false}>
+    <Group x={cp.x} y={cp.y} listening={false}>
       {cp.isEvent ? (
         <Rect
+          ref={selectionRingRectRef}
           x={0}
           y={0}
-          width={size + selectionGap * 2}
-          height={size + selectionGap * 2}
-          offsetX={(size + selectionGap * 2) / 2}
-          offsetY={(size + selectionGap * 2) / 2}
+          width={selectionRingSize}
+          height={selectionRingSize}
+          offsetX={selectionRingSize / 2}
+          offsetY={selectionRingSize / 2}
           stroke="#ffffff"
           strokeWidth={selectionStroke}
-          dash={[selectionGap * 2, selectionGap * 1.2]}
+          dash={selectionDash}
         />
       ) : (
         <Circle
+          ref={selectionRingCircleRef}
           x={0}
           y={0}
-          radius={radius + selectionGap}
+          radius={selectionRingRadius}
           stroke="#ffffff"
           strokeWidth={selectionStroke}
-          dash={[selectionGap * 2, selectionGap * 1.2]}
+          dash={selectionDash}
         />
       )}
     </Group>
@@ -311,7 +396,7 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       offsetY={size / 2}
       fill={traj.color}
       draggable={draggable}
-      hitStrokeWidth={12}
+      hitStrokeWidth={0}
       onDragMove={onDragMove}
       onDragEnd={onDragEnd}
       onMouseDown={onMouseDown}

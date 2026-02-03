@@ -9,6 +9,7 @@ import { useEditorStore } from "../../../../editor/editor-store";
 import type {
   AngleUnit,
   AxisDirection,
+  BuiltInDistanceUnit,
   DistanceUnit,
   RotationDirection,
 } from "../../../../editor/editor-store.interface";
@@ -34,16 +35,14 @@ export default function SettingsOverlay({ onClose }: Props) {
     const setCanvasConfig = useEditorStore((s) => s.setCanvasConfig);
     const robotConfig = useEditorStore((s) => s.robotConfig);
     const setRobotConfig = useEditorStore((s) => s.setRobotConfig);
+    const robotDimensionUnits = useEditorStore((s) => s.robotDimensionUnits);
+    const setRobotDimensionUnits = useEditorStore((s) => s.setRobotDimensionUnits);
 
     // Staged Config
     const [stagedConfig, setStagedConfig] = useState(canvasConfig);
-    const distanceUnit = stagedConfig.units.distance;
-    const distanceUnitLabel =
-        distanceUnit === "INCHES"
-            ? "in"
-            : distanceUnit === "FEET"
-            ? "ft"
-            : "m";
+    const robotWidthUnit = robotDimensionUnits.width;
+    const robotHeightUnit = robotDimensionUnits.height;
+    const customDistance = stagedConfig.units.customDistance;
 
     // Access to Data
     const trajectories = useDataStore((s) => s.trajectories);
@@ -79,6 +78,10 @@ export default function SettingsOverlay({ onClose }: Props) {
         });
 
         setCanvasConfig(stagedConfig);
+    };
+
+    const discardChanges = () => {
+        setStagedConfig(canvasConfig);
     };
 
     const hasChanges = JSON.stringify(canvasConfig) !== JSON.stringify(stagedConfig);
@@ -220,23 +223,6 @@ export default function SettingsOverlay({ onClose }: Props) {
                             </div>
                         </div>
 
-                        {/* Action Buttons */}
-                        {hasChanges && (
-                            <div className="settings-actions">
-                                <button
-                                    className="apply-button"
-                                    onClick={applyChanges}
-                                >
-                                    Apply Changes
-                                </button>
-                                <button
-                                    className="discard-button"
-                                    onClick={() => setStagedConfig(canvasConfig)}
-                                >
-                                    Discard
-                                </button>
-                            </div>
-                        )}
                     </div>
                 );
             case "Keybinds":
@@ -258,23 +244,99 @@ export default function SettingsOverlay({ onClose }: Props) {
                             <div className="control-group">
                                 <div className="control-item">
                                     <label>Distance Units</label>
-                                    <select
-                                        value={stagedConfig.units.distance}
-                                        onChange={(e) =>
-                                            setStagedConfig((prev) => ({
-                                                ...prev,
+                                        <select
+                                            value={stagedConfig.units.distance}
+                                            onChange={(e) =>
+                                                setStagedConfig((prev) => ({
+                                                    ...prev,
                                                 units: {
                                                     ...prev.units,
                                                     distance: e.target.value as DistanceUnit,
                                                 },
                                             }))
-                                        }
-                                    >
-                                        <option value="INCHES">Inches</option>
-                                        <option value="METERS">Meters</option>
-                                        <option value="FEET">Feet</option>
-                                    </select>
-                                </div>
+                                            }
+                                        >
+                                            <option value="INCHES">Inches</option>
+                                            <option value="METERS">Meters</option>
+                                            <option value="FEET">Feet</option>
+                                            <option value="CUSTOM">
+                                                {customDistance.name?.trim()
+                                                    ? `Custom (${customDistance.name.trim()})`
+                                                    : "Custom"}
+                                            </option>
+                                        </select>
+                                        {stagedConfig.units.distance === "CUSTOM" && (
+                                            <div className="custom-distance-section">
+                                                <div className="control-item">
+                                                    <label>Custom Conversion</label>
+                                                    <div className="custom-distance-row">
+                                                        <span>1 custom unit =</span>
+                                                        <input
+                                                            type="number"
+                                                            min="0.000001"
+                                                            step="0.01"
+                                                            value={customDistance.factor}
+                                                            onChange={(e) =>
+                                                                setStagedConfig((prev) => ({
+                                                                    ...prev,
+                                                                    units: {
+                                                                        ...prev.units,
+                                                                        customDistance: {
+                                                                            ...prev.units.customDistance,
+                                                                            factor: Math.max(
+                                                                                0.000001,
+                                                                                parseFloat(e.target.value) || 0
+                                                                            ),
+                                                                        },
+                                                                    },
+                                                                }))
+                                                            }
+                                                        />
+                                                        <select
+                                                            value={customDistance.baseUnit}
+                                                            onChange={(e) =>
+                                                                setStagedConfig((prev) => ({
+                                                                    ...prev,
+                                                                    units: {
+                                                                        ...prev.units,
+                                                                        customDistance: {
+                                                                            ...prev.units.customDistance,
+                                                                            baseUnit:
+                                                                                e.target.value as BuiltInDistanceUnit,
+                                                                        },
+                                                                    },
+                                                                }))
+                                                            }
+                                                        >
+                                                            <option value="INCHES">Inches</option>
+                                                            <option value="METERS">Meters</option>
+                                                            <option value="FEET">Feet</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div className="control-item">
+                                                    <label>Custom Unit Name</label>
+                                                    <input
+                                                        type="text"
+                                                        value={customDistance.name}
+                                                        onChange={(e) =>
+                                                            setStagedConfig((prev) => ({
+                                                                ...prev,
+                                                                units: {
+                                                                    ...prev.units,
+                                                                    customDistance: {
+                                                                        ...prev.units.customDistance,
+                                                                        name: e.target.value,
+                                                                    },
+                                                                },
+                                                            }))
+                                                        }
+                                                        placeholder="e.g. tiles"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 <div className="control-item">
                                     <label>Angle Units</label>
                                     <select
@@ -299,66 +361,92 @@ export default function SettingsOverlay({ onClose }: Props) {
 
                         <div className="settings-section">
                             <h3>Robot Dimensions</h3>
-                            <div className="control-group horizontal">
+                            <div className="control-group">
                                 <div className="control-item">
-                                    <label>Robot Width ({distanceUnitLabel})</label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        value={metersToDistance(
-                                            robotConfig.widthM,
-                                            distanceUnit
-                                        )}
-                                        onChange={(e) =>
-                                            setRobotConfig({
-                                                widthM:
-                                                    distanceToMeters(
-                                                        parseFloat(e.target.value) || 0,
-                                                        distanceUnit
-                                                    ),
-                                            })
-                                        }
-                                    />
+                                    <label>Robot Width</label>
+                                    <div className="dimension-input-row">
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={metersToDistance(
+                                                robotConfig.widthM,
+                                                robotWidthUnit,
+                                                stagedConfig.units
+                                            )}
+                                            onChange={(e) =>
+                                                setRobotConfig({
+                                                    widthM:
+                                                        distanceToMeters(
+                                                            parseFloat(e.target.value) || 0,
+                                                            robotWidthUnit,
+                                                            stagedConfig.units
+                                                        ),
+                                                })
+                                            }
+                                        />
+                                        <select
+                                            value={robotWidthUnit}
+                                            onChange={(e) =>
+                                                setRobotDimensionUnits({
+                                                    width: e.target.value as DistanceUnit,
+                                                })
+                                            }
+                                        >
+                                            <option value="INCHES">Inches</option>
+                                            <option value="METERS">Meters</option>
+                                            <option value="FEET">Feet</option>
+                                            <option value="CUSTOM">
+                                                {customDistance.name?.trim()
+                                                    ? `Custom (${customDistance.name.trim()})`
+                                                    : "Custom"}
+                                            </option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <div className="control-item">
-                                    <label>Robot Height ({distanceUnitLabel})</label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        value={metersToDistance(
-                                            robotConfig.heightM,
-                                            distanceUnit
-                                        )}
-                                        onChange={(e) =>
-                                            setRobotConfig({
-                                                heightM:
-                                                    distanceToMeters(
-                                                        parseFloat(e.target.value) || 0,
-                                                        distanceUnit
-                                                    ),
-                                            })
-                                        }
-                                    />
+                                    <label>Robot Height</label>
+                                    <div className="dimension-input-row">
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={metersToDistance(
+                                                robotConfig.heightM,
+                                                robotHeightUnit,
+                                                stagedConfig.units
+                                            )}
+                                            onChange={(e) =>
+                                                setRobotConfig({
+                                                    heightM:
+                                                        distanceToMeters(
+                                                            parseFloat(e.target.value) || 0,
+                                                            robotHeightUnit,
+                                                            stagedConfig.units
+                                                        ),
+                                                })
+                                            }
+                                        />
+                                        <select
+                                            value={robotHeightUnit}
+                                            onChange={(e) =>
+                                                setRobotDimensionUnits({
+                                                    height: e.target.value as DistanceUnit,
+                                                })
+                                            }
+                                        >
+                                            <option value="INCHES">Inches</option>
+                                            <option value="METERS">Meters</option>
+                                            <option value="FEET">Feet</option>
+                                            <option value="CUSTOM">
+                                                {customDistance.name?.trim()
+                                                    ? `Custom (${customDistance.name.trim()})`
+                                                    : "Custom"}
+                                            </option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        {hasChanges && (
-                            <div className="settings-actions">
-                                <button
-                                    className="apply-button"
-                                    onClick={applyChanges}
-                                >
-                                    Apply Changes
-                                </button>
-                                <button
-                                    className="discard-button"
-                                    onClick={() => setStagedConfig(canvasConfig)}
-                                >
-                                    Discard
-                                </button>
-                            </div>
-                        )}
                     </div>
                 );
             default:
@@ -369,10 +457,6 @@ export default function SettingsOverlay({ onClose }: Props) {
     return (
         <div className="settings-overlay-backdrop" onClick={handleBackdropClick}>
             <div className="settings-overlay">
-                <button className="close-button" onClick={onClose}>
-                    <FontAwesomeIcon icon={faTimes} />
-                </button>
-
                 <div className="settings-sidebar">
                     <div className="sidebar-header">Settings</div>
                     {["Canvas", "Keybinds", "Defaults"].map((section) => (
@@ -385,7 +469,30 @@ export default function SettingsOverlay({ onClose }: Props) {
                         </button>
                     ))}
                 </div>
-                <div className="settings-content">{renderContent()}</div>
+                <div className="settings-main">
+                    <div className="settings-topbar">
+                        {hasChanges && (
+                            <div className="settings-topbar-actions">
+                                <button
+                                    className="apply-button"
+                                    onClick={applyChanges}
+                                >
+                                    Apply
+                                </button>
+                                <button
+                                    className="discard-button"
+                                    onClick={discardChanges}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        )}
+                        <button className="close-button" onClick={onClose}>
+                            <FontAwesomeIcon icon={faTimes} />
+                        </button>
+                    </div>
+                    <div className="settings-content">{renderContent()}</div>
+                </div>
             </div>
         </div>
     );

@@ -31,7 +31,36 @@ const KEYBINDS = {
 
 export function useKeybinds() {
   useEffect(() => {
+    const isEditableElement = (el: Element | null): boolean => {
+      if (!(el instanceof HTMLElement)) return false;
+      if (el.isContentEditable) return true;
+      const tag = el.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
+      if (el.getAttribute("role") === "textbox") return true;
+      return !!el.closest('[contenteditable="true"]');
+    };
+
+    const shouldIgnoreHotkeys = (e: KeyboardEvent): boolean => {
+      // If any focusable control owns focus, do not run global hotkeys.
+      const active = document.activeElement;
+      if (active && active !== document.body && active !== document.documentElement) {
+        if (isEditableElement(active)) return true;
+      }
+
+      if (isEditableElement(e.target as Element | null)) return true;
+
+      const path = typeof e.composedPath === "function" ? e.composedPath() : [];
+      for (const node of path) {
+        if (node instanceof Element && isEditableElement(node)) return true;
+      }
+      return false;
+    };
+
     const onKeyDown = (e: KeyboardEvent) => {
+      if (shouldIgnoreHotkeys(e)) {
+        return;
+      }
+
       const isMac = navigator.platform.toUpperCase().includes("MAC");
       const mod = isMac ? e.metaKey : e.ctrlKey;
       const shift = e.shiftKey;

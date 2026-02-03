@@ -67,6 +67,9 @@ export const useEditorStore = create<IEditorStore>()(
   hoveredCurvePoint: null,
 
   // --- actions ---
+  setHoverWorld(xM, yM) {
+    set({ hoverWorld: { xM, yM } });
+  },
   setHoverFromScreen(xPx, yPx) {
     const { xM, yM } = get().screenToWorld(xPx, yPx);
     set({ hoverWorld: { xM, yM } });
@@ -188,9 +191,18 @@ export const useEditorStore = create<IEditorStore>()(
     widthM: 0.4572, // 18 inches
     heightM: 0.4572, // 18 inches
   },
+  robotDimensionUnits: {
+    width: "INCHES",
+    height: "INCHES",
+  },
   setRobotConfig(config) {
     set((s) => ({
       robotConfig: { ...s.robotConfig, ...config },
+    }));
+  },
+  setRobotDimensionUnits(config) {
+    set((s) => ({
+      robotDimensionUnits: { ...s.robotDimensionUnits, ...config },
     }));
   },
 
@@ -204,6 +216,11 @@ export const useEditorStore = create<IEditorStore>()(
     units: {
       angle: "DEGREES",
       distance: "INCHES",
+      customDistance: {
+        factor: 1,
+        baseUnit: "INCHES",
+        name: "custom",
+      },
     },
   },
   setCanvasConfig(config) {
@@ -223,6 +240,10 @@ export const useEditorStore = create<IEditorStore>()(
           units: {
             ...s.canvasConfig.units,
             ...(newConfig.units || {}),
+            customDistance: {
+              ...s.canvasConfig.units.customDistance,
+              ...(newConfig.units?.customDistance || {}),
+            },
           },
         },
       };
@@ -235,8 +256,44 @@ export const useEditorStore = create<IEditorStore>()(
       partialize: (state) => ({
         canvasConfig: state.canvasConfig,
         robotConfig: state.robotConfig,
+        robotDimensionUnits: state.robotDimensionUnits,
       }),
-      version: 1,
+      version: 3,
+      migrate: (persistedState: unknown) => {
+        const state = persistedState as Partial<IEditorStore> | undefined;
+        if (!state) return state as unknown as IEditorStore;
+
+        const units = state.canvasConfig?.units;
+        const robotDimensionUnits = state.robotDimensionUnits;
+        if (!units) {
+          return {
+            ...state,
+            robotDimensionUnits: {
+              width: robotDimensionUnits?.width ?? "INCHES",
+              height: robotDimensionUnits?.height ?? "INCHES",
+            },
+          } as IEditorStore;
+        }
+
+        return {
+          ...state,
+          robotDimensionUnits: {
+            width: robotDimensionUnits?.width ?? "INCHES",
+            height: robotDimensionUnits?.height ?? "INCHES",
+          },
+          canvasConfig: {
+            ...state.canvasConfig,
+            units: {
+              ...units,
+              customDistance: {
+                factor: units.customDistance?.factor ?? 1,
+                baseUnit: units.customDistance?.baseUnit ?? "INCHES",
+                name: units.customDistance?.name ?? "custom",
+              },
+            },
+          },
+        } as IEditorStore;
+      },
     },
   ),
 );

@@ -149,7 +149,8 @@ export default function Canvas() {
     const pos = stage?.getPointerPosition();
     if (pos) {
       // always update hover, even when not panning or over shapes
-      setHoverFromScreen(pos.x, pos.y);
+      const hover = transform.screenToUser(pos.x, pos.y, activeViewport);
+      setHoverWorld(hover.x, hover.y);
     } else {
       // pointer left the stage surface but event bubbled — clear hover
       clearHover();
@@ -272,7 +273,7 @@ export default function Canvas() {
   const worldTop = -activeViewport.originY / activeViewport.scale;
 
   // Manage mouse position while hovering over canvas.
-  const setHoverFromScreen = useEditorStore((s) => s.setHoverFromScreen);
+  const setHoverWorld = useEditorStore((s) => s.setHoverWorld);
   const clearHover = useEditorStore((s) => s.clearHover);
 
   return (

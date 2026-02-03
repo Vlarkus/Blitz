@@ -200,21 +200,19 @@ export default function TrajectoryElement({ trajId }: Props) {
   const scale = useEditorStore((s) => s.activeViewport.scale);
   const canvasConfig = useEditorStore((s) => s.canvasConfig);
 
-  // ----- Geometry helpers (local) -----
-  const coordSys = new CanvasCoordinateSystem(canvasConfig);
-  const vectorToHeadingCw = (dx: number, dy: number) => {
-    if (dx === 0 && dy === 0) return 0;
-    const v = coordSys.fromUser(dx, dy);
-    const screenAngleDeg = (Math.atan2(v.y, v.x) * 180) / Math.PI;
-    const cwScreenDeg = screenAngleDeg + 90;
-    return coordSys.mapHeadingFromScreen(cwScreenDeg);
-  };
-
   const shouldRenderCurvePoints =
     activeTool === "insert" || activeTool === "show_robot";
 
   const curvePoints = useMemo(() => {
     if (!shouldRenderCurvePoints || !traj) return [];
+    const coordSys = new CanvasCoordinateSystem(canvasConfig);
+    const vectorToHeadingCw = (dx: number, dy: number) => {
+      if (dx === 0 && dy === 0) return 0;
+      const v = coordSys.fromUser(dx, dy);
+      const screenAngleDeg = (Math.atan2(v.y, v.x) * 180) / Math.PI;
+      const cwScreenDeg = screenAngleDeg + 90;
+      return coordSys.mapHeadingFromScreen(cwScreenDeg);
+    };
     return buildCurvePoints(
       traj,
       getHandlePosition,
@@ -226,7 +224,6 @@ export default function TrajectoryElement({ trajId }: Props) {
     traj,
     getHandlePosition,
     canvasConfig,
-    vectorToHeadingCw,
   ]);
 
   if (!traj) return null;

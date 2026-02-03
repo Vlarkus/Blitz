@@ -20,6 +20,7 @@ export default function HelperPointInfo() {
   const selectedControlPointId = useDataStore((s) => s.selectedControlPointId);
   const hasSel = !!(selectedTrajectoryId && selectedControlPointId);
   const distanceUnit = useEditorStore((s) => s.canvasConfig.units.distance);
+  const unitsConfig = useEditorStore((s) => s.canvasConfig.units);
   const angleUnit = useEditorStore((s) => s.canvasConfig.units.angle);
 
   // ---- Subscribe to primitives only (avoid new object snapshots) ----
@@ -139,18 +140,18 @@ export default function HelperPointInfo() {
 
     if (mode === "polar") {
       return part === "primary"
-        ? metersToDistance(r, distanceUnit)
+        ? metersToDistance(r, distanceUnit, unitsConfig)
         : radiansToAngle(th, angleUnit);
     }
     if (mode === "relative") {
       return part === "primary"
-        ? metersToDistance(dx, distanceUnit)
-        : metersToDistance(dy, distanceUnit);
+        ? metersToDistance(dx, distanceUnit, unitsConfig)
+        : metersToDistance(dy, distanceUnit, unitsConfig);
     }
     // absolute
     return part === "primary"
-      ? metersToDistance(which === "in" ? baseX + dxIn : baseX + dxOut, distanceUnit)
-      : metersToDistance(which === "in" ? baseY + dyIn : baseY + dyOut, distanceUnit);
+      ? metersToDistance(which === "in" ? baseX + dxIn : baseX + dxOut, distanceUnit, unitsConfig)
+      : metersToDistance(which === "in" ? baseY + dyIn : baseY + dyOut, distanceUnit, unitsConfig);
   };
 
   // ---- Write updates back via store (no objects returned) ----
@@ -168,7 +169,10 @@ export default function HelperPointInfo() {
       // UI shows the selected angle unit; convert to radians before sending.
       const curR = which === "in" ? rIn : rOut;
       const curTheta = which === "in" ? thIn : thOut;
-      const r = part === "primary" ? distanceToMeters(val, distanceUnit) : curR;
+      const r =
+        part === "primary"
+          ? distanceToMeters(val, distanceUnit, unitsConfig)
+          : curR;
       const theta = angleToRadians(
         part === "secondary" ? val : curTheta,
         angleUnit
@@ -194,9 +198,13 @@ export default function HelperPointInfo() {
       const curDx = which === "in" ? dxIn : dxOut;
       const curDy = which === "in" ? dyIn : dyOut;
       const dx =
-        part === "primary" ? distanceToMeters(val, distanceUnit) : curDx;
+        part === "primary"
+          ? distanceToMeters(val, distanceUnit, unitsConfig)
+          : curDx;
       const dy =
-        part === "secondary" ? distanceToMeters(val, distanceUnit) : curDy;
+        part === "secondary"
+          ? distanceToMeters(val, distanceUnit, unitsConfig)
+          : curDy;
       const prevPos = { type: "relative" as const, dx: curDx, dy: curDy };
       execute({
         redo: () => {
@@ -213,9 +221,13 @@ export default function HelperPointInfo() {
     const curX = which === "in" ? xInAbs : xOutAbs;
     const curY = which === "in" ? yInAbs : yOutAbs;
     const x =
-      part === "primary" ? distanceToMeters(val, distanceUnit) : curX;
+      part === "primary"
+        ? distanceToMeters(val, distanceUnit, unitsConfig)
+        : curX;
     const y =
-      part === "secondary" ? distanceToMeters(val, distanceUnit) : curY;
+      part === "secondary"
+        ? distanceToMeters(val, distanceUnit, unitsConfig)
+        : curY;
     const prevPos = { type: "absolute" as const, x: curX, y: curY };
     execute({
       redo: () => {
