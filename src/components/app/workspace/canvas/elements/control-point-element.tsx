@@ -53,7 +53,8 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
   );
   const dragAnchorPos = useRef<{ x: number; y: number } | null>(null);
   const dragDidMove = useRef(false);
-  const selectionRingStrokeRef = useRef<Konva.Shape | null>(null);
+  const selectionRingRectRef = useRef<Konva.Rect | null>(null);
+  const selectionRingCircleRef = useRef<Konva.Circle | null>(null);
 
   const radius = Math.min((1 / scale) * 10, 2);
   const size = radius * 2;
@@ -88,7 +89,9 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
   }, []);
 
   useEffect(() => {
-    const node = selectionRingStrokeRef.current;
+    const node = cp?.isEvent
+      ? selectionRingRectRef.current
+      : selectionRingCircleRef.current;
     if (!node || !isSelected) return;
     const layer = node.getLayer();
     if (!layer) return;
@@ -96,7 +99,9 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
     const dashSpeed = selectionDashCycle * 1.5;
     const anim = new Konva.Animation((frame) => {
       const t = (frame?.time ?? 0) / 1000;
-      const ring = selectionRingStrokeRef.current;
+      const ring = cp?.isEvent
+        ? selectionRingRectRef.current
+        : selectionRingCircleRef.current;
       if (!ring) return;
       ring.dashOffset((t * dashSpeed) % selectionDashCycle);
     }, layer);
@@ -354,7 +359,7 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
     <Group x={cp.x} y={cp.y} listening={false}>
       {cp.isEvent ? (
         <Rect
-          ref={selectionRingStrokeRef}
+          ref={selectionRingRectRef}
           x={0}
           y={0}
           width={selectionRingSize}
@@ -367,7 +372,7 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
         />
       ) : (
         <Circle
-          ref={selectionRingStrokeRef}
+          ref={selectionRingCircleRef}
           x={0}
           y={0}
           radius={selectionRingRadius}

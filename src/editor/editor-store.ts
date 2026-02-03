@@ -67,6 +67,9 @@ export const useEditorStore = create<IEditorStore>()(
   hoveredCurvePoint: null,
 
   // --- actions ---
+  setHoverWorld(xM, yM) {
+    set({ hoverWorld: { xM, yM } });
+  },
   setHoverFromScreen(xPx, yPx) {
     const { xM, yM } = get().screenToWorld(xPx, yPx);
     set({ hoverWorld: { xM, yM } });
@@ -188,9 +191,18 @@ export const useEditorStore = create<IEditorStore>()(
     widthM: 0.4572, // 18 inches
     heightM: 0.4572, // 18 inches
   },
+  robotDimensionUnits: {
+    width: "INCHES",
+    height: "INCHES",
+  },
   setRobotConfig(config) {
     set((s) => ({
       robotConfig: { ...s.robotConfig, ...config },
+    }));
+  },
+  setRobotDimensionUnits(config) {
+    set((s) => ({
+      robotDimensionUnits: { ...s.robotDimensionUnits, ...config },
     }));
   },
 
@@ -244,17 +256,31 @@ export const useEditorStore = create<IEditorStore>()(
       partialize: (state) => ({
         canvasConfig: state.canvasConfig,
         robotConfig: state.robotConfig,
+        robotDimensionUnits: state.robotDimensionUnits,
       }),
-      version: 2,
+      version: 3,
       migrate: (persistedState: unknown) => {
         const state = persistedState as Partial<IEditorStore> | undefined;
-        if (!state) return state as IEditorStore;
+        if (!state) return state as unknown as IEditorStore;
 
         const units = state.canvasConfig?.units;
-        if (!units) return state as IEditorStore;
+        const robotDimensionUnits = state.robotDimensionUnits;
+        if (!units) {
+          return {
+            ...state,
+            robotDimensionUnits: {
+              width: robotDimensionUnits?.width ?? "INCHES",
+              height: robotDimensionUnits?.height ?? "INCHES",
+            },
+          } as IEditorStore;
+        }
 
         return {
           ...state,
+          robotDimensionUnits: {
+            width: robotDimensionUnits?.width ?? "INCHES",
+            height: robotDimensionUnits?.height ?? "INCHES",
+          },
           canvasConfig: {
             ...state.canvasConfig,
             units: {

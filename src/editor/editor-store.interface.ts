@@ -49,6 +49,10 @@ export interface IEditorStore {
   activeTool: Tool;
   activeViewport: Viewport;
   robotConfig: RobotConfig;
+  robotDimensionUnits: {
+    width: DistanceUnit;
+    height: DistanceUnit;
+  };
   canvasConfig: CanvasConfig;
 
   // Hover indicator (null = not hovering the canvas)
@@ -59,6 +63,7 @@ export interface IEditorStore {
     | null;
 
   // Hover helpers
+  setHoverWorld(xM: number, yM: number): void;
   setHoverFromScreen(xPx: number, yPx: number): void;
   clearHover(): void;
   setHoveredElementName(name: string | null): void;
@@ -91,5 +96,6 @@ export interface IEditorStore {
 
   // Settings
   setRobotConfig(config: Partial<RobotConfig>): void;
+  setRobotDimensionUnits(config: Partial<{ width: DistanceUnit; height: DistanceUnit }>): void;
   setCanvasConfig(config: Partial<CanvasConfig> | ((prev: CanvasConfig) => Partial<CanvasConfig>)): void;
 }

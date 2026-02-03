@@ -35,15 +35,13 @@ export default function SettingsOverlay({ onClose }: Props) {
     const setCanvasConfig = useEditorStore((s) => s.setCanvasConfig);
     const robotConfig = useEditorStore((s) => s.robotConfig);
     const setRobotConfig = useEditorStore((s) => s.setRobotConfig);
+    const robotDimensionUnits = useEditorStore((s) => s.robotDimensionUnits);
+    const setRobotDimensionUnits = useEditorStore((s) => s.setRobotDimensionUnits);
 
     // Staged Config
     const [stagedConfig, setStagedConfig] = useState(canvasConfig);
-    const [robotWidthUnit, setRobotWidthUnit] = useState<DistanceUnit>(
-        canvasConfig.units.distance
-    );
-    const [robotHeightUnit, setRobotHeightUnit] = useState<DistanceUnit>(
-        canvasConfig.units.distance
-    );
+    const robotWidthUnit = robotDimensionUnits.width;
+    const robotHeightUnit = robotDimensionUnits.height;
     const customDistance = stagedConfig.units.customDistance;
 
     // Access to Data
@@ -84,8 +82,6 @@ export default function SettingsOverlay({ onClose }: Props) {
 
     const discardChanges = () => {
         setStagedConfig(canvasConfig);
-        setRobotWidthUnit(canvasConfig.units.distance);
-        setRobotHeightUnit(canvasConfig.units.distance);
     };
 
     const hasChanges = JSON.stringify(canvasConfig) !== JSON.stringify(stagedConfig);
@@ -391,9 +387,9 @@ export default function SettingsOverlay({ onClose }: Props) {
                                         <select
                                             value={robotWidthUnit}
                                             onChange={(e) =>
-                                                setRobotWidthUnit(
-                                                    e.target.value as DistanceUnit
-                                                )
+                                                setRobotDimensionUnits({
+                                                    width: e.target.value as DistanceUnit,
+                                                })
                                             }
                                         >
                                             <option value="INCHES">Inches</option>
@@ -432,9 +428,9 @@ export default function SettingsOverlay({ onClose }: Props) {
                                         <select
                                             value={robotHeightUnit}
                                             onChange={(e) =>
-                                                setRobotHeightUnit(
-                                                    e.target.value as DistanceUnit
-                                                )
+                                                setRobotDimensionUnits({
+                                                    height: e.target.value as DistanceUnit,
+                                                })
                                             }
                                         >
                                             <option value="INCHES">Inches</option>
