@@ -50,6 +50,9 @@ export default function ControlPointInfo() {
   const distanceUnit = useEditorStore((s) => s.canvasConfig.units.distance);
   const unitsConfig = useEditorStore((s) => s.canvasConfig.units);
   const angleUnit = useEditorStore((s) => s.canvasConfig.units.angle);
+  const independentHeading = useEditorStore(
+    (s) => s.robotConfig.independentHeading
+  );
 
   const cpSymmetry = useDataStore((s) => {
     if (!selectedTrajectoryId || !selectedControlPointId) return "";
@@ -198,35 +201,6 @@ export default function ControlPointInfo() {
           </label>
           {selectedControlPointId ? (
             <>
-              <input
-                type="checkbox"
-                className="checkbox"
-                checked={cpHeading !== null}
-                onChange={(e) => {
-                  if (!selectedTrajectoryId || !selectedControlPointId) return;
-
-                  const prevHeading = cpHeading;
-                  const newHeading = e.target.checked ? 0 : null;
-
-                  execute({
-                    redo: () => {
-                      setControlPointHeading(
-                        selectedTrajectoryId,
-                        selectedControlPointId,
-                        newHeading
-                      );
-                    },
-                    undo: () => {
-                      setControlPointHeading(
-                        selectedTrajectoryId,
-                        selectedControlPointId,
-                        prevHeading
-                      );
-                    },
-                  });
-                }}
-              />
-
               <EditableLabel<number>
                 // Display in degrees
                 value={
@@ -242,8 +216,9 @@ export default function ControlPointInfo() {
                   allowNegative: true, // needed for negative degrees
                 }}
                 ariaLabel="Heading (degrees)"
-                className={cpHeading === null ? "label-disabled" : undefined}
+                className={!independentHeading ? "label-disabled" : undefined}
                 onCommit={(nextHeadingDeg) => {
+                  if (!independentHeading) return;
                   const headingVal =
                     typeof nextHeadingDeg === "number"
                       ? nextHeadingDeg

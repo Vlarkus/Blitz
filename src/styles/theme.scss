@@ -60,18 +60,18 @@ button {
 
   &:checked {
     color: $active;
-    transform: scale(1.1);
+    background-color: $bg-light;
 
     &::after {
       content: "";
       position: absolute;
-      left: 0.4rem;
-      top: 0.3rem;
-      width: 0.3rem;
+      left: 50%;
+      top: 50%;
+      width: 0.28rem;
       height: 0.5rem;
       border: solid $active;
       border-width: 0 0.15rem 0.15rem 0;
-      transform: rotate(45deg);
+      transform: translate(-50%, -60%) rotate(45deg);
     }
   }
 }

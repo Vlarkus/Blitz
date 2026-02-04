@@ -22,6 +22,9 @@ export default function Canvas() {
   const zoomBy = useEditorStore((s) => s.zoomBy);
 
   const activeTool = useEditorStore((s) => s.activeTool); // ...
+  const independentHeading = useEditorStore(
+    (s) => s.robotConfig.independentHeading
+  );
 
   const selectedTrajectoryId = useDataStore((s) => s.selectedTrajectoryId);
   // const selectedControlPointId = useDataStore((s) => s.selectedControlPointId);
@@ -123,7 +126,12 @@ export default function Canvas() {
         const { x, y } = transform.screenToUser(pos.x, pos.y, activeViewport);
 
         // Construct CP first so we know its id
-        const cp = new ControlPoint("Control Point", x, y);
+        const cp = new ControlPoint(
+          "Control Point",
+          x,
+          y,
+          independentHeading ? 0 : null
+        );
         const trajId = selectedTrajectoryId;
         const cpId = cp.id;
 

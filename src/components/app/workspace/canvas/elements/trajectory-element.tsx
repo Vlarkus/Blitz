@@ -199,6 +199,9 @@ export default function TrajectoryElement({ trajId }: Props) {
   const activeTool = useEditorStore((s) => s.activeTool);
   const scale = useEditorStore((s) => s.activeViewport.scale);
   const canvasConfig = useEditorStore((s) => s.canvasConfig);
+  const independentHeading = useEditorStore(
+    (s) => s.robotConfig.independentHeading,
+  );
 
   const shouldRenderCurvePoints =
     activeTool === "insert" || activeTool === "show_robot";
@@ -269,7 +272,12 @@ export default function TrajectoryElement({ trajId }: Props) {
             if (traj.controlPoints.length < 2) return;
             const cps = traj.controlPoints;
             const afterCpId = cps[pt.segIndex].id;
-            const newCp = new ControlPoint("", pt.x, pt.y);
+            const newCp = new ControlPoint(
+              "",
+              pt.x,
+              pt.y,
+              independentHeading ? 0 : null,
+            );
             insertControlPointAfter(trajId, afterCpId, newCp);
             setSelectedControlPointId(newCp.id);
           }}
