@@ -7,18 +7,18 @@ import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import CoordinatePreview from "./coordinate-preview";
 import { useEditorStore } from "../../../../editor/editor-store";
 import type {
-  AngleUnit,
-  AxisDirection,
-  BuiltInDistanceUnit,
-  DistanceUnit,
-  RotationDirection,
+    AngleUnit,
+    AxisDirection,
+    BuiltInDistanceUnit,
+    DistanceUnit,
+    RotationDirection,
 } from "../../../../editor/editor-store.interface";
 import {
-  distanceToMeters,
-  metersToDistance,
+    distanceToMeters,
+    metersToDistance,
 } from "../../../../utils/unit-conversion";
 
-type Section = "Canvas" | "Keybinds" | "Defaults";
+type Section = "Canvas" | "Keybinds" | "Defaults" | "Robot";
 
 interface Props {
     onClose: () => void;
@@ -244,81 +244,38 @@ export default function SettingsOverlay({ onClose }: Props) {
                             <div className="control-group">
                                 <div className="control-item">
                                     <label>Distance Units</label>
-                                        <select
-                                            value={stagedConfig.units.distance}
-                                            onChange={(e) =>
-                                                setStagedConfig((prev) => ({
-                                                    ...prev,
+                                    <select
+                                        value={stagedConfig.units.distance}
+                                        onChange={(e) =>
+                                            setStagedConfig((prev) => ({
+                                                ...prev,
                                                 units: {
                                                     ...prev.units,
                                                     distance: e.target.value as DistanceUnit,
                                                 },
                                             }))
-                                            }
-                                        >
-                                            <option value="INCHES">Inches</option>
-                                            <option value="METERS">Meters</option>
-                                            <option value="FEET">Feet</option>
-                                            <option value="CUSTOM">
-                                                {customDistance.name?.trim()
-                                                    ? `Custom (${customDistance.name.trim()})`
-                                                    : "Custom"}
-                                            </option>
-                                        </select>
-                                        {stagedConfig.units.distance === "CUSTOM" && (
-                                            <div className="custom-distance-section">
-                                                <div className="control-item">
-                                                    <label>Custom Conversion</label>
-                                                    <div className="custom-distance-row">
-                                                        <span>1 custom unit =</span>
-                                                        <input
-                                                            type="number"
-                                                            min="0.000001"
-                                                            step="0.01"
-                                                            value={customDistance.factor}
-                                                            onChange={(e) =>
-                                                                setStagedConfig((prev) => ({
-                                                                    ...prev,
-                                                                    units: {
-                                                                        ...prev.units,
-                                                                        customDistance: {
-                                                                            ...prev.units.customDistance,
-                                                                            factor: Math.max(
-                                                                                0.000001,
-                                                                                parseFloat(e.target.value) || 0
-                                                                            ),
-                                                                        },
-                                                                    },
-                                                                }))
-                                                            }
-                                                        />
-                                                        <select
-                                                            value={customDistance.baseUnit}
-                                                            onChange={(e) =>
-                                                                setStagedConfig((prev) => ({
-                                                                    ...prev,
-                                                                    units: {
-                                                                        ...prev.units,
-                                                                        customDistance: {
-                                                                            ...prev.units.customDistance,
-                                                                            baseUnit:
-                                                                                e.target.value as BuiltInDistanceUnit,
-                                                                        },
-                                                                    },
-                                                                }))
-                                                            }
-                                                        >
-                                                            <option value="INCHES">Inches</option>
-                                                            <option value="METERS">Meters</option>
-                                                            <option value="FEET">Feet</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div className="control-item">
-                                                    <label>Custom Unit Name</label>
+                                        }
+                                    >
+                                        <option value="INCHES">Inches</option>
+                                        <option value="METERS">Meters</option>
+                                        <option value="FEET">Feet</option>
+                                        <option value="CUSTOM">
+                                            {customDistance.name?.trim()
+                                                ? `Custom (${customDistance.name.trim()})`
+                                                : "Custom"}
+                                        </option>
+                                    </select>
+                                    {stagedConfig.units.distance === "CUSTOM" && (
+                                        <div className="custom-distance-section">
+                                            <div className="control-item">
+                                                <label>Custom Conversion</label>
+                                                <div className="custom-distance-row">
+                                                    <span>1 custom unit =</span>
                                                     <input
-                                                        type="text"
-                                                        value={customDistance.name}
+                                                        type="number"
+                                                        min="0.000001"
+                                                        step="0.01"
+                                                        value={customDistance.factor}
                                                         onChange={(e) =>
                                                             setStagedConfig((prev) => ({
                                                                 ...prev,
@@ -326,17 +283,60 @@ export default function SettingsOverlay({ onClose }: Props) {
                                                                     ...prev.units,
                                                                     customDistance: {
                                                                         ...prev.units.customDistance,
-                                                                        name: e.target.value,
+                                                                        factor: Math.max(
+                                                                            0.000001,
+                                                                            parseFloat(e.target.value) || 0
+                                                                        ),
                                                                     },
                                                                 },
                                                             }))
                                                         }
-                                                        placeholder="e.g. tiles"
                                                     />
+                                                    <select
+                                                        value={customDistance.baseUnit}
+                                                        onChange={(e) =>
+                                                            setStagedConfig((prev) => ({
+                                                                ...prev,
+                                                                units: {
+                                                                    ...prev.units,
+                                                                    customDistance: {
+                                                                        ...prev.units.customDistance,
+                                                                        baseUnit:
+                                                                            e.target.value as BuiltInDistanceUnit,
+                                                                    },
+                                                                },
+                                                            }))
+                                                        }
+                                                    >
+                                                        <option value="INCHES">Inches</option>
+                                                        <option value="METERS">Meters</option>
+                                                        <option value="FEET">Feet</option>
+                                                    </select>
                                                 </div>
                                             </div>
-                                        )}
-                                    </div>
+                                            <div className="control-item">
+                                                <label>Custom Unit Name</label>
+                                                <input
+                                                    type="text"
+                                                    value={customDistance.name}
+                                                    onChange={(e) =>
+                                                        setStagedConfig((prev) => ({
+                                                            ...prev,
+                                                            units: {
+                                                                ...prev.units,
+                                                                customDistance: {
+                                                                    ...prev.units.customDistance,
+                                                                    name: e.target.value,
+                                                                },
+                                                            },
+                                                        }))
+                                                    }
+                                                    placeholder="e.g. tiles"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                                 <div className="control-item">
                                     <label>Angle Units</label>
                                     <select
@@ -358,6 +358,13 @@ export default function SettingsOverlay({ onClose }: Props) {
                                 </div>
                             </div>
                         </div>
+
+                    </div>
+                );
+            case "Robot":
+                return (
+                    <div>
+                        <h2>Robot</h2>
 
                         <div className="settings-section">
                             <h3>Robot Dimensions</h3>
@@ -404,7 +411,7 @@ export default function SettingsOverlay({ onClose }: Props) {
                                     </div>
                                 </div>
                                 <div className="control-item">
-                                    <label>Robot Height</label>
+                                    <label>Robot Length</label>
                                     <div className="dimension-input-row">
                                         <input
                                             type="number"
@@ -447,6 +454,25 @@ export default function SettingsOverlay({ onClose }: Props) {
                             </div>
                         </div>
 
+                        <div className="settings-section">
+                            <h3>Robot Behavior</h3>
+                            <div className="control-group">
+                                <div className="control-item checkbox-item">
+                                    <label>Independent Heading (Heading separate from movement)</label>
+                                    <input
+                                        type="checkbox"
+                                        className="checkbox"
+                                        checked={robotConfig.independentHeading}
+                                        onChange={(e) =>
+                                            setRobotConfig({
+                                                independentHeading: e.target.checked,
+                                            })
+                                        }
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 );
             default:
@@ -459,7 +485,7 @@ export default function SettingsOverlay({ onClose }: Props) {
             <div className="settings-overlay">
                 <div className="settings-sidebar">
                     <div className="sidebar-header">Settings</div>
-                    {["Canvas", "Keybinds", "Defaults"].map((section) => (
+                    {["Canvas", "Defaults", "Robot"].map((section) => (
                         <button
                             key={section}
                             className={activeSection === section ? "active" : ""}

@@ -106,7 +106,7 @@ export default function CurvePointElement({
     <Group
       x={ghostPose.x}
       y={ghostPose.y}
-        rotation={transform.mapHeading(ghostPose.heading)}
+      rotation={transform.mapHeading(ghostPose.heading)}
       listening={false}
     >
       <Circle
@@ -115,16 +115,16 @@ export default function CurvePointElement({
         strokeWidth={robotStroke}
       />
       <Rect
-        x={-widthM / 2}
-        y={-heightM / 2}
-        width={widthM}
-        height={heightM}
+        x={-heightM / 2}
+        y={-widthM / 2}
+        width={heightM}
+        height={widthM}
         stroke="#ffffff"
         strokeWidth={robotStroke}
-        dash={[widthM * 0.15, heightM * 0.15]}
+        dash={[heightM * 0.15, widthM * 0.15]}
       />
       <Line
-        points={[0, 0, widthM * 0.45, 0]}
+        points={[0, 0, heightM * 0.45, 0]}
         stroke="#ffffff"
         strokeWidth={robotStroke * 1.5}
         lineCap="round"
@@ -132,13 +132,13 @@ export default function CurvePointElement({
       />
       <Line
         points={[
-          widthM * 0.45,
+          heightM * 0.45,
           0,
-          widthM * 0.35,
+          heightM * 0.35,
           -widthM * 0.08,
-          widthM * 0.45,
+          heightM * 0.45,
           0,
-          widthM * 0.35,
+          heightM * 0.35,
           widthM * 0.08,
         ]}
         stroke="#ffffff"

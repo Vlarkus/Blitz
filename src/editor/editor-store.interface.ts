@@ -42,6 +42,7 @@ export interface CanvasConfig {
 export interface RobotConfig {
   widthM: number;
   heightM: number;
+  independentHeading: boolean;
 }
 
 export interface IEditorStore {
@@ -59,8 +60,8 @@ export interface IEditorStore {
   hoverWorld: { xM: number; yM: number } | null;
   hoveredElementName: string | null;
   hoveredCurvePoint:
-    | { trajId: string; index: number; x: number; y: number; heading: number }
-    | null;
+  | { trajId: string; index: number; x: number; y: number; heading: number }
+  | null;
 
   // Hover helpers
   setHoverWorld(xM: number, yM: number): void;

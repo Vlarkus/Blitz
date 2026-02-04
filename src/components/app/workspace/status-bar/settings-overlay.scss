@@ -130,6 +130,30 @@
               border-color: #007acc;
             }
           }
+
+          &.checkbox-item {
+            flex-direction: row;
+            align-items: center;
+            gap: 0.5rem;
+
+            label {
+              flex: 0 0 auto;
+              color: #bbbbbb;
+            }
+
+            input[type="checkbox"] {
+              cursor: pointer;
+              width: 16px;
+              height: 16px;
+              accent-color: #cc0077;
+              flex-shrink: 0;
+              margin: 0;
+              vertical-align: middle;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+            }
+          }
         }
 
         .custom-distance-section {

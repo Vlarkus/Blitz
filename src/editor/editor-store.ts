@@ -49,206 +49,207 @@ function clamp(n: number, min: number, max: number) {
 export const useEditorStore = create<IEditorStore>()(
   persist(
     (set, get) => ({
-  // State
-  activeTool: "select" as Tool,
-  activeViewport: {
-    scale: SCALE_COEFF, // trueScale = 1 * SCALE_COEFF
-    originX: 400, // center of 800px wide canvas
-    originY: 300, // center of 600px tall canvas
-    stageWidth: 800,
-    stageHeight: 600,
-    snappingEnabled: true,
-    snapGridM: 0.1,
-  } as Viewport,
-
-  // --- state ---
-  hoverWorld: null,
-  hoveredElementName: null,
-  hoveredCurvePoint: null,
-
-  // --- actions ---
-  setHoverWorld(xM, yM) {
-    set({ hoverWorld: { xM, yM } });
-  },
-  setHoverFromScreen(xPx, yPx) {
-    const { xM, yM } = get().screenToWorld(xPx, yPx);
-    set({ hoverWorld: { xM, yM } });
-  },
-  clearHover() {
-    set({ hoverWorld: null });
-  },
-  setHoveredElementName(name) {
-    set({ hoveredElementName: name });
-  },
-  setHoveredCurvePoint(point) {
-    set({ hoveredCurvePoint: point });
-  },
-
-  // Tool
-  setActiveTool(tool) {
-    set({ activeTool: tool });
-  },
-
-  // Stage sizing
-  setStageSize(width, height) {
-    set((s) => ({
+      // State
+      activeTool: "select" as Tool,
       activeViewport: {
-        ...s.activeViewport,
-        stageWidth: width,
-        stageHeight: height,
-        originX: width / 2, // keep world (0,0) centered
-        originY: height / 2, // keep world (0,0) centered
+        scale: SCALE_COEFF, // trueScale = 1 * SCALE_COEFF
+        originX: 400, // center of 800px wide canvas
+        originY: 300, // center of 600px tall canvas
+        stageWidth: 800,
+        stageHeight: 600,
+        snappingEnabled: true,
+        snapGridM: 0.1,
+      } as Viewport,
+
+      // --- state ---
+      hoverWorld: null,
+      hoveredElementName: null,
+      hoveredCurvePoint: null,
+
+      // --- actions ---
+      setHoverWorld(xM, yM) {
+        set({ hoverWorld: { xM, yM } });
       },
-    }));
-  },
-
-  // Pan/zoom
-  panBy(dxPx, dyPx) {
-    set((s) => ({
-      activeViewport: {
-        ...s.activeViewport,
-        originX: s.activeViewport.originX + dxPx,
-        originY: s.activeViewport.originY + dyPx,
+      setHoverFromScreen(xPx, yPx) {
+        const { xM, yM } = get().screenToWorld(xPx, yPx);
+        set({ hoverWorld: { xM, yM } });
       },
-    }));
-  },
-
-  panTo(originXPx, originYPx) {
-    set((s) => ({
-      activeViewport: {
-        ...s.activeViewport,
-        originX: originXPx,
-        originY: originYPx,
+      clearHover() {
+        set({ hoverWorld: null });
       },
-    }));
-  },
-
-  zoomTo(scale, centerScreenX, centerScreenY) {
-    set((s) => {
-      const vp = s.activeViewport;
-      const nextScale = clamp(scale, MIN_SCALE, MAX_SCALE);
-
-      // World point under the given screen point before zoom
-      const wx = (centerScreenX - vp.originX) / vp.scale;
-      const wy = (centerScreenY - vp.originY) / vp.scale;
-
-      // Keep that world point fixed on screen after zoom
-      const nextOriginX = centerScreenX - wx * nextScale;
-      const nextOriginY = centerScreenY - wy * nextScale;
-
-      return {
-        activeViewport: {
-          ...vp,
-          scale: nextScale,
-          originX: nextOriginX,
-          originY: nextOriginY,
-        },
-      };
-    });
-  },
-
-  zoomBy(factor, centerScreenX, centerScreenY) {
-    const { activeViewport } = get();
-    const targetScale = activeViewport.scale * factor;
-    get().zoomTo(targetScale, centerScreenX, centerScreenY);
-  },
-
-  setScale(scale) {
-    set((s) => ({
-      activeViewport: {
-        ...s.activeViewport,
-        scale: clamp(scale, MIN_SCALE, MAX_SCALE),
+      setHoveredElementName(name) {
+        set({ hoveredElementName: name });
       },
-    }));
-  },
-
-  // Snapping
-  setSnappingEnabled(enabled) {
-    set((s) => ({
-      activeViewport: { ...s.activeViewport, snappingEnabled: !!enabled },
-    }));
-  },
-
-  setSnapGridMeters(meters) {
-    const m = Math.max(meters, MIN_SNAP);
-    set((s) => ({ activeViewport: { ...s.activeViewport, snapGridM: m } }));
-  },
-
-  // Transforms
-  worldToScreen(xM, yM) {
-    const { scale, originX, originY } = get().activeViewport;
-    return { xPx: xM * scale + originX, yPx: yM * scale + originY };
-    // Note: y-axis direction is conventional; invert here if your canvas uses a different origin.
-  },
-
-  screenToWorld(xPx, yPx) {
-    const { scale, originX, originY } = get().activeViewport;
-    return { xM: (xPx - originX) / scale, yM: (yPx - originY) / scale };
-  },
-
-  // Settings
-  robotConfig: {
-    widthM: 0.4572, // 18 inches
-    heightM: 0.4572, // 18 inches
-  },
-  robotDimensionUnits: {
-    width: "INCHES",
-    height: "INCHES",
-  },
-  setRobotConfig(config) {
-    set((s) => ({
-      robotConfig: { ...s.robotConfig, ...config },
-    }));
-  },
-  setRobotDimensionUnits(config) {
-    set((s) => ({
-      robotDimensionUnits: { ...s.robotDimensionUnits, ...config },
-    }));
-  },
-
-  canvasConfig: {
-    coordinateSystem: {
-      positiveX: "RIGHT",
-      positiveY: "UP",
-      zeroAngle: "RIGHT",
-      rotationDirection: "CCW",
-    },
-    units: {
-      angle: "DEGREES",
-      distance: "INCHES",
-      customDistance: {
-        factor: 1,
-        baseUnit: "INCHES",
-        name: "custom",
+      setHoveredCurvePoint(point) {
+        set({ hoveredCurvePoint: point });
       },
-    },
-  },
-  setCanvasConfig(config) {
-    set((s) => {
-      const newConfig =
-        typeof config === "function" ? config(s.canvasConfig) : config;
 
-      // Deep merge for nested objects
-      return {
-        canvasConfig: {
-          ...s.canvasConfig,
-          ...newConfig,
-          coordinateSystem: {
-            ...s.canvasConfig.coordinateSystem,
-            ...(newConfig.coordinateSystem || {}),
+      // Tool
+      setActiveTool(tool) {
+        set({ activeTool: tool });
+      },
+
+      // Stage sizing
+      setStageSize(width, height) {
+        set((s) => ({
+          activeViewport: {
+            ...s.activeViewport,
+            stageWidth: width,
+            stageHeight: height,
+            originX: width / 2, // keep world (0,0) centered
+            originY: height / 2, // keep world (0,0) centered
           },
-          units: {
-            ...s.canvasConfig.units,
-            ...(newConfig.units || {}),
-            customDistance: {
-              ...s.canvasConfig.units.customDistance,
-              ...(newConfig.units?.customDistance || {}),
+        }));
+      },
+
+      // Pan/zoom
+      panBy(dxPx, dyPx) {
+        set((s) => ({
+          activeViewport: {
+            ...s.activeViewport,
+            originX: s.activeViewport.originX + dxPx,
+            originY: s.activeViewport.originY + dyPx,
+          },
+        }));
+      },
+
+      panTo(originXPx, originYPx) {
+        set((s) => ({
+          activeViewport: {
+            ...s.activeViewport,
+            originX: originXPx,
+            originY: originYPx,
+          },
+        }));
+      },
+
+      zoomTo(scale, centerScreenX, centerScreenY) {
+        set((s) => {
+          const vp = s.activeViewport;
+          const nextScale = clamp(scale, MIN_SCALE, MAX_SCALE);
+
+          // World point under the given screen point before zoom
+          const wx = (centerScreenX - vp.originX) / vp.scale;
+          const wy = (centerScreenY - vp.originY) / vp.scale;
+
+          // Keep that world point fixed on screen after zoom
+          const nextOriginX = centerScreenX - wx * nextScale;
+          const nextOriginY = centerScreenY - wy * nextScale;
+
+          return {
+            activeViewport: {
+              ...vp,
+              scale: nextScale,
+              originX: nextOriginX,
+              originY: nextOriginY,
             },
+          };
+        });
+      },
+
+      zoomBy(factor, centerScreenX, centerScreenY) {
+        const { activeViewport } = get();
+        const targetScale = activeViewport.scale * factor;
+        get().zoomTo(targetScale, centerScreenX, centerScreenY);
+      },
+
+      setScale(scale) {
+        set((s) => ({
+          activeViewport: {
+            ...s.activeViewport,
+            scale: clamp(scale, MIN_SCALE, MAX_SCALE),
+          },
+        }));
+      },
+
+      // Snapping
+      setSnappingEnabled(enabled) {
+        set((s) => ({
+          activeViewport: { ...s.activeViewport, snappingEnabled: !!enabled },
+        }));
+      },
+
+      setSnapGridMeters(meters) {
+        const m = Math.max(meters, MIN_SNAP);
+        set((s) => ({ activeViewport: { ...s.activeViewport, snapGridM: m } }));
+      },
+
+      // Transforms
+      worldToScreen(xM, yM) {
+        const { scale, originX, originY } = get().activeViewport;
+        return { xPx: xM * scale + originX, yPx: yM * scale + originY };
+        // Note: y-axis direction is conventional; invert here if your canvas uses a different origin.
+      },
+
+      screenToWorld(xPx, yPx) {
+        const { scale, originX, originY } = get().activeViewport;
+        return { xM: (xPx - originX) / scale, yM: (yPx - originY) / scale };
+      },
+
+      // Settings
+      robotConfig: {
+        widthM: 0.4572, // 18 inches
+        heightM: 0.4572, // 18 inches
+        independentHeading: false,
+      },
+      robotDimensionUnits: {
+        width: "INCHES",
+        height: "INCHES",
+      },
+      setRobotConfig(config) {
+        set((s) => ({
+          robotConfig: { ...s.robotConfig, ...config },
+        }));
+      },
+      setRobotDimensionUnits(config) {
+        set((s) => ({
+          robotDimensionUnits: { ...s.robotDimensionUnits, ...config },
+        }));
+      },
+
+      canvasConfig: {
+        coordinateSystem: {
+          positiveX: "RIGHT",
+          positiveY: "UP",
+          zeroAngle: "RIGHT",
+          rotationDirection: "CCW",
+        },
+        units: {
+          angle: "DEGREES",
+          distance: "INCHES",
+          customDistance: {
+            factor: 1,
+            baseUnit: "INCHES",
+            name: "custom",
           },
         },
-      };
-    });
-  },
+      },
+      setCanvasConfig(config) {
+        set((s) => {
+          const newConfig =
+            typeof config === "function" ? config(s.canvasConfig) : config;
+
+          // Deep merge for nested objects
+          return {
+            canvasConfig: {
+              ...s.canvasConfig,
+              ...newConfig,
+              coordinateSystem: {
+                ...s.canvasConfig.coordinateSystem,
+                ...(newConfig.coordinateSystem || {}),
+              },
+              units: {
+                ...s.canvasConfig.units,
+                ...(newConfig.units || {}),
+                customDistance: {
+                  ...s.canvasConfig.units.customDistance,
+                  ...(newConfig.units?.customDistance || {}),
+                },
+              },
+            },
+          };
+        });
+      },
     }),
     {
       name: "blitz:settings",
@@ -258,7 +259,7 @@ export const useEditorStore = create<IEditorStore>()(
         robotConfig: state.robotConfig,
         robotDimensionUnits: state.robotDimensionUnits,
       }),
-      version: 3,
+      version: 4,
       migrate: (persistedState: unknown) => {
         const state = persistedState as Partial<IEditorStore> | undefined;
         if (!state) return state as unknown as IEditorStore;
@@ -268,6 +269,10 @@ export const useEditorStore = create<IEditorStore>()(
         if (!units) {
           return {
             ...state,
+            robotConfig: {
+              ...state.robotConfig,
+              independentHeading: state.robotConfig?.independentHeading ?? false,
+            },
             robotDimensionUnits: {
               width: robotDimensionUnits?.width ?? "INCHES",
               height: robotDimensionUnits?.height ?? "INCHES",
@@ -277,6 +282,10 @@ export const useEditorStore = create<IEditorStore>()(
 
         return {
           ...state,
+          robotConfig: {
+            ...state.robotConfig,
+            independentHeading: state.robotConfig?.independentHeading ?? false,
+          },
           robotDimensionUnits: {
             width: robotDimensionUnits?.width ?? "INCHES",
             height: robotDimensionUnits?.height ?? "INCHES",

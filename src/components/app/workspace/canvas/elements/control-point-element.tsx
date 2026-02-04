@@ -296,36 +296,36 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
     hoveredElementName === `cp:${trajId}:${cpId}`;
 
   const robotHoverGhost = isRobotHover ? (
-      <Group
-        x={cp.x}
-        y={cp.y}
-        rotation={transform.mapHeading(inferredHeading)}
-        listening={false}
-      >
+    <Group
+      x={cp.x}
+      y={cp.y}
+      rotation={transform.mapHeading(inferredHeading)}
+      listening={false}
+    >
       {/* Reach circle (circumcribed) */}
       <Circle
         radius={robotRadiusM}
         stroke="#ffffff"
         strokeWidth={robotStroke}
-        // dash={[robotRadiusM * 0.25, robotRadiusM * 0.25]}
+      // dash={[robotRadiusM * 0.25, robotRadiusM * 0.25]}
       />
 
       {/* Robot footprint (Configurable) */}
       <Rect
-        x={-widthM / 2}
-        y={-heightM / 2}
-        width={widthM}
-        height={heightM}
+        x={-heightM / 2}
+        y={-widthM / 2}
+        width={heightM}
+        height={widthM}
         stroke="#ffffff"
         strokeWidth={robotStroke}
-        dash={[widthM * 0.15, heightM * 0.15]}
+        dash={[heightM * 0.15, widthM * 0.15]}
       />
       {/* Front indicator - shaft + arrowhead */}
       <Line
         points={[
           0,
           0, // Start at center
-          widthM * 0.45,
+          heightM * 0.45,
           0, // Shaft ENDPOINT like heading line
         ]}
         stroke="#ffffff"
@@ -336,13 +336,13 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       {/* Arrowhead */}
       <Line
         points={[
-          widthM * 0.45,
+          heightM * 0.45,
           0, // Arrow tip (matches shaft end)
-          widthM * 0.35,
+          heightM * 0.35,
           -widthM * 0.08, // Left barb
-          widthM * 0.45,
+          heightM * 0.45,
           0, // Back to tip
-          widthM * 0.35,
+          heightM * 0.35,
           widthM * 0.08, // Right barb
         ]}
         stroke="#ffffff"
