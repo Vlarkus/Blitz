@@ -99,6 +99,8 @@ export default function ToolBar() {
             canvasPos,
             canvasIn,
             canvasOut,
+            canvasIn,
+            canvasOut,
             headingScreenDeg:
               cp.heading !== null ? coordSys.mapHeadingToScreen(cp.heading) : null,
           });
@@ -234,7 +236,38 @@ export default function ToolBar() {
             onClick={() => setShowRobot(!showRobot)}
             title="Toggle Robot Overlay"
           >
-            <FontAwesomeIcon icon={faObjectGroup} />
+            <svg
+              width="1.2em"
+              height="1.2em"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect
+                x="3"
+                y="3"
+                width="18"
+                height="18"
+                rx="2"
+                ry="2"
+                strokeDasharray="4 4"
+              />
+              <text
+                x="50%"
+                y="54%"
+                dominantBaseline="middle"
+                textAnchor="middle"
+                fontSize="11"
+                fontWeight="bold"
+                fill="currentColor"
+                stroke="none"
+              >
+                R
+              </text>
+            </svg>
           </button>
 
           <button

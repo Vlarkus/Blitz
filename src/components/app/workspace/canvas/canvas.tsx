@@ -19,10 +19,7 @@ const SNAP_ANGLES_DEG = [0, 30, 45, 60, 90]
   .map((deg) => ((deg % 360) + 360) % 360)
   .sort((a, b) => a - b);
 
-function normalizeRad(rad: number) {
-  const twoPi = Math.PI * 2;
-  return ((rad % twoPi) + twoPi) % twoPi;
-}
+
 
 function degToRad(deg: number) {
   return (deg * Math.PI) / 180;
@@ -33,18 +30,28 @@ function radToDeg(rad: number) {
 }
 
 function stepSnapAngle(currentRad: number, direction: 1 | -1) {
-  const currentDeg = ((radToDeg(currentRad) % 360) + 360) % 360;
+  const currentDeg = radToDeg(currentRad);
+  // Normalize to 0-360 base for lookup, but preserve 360 offsets
+  const offset = Math.floor(currentDeg / 360) * 360;
+  const localDeg = currentDeg - offset;
   const epsilon = 1e-6;
+
   if (direction > 0) {
-    const next = SNAP_ANGLES_DEG.find((deg) => deg > currentDeg + epsilon);
-    return degToRad(next ?? SNAP_ANGLES_DEG[0]);
-  }
-  for (let i = SNAP_ANGLES_DEG.length - 1; i >= 0; i--) {
-    if (SNAP_ANGLES_DEG[i] < currentDeg - epsilon) {
-      return degToRad(SNAP_ANGLES_DEG[i]);
+    const next = SNAP_ANGLES_DEG.find((deg) => deg > localDeg + epsilon);
+    if (next !== undefined) {
+      return degToRad(offset + next);
     }
+    // Wrap to next rotation
+    return degToRad(offset + 360 + SNAP_ANGLES_DEG[0]);
+  } else {
+    for (let i = SNAP_ANGLES_DEG.length - 1; i >= 0; i--) {
+      if (SNAP_ANGLES_DEG[i] < localDeg - epsilon) {
+        return degToRad(offset + SNAP_ANGLES_DEG[i]);
+      }
+    }
+    // Wrap to prev rotation
+    return degToRad(offset - 360 + SNAP_ANGLES_DEG[SNAP_ANGLES_DEG.length - 1]);
   }
-  return degToRad(SNAP_ANGLES_DEG[SNAP_ANGLES_DEG.length - 1]);
 }
 
 export default function Canvas() {
@@ -169,7 +176,7 @@ export default function Canvas() {
           "Control Point",
           x,
           y,
-          independentHeading ? 0 : null
+          independentHeading ? robotHeading : null
         );
         const trajId = selectedTrajectoryId;
         const cpId = cp.id;
@@ -324,9 +331,9 @@ export default function Canvas() {
       const prev = robotHeading;
       let next = prev;
       if (snapMode) {
-        next = normalizeRad(stepSnapAngle(prev, direction));
+        next = transform.normalizeHeading(stepSnapAngle(prev, direction));
       } else {
-        next = normalizeRad(
+        next = transform.normalizeHeading(
           prev + degToRad(SHOW_ROBOT_SCROLL_STEP_DEG * direction)
         );
       }

@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import { useDataStore } from "../../../../../models/dataStore";
 import { useEditorStore } from "../../../../../editor/editor-store";
+import { CanvasCoordinateSystem } from "../../canvas/canvas-coordinate-helper";
 import {
   SPLINE_TYPES,
   SYMMETRY_TYPES,
@@ -52,6 +54,12 @@ export default function ControlPointInfo() {
   const angleUnit = useEditorStore((s) => s.canvasConfig.units.angle);
   const independentHeading = useEditorStore(
     (s) => s.robotConfig.independentHeading
+  );
+
+  const canvasConfig = useEditorStore((s) => s.canvasConfig);
+  const sys = useMemo(
+    () => new CanvasCoordinateSystem(canvasConfig),
+    [canvasConfig]
   );
 
   const cpSymmetry = useDataStore((s) => {
@@ -204,7 +212,9 @@ export default function ControlPointInfo() {
               <EditableLabel<number>
                 // Display in degrees
                 value={
-                  cpHeading !== null ? radiansToAngle(cpHeading, angleUnit) : 0
+                  cpHeading !== null
+                    ? radiansToAngle(sys.normalizeHeading(cpHeading), angleUnit)
+                    : 0
                 }
                 maxIntegerDigits={3}
                 maxDecimalDigits={2}
@@ -227,7 +237,9 @@ export default function ControlPointInfo() {
                   if (!Number.isFinite(headingVal)) return;
 
                   // Convert back to radians for the store
-                  const headingRad = angleToRadians(headingVal, angleUnit);
+                  const headingRad = sys.normalizeHeading(
+                    angleToRadians(headingVal, angleUnit)
+                  );
 
                   if (!selectedTrajectoryId || !selectedControlPointId) return;
 

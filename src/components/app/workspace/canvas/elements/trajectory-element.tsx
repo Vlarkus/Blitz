@@ -213,6 +213,7 @@ export default function TrajectoryElement({ trajId }: Props) {
   const independentHeading = useEditorStore(
     (s) => s.robotConfig.independentHeading,
   );
+  const robotHeading = useEditorStore((s) => s.robotHeading);
 
   const shouldRenderCurvePoints =
     activeTool === "insert" || activeTool === "show_robot";
@@ -287,7 +288,7 @@ export default function TrajectoryElement({ trajId }: Props) {
               "",
               pt.x,
               pt.y,
-              independentHeading ? 0 : null,
+              independentHeading ? robotHeading : null,
             );
             insertControlPointAfter(trajId, afterCpId, newCp);
             setSelectedControlPointId(newCp.id);

@@ -92,6 +92,11 @@ export default function SettingsOverlay({ onClose }: Props) {
 
   // Staged Config
   const [stagedConfig, setStagedConfig] = useState(canvasConfig);
+  // Local UI state for Heading Range unit (decoupled from global default)
+  const [rangeUnit, setRangeUnit] = useState<AngleUnit>(
+    stagedConfig.units.angle
+  );
+
   const robotWidthUnit = robotDimensionUnits.width;
   const robotHeightUnit = robotDimensionUnits.height;
   const customDistance = stagedConfig.units.customDistance;
@@ -289,13 +294,10 @@ export default function SettingsOverlay({ onClose }: Props) {
                         step="any"
                         value={radiansToAngle(
                           stagedConfig.headingRange?.minRad ?? -Math.PI,
-                          stagedConfig.units.angle
+                          rangeUnit
                         )}
                         onChange={(val) => {
-                          const rad = angleToRadians(
-                            val,
-                            stagedConfig.units.angle
-                          );
+                          const rad = angleToRadians(val, rangeUnit);
                           const currentMax =
                             stagedConfig.headingRange?.maxRad ?? Math.PI;
                           const oneRot = 2 * Math.PI;
@@ -326,13 +328,10 @@ export default function SettingsOverlay({ onClose }: Props) {
                         step="any"
                         value={radiansToAngle(
                           stagedConfig.headingRange?.maxRad ?? Math.PI,
-                          stagedConfig.units.angle
+                          rangeUnit
                         )}
                         onChange={(val) => {
-                          const rad = angleToRadians(
-                            val,
-                            stagedConfig.units.angle
-                          );
+                          const rad = angleToRadians(val, rangeUnit);
                           const currentMin =
                             stagedConfig.headingRange?.minRad ?? -Math.PI;
                           const oneRot = 2 * Math.PI;
@@ -359,15 +358,9 @@ export default function SettingsOverlay({ onClose }: Props) {
                     <div className="control-item" style={{ flex: 1, minWidth: 0 }}>
                       <label>Units</label>
                       <select
-                        value={stagedConfig.units.angle}
+                        value={rangeUnit}
                         onChange={(e) =>
-                          setStagedConfig((prev) => ({
-                            ...prev,
-                            units: {
-                              ...prev.units,
-                              angle: e.target.value as AngleUnit,
-                            },
-                          }))
+                          setRangeUnit(e.target.value as AngleUnit)
                         }
                       >
                         <option value="DEGREES">Degrees</option>
@@ -376,6 +369,33 @@ export default function SettingsOverlay({ onClose }: Props) {
                       </select>
                     </div>
                   </div>
+                  {rangeUnit !== stagedConfig.units.angle && (
+                    <div
+                      style={{
+                        marginTop: "0.5rem",
+                        fontSize: "0.85rem",
+                        color: "#aaa",
+                        fontStyle: "italic",
+                      }}
+                    >
+                      <div>
+                        Note: Default selected units are{" "}
+                        {stagedConfig.units.angle.toLowerCase()}
+                      </div>
+                      <div>
+                        Range in default units:{" "}
+                        {radiansToAngle(
+                          stagedConfig.headingRange?.minRad ?? -Math.PI,
+                          stagedConfig.units.angle
+                        ).toFixed(2)}{" "}
+                        to{" "}
+                        {radiansToAngle(
+                          stagedConfig.headingRange?.maxRad ?? Math.PI,
+                          stagedConfig.units.angle
+                        ).toFixed(2)}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
