@@ -17,7 +17,7 @@ import {
   metersToDistance,
 } from "../../../../utils/unit-conversion";
 
-type Section = "Canvas" | "Keybinds" | "Defaults" | "Robot";
+type Section = "Defaults" | "Canvas" | "Robot" | "Keybinds";
 
 interface Props {
   onClose: () => void;
@@ -495,7 +495,7 @@ export default function SettingsOverlay({ onClose }: Props) {
       <div className="settings-overlay">
         <div className="settings-sidebar">
           <div className="sidebar-header">Settings</div>
-          {["Canvas", "Defaults", "Robot"].map((section) => (
+          {["Defaults", "Canvas", "Robot"].map((section) => (
             <button
               key={section}
               className={activeSection === section ? "active" : ""}

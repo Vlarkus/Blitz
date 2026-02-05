@@ -122,7 +122,8 @@ export default function Canvas() {
     y2: number;
     additive: boolean;
   } | null>(null);
-  const [showRobotHeading, setShowRobotHeading] = useState(0);
+  const robotHeading = useEditorStore((s) => s.robotHeading);
+  const setRobotHeading = useEditorStore((s) => s.setRobotHeading);
 
   // const getClickedControlPointId = (target: any): string | null => {
   //   if (!target) return null;
@@ -308,23 +309,30 @@ export default function Canvas() {
     const pos = e.target.getStage()?.getPointerPosition();
     if (!pos) return;
 
-    // Robot rotation: Show Robot enabled AND Shift key pressed
-    if (showRobot && e.evt.shiftKey) {
-      const direction: 1 | -1 = e.evt.deltaY < 0 ? 1 : -1;
-      const snapMode = e.evt.ctrlKey;
-
-      setShowRobotHeading((prev) => {
-        if (snapMode) return normalizeRad(stepSnapAngle(prev, direction));
-        return normalizeRad(
-          prev + degToRad(SHOW_ROBOT_SCROLL_STEP_DEG * direction),
-        );
-      });
-      return; // consume event
+    // Zoom: Ctrl + Scroll
+    if (e.evt.ctrlKey) {
+      const factor = e.evt.deltaY > 0 ? 0.9 : 1.1; // scroll up -> zoom in
+      zoomBy(factor, pos.x, pos.y);
+      return;
     }
 
-    // Default: Zoom
-    const factor = e.evt.deltaY > 0 ? 0.9 : 1.1; // scroll up -> zoom in
-    zoomBy(factor, pos.x, pos.y);
+    // Robot rotation: Show Robot enabled
+    if (showRobot) {
+      const direction: 1 | -1 = e.evt.deltaY < 0 ? 1 : -1;
+      const snapMode = e.evt.shiftKey;
+
+      const prev = robotHeading;
+      let next = prev;
+      if (snapMode) {
+        next = normalizeRad(stepSnapAngle(prev, direction));
+      } else {
+        next = normalizeRad(
+          prev + degToRad(SHOW_ROBOT_SCROLL_STEP_DEG * direction)
+        );
+      }
+      setRobotHeading(next);
+      return;
+    }
   };
 
   // Compute the visible world-rect so the background Rect matches the view.
@@ -352,6 +360,15 @@ export default function Canvas() {
         onWheel={onWheel}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
+        onDragMove={(e) => {
+          // Keep hover updated even while dragging (e.g. control points)
+          const stage = e.target.getStage();
+          const pos = stage?.getPointerPosition();
+          if (pos) {
+            const hover = transform.screenToUser(pos.x, pos.y, activeViewport);
+            setHoverWorld(hover.x, hover.y);
+          }
+        }}
         onMouseUp={() => {
           endPan();
           endSelection();
@@ -384,7 +401,7 @@ export default function Canvas() {
             scaleY={transform.groupProps.scaleY}
           >
             <TrajectoriesLayer />
-            <ShowRobotOverlay headingRad={showRobotHeading} />
+            <ShowRobotOverlay headingRad={robotHeading} />
           </Group>
         </Layer>
         {selectionBox && (

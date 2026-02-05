@@ -32,7 +32,8 @@
   align-items: center;
   justify-content: center;
   width: auto;
-  padding: 0.1rem 0.3rem;
+  height: 24px;
+  padding: 0 0.3rem;
   margin: 0;
   gap: 0.25rem;
 }
@@ -49,9 +50,55 @@
   text-align: center;
   white-space: nowrap;
   user-select: none;
+  line-height: 1;
+  display: flex;
+  align-items: center;
 }
 
 .status-zoom {
   text-align: center;
   white-space: nowrap;
+}
+
+.status-action-icon {
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    opacity: 1;
+    color: $active;
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
+}
+
+.zoom-controls {
+  gap: 0.2rem !important;
+}
+
+.zoom-btn {
+  cursor: pointer;
+  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 16px;
+  width: 16px;
+  transition: all 0.1s;
+
+  &:hover {
+    opacity: 1;
+    color: $active;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
 }

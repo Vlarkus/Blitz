@@ -43,7 +43,7 @@ export default function ControlPointInfo() {
   const cpHeading = useDataStore((s) =>
     selectedTrajectoryId && selectedControlPointId
       ? s.getControlPoint(selectedTrajectoryId, selectedControlPointId)
-          ?.heading ?? null
+        ?.heading ?? null
       : null
   );
 
@@ -72,7 +72,7 @@ export default function ControlPointInfo() {
   const cpIsEvent = useDataStore((s) =>
     selectedTrajectoryId && selectedControlPointId
       ? s.getControlPoint(selectedTrajectoryId, selectedControlPointId)
-          ?.isEvent ?? false
+        ?.isEvent ?? false
       : false
   );
 

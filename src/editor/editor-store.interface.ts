@@ -103,4 +103,6 @@ export interface IEditorStore {
   // Display Modes
   showRobot: boolean;
   setShowRobot(show: boolean): void;
+  robotHeading: number;
+  setRobotHeading(heading: number): void;
 }

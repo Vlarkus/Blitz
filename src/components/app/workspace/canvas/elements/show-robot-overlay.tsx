@@ -1,16 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Circle, Group, Line, Rect } from "react-konva";
 import { useEditorStore } from "../../../../../editor/editor-store";
 import { useCanvasCoordinates } from "../canvas-coordinate-helper";
 
-const ROBOT_TRANSITION_MS = 75;
-
 type Pose = { x: number; y: number; heading: number };
-
-function lerpAngle(a: number, b: number, t: number) {
-  const diff = Math.atan2(Math.sin(b - a), Math.cos(b - a));
-  return a + diff * t;
-}
 
 export default function ShowRobotOverlay({ headingRad }: { headingRad: number }) {
   const showRobot = useEditorStore((s) => s.showRobot);
@@ -23,22 +16,6 @@ export default function ShowRobotOverlay({ headingRad }: { headingRad: number })
   const transform = useCanvasCoordinates(canvasConfig);
 
   const [pose, setPose] = useState<Pose | null>(null);
-  const poseRef = useRef<Pose | null>(null);
-  const animRef = useRef<number | null>(null);
-  const modeRef = useRef<"snap" | "free" | null>(null);
-  const snapKeyRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    poseRef.current = pose;
-  }, [pose]);
-
-  useEffect(() => {
-    return () => {
-      if (animRef.current !== null) {
-        cancelAnimationFrame(animRef.current);
-      }
-    };
-  }, []);
 
   const snapTarget = useMemo(() => {
     if (!showRobot) return null;
@@ -52,62 +29,16 @@ export default function ShowRobotOverlay({ headingRad }: { headingRad: number })
   }, [showRobot, hoveredElementName, hoveredCurvePoint]);
 
   useEffect(() => {
-    if (animRef.current !== null) {
-      cancelAnimationFrame(animRef.current);
-      animRef.current = null;
-    }
-
     if (!showRobot || !hoverWorld) {
       setPose(null);
-      modeRef.current = null;
-      snapKeyRef.current = null;
       return;
     }
 
     const target: Pose = snapTarget
       ? { x: snapTarget.x, y: snapTarget.y, heading: headingRad }
       : { x: hoverWorld.xM, y: hoverWorld.yM, heading: headingRad };
-    const current = poseRef.current;
 
-    const animateTo = (from: Pose, to: Pose) => {
-      const startTime = performance.now();
-      const tick = (now: number) => {
-        const t = Math.min(1, (now - startTime) / ROBOT_TRANSITION_MS);
-        setPose({
-          x: from.x + (to.x - from.x) * t,
-          y: from.y + (to.y - from.y) * t,
-          heading: lerpAngle(from.heading, to.heading, t),
-        });
-        if (t < 1) {
-          animRef.current = requestAnimationFrame(tick);
-        } else {
-          animRef.current = null;
-        }
-      };
-      animRef.current = requestAnimationFrame(tick);
-    };
-
-    if (snapTarget) {
-      const snapChanged =
-        modeRef.current !== "snap" || snapKeyRef.current !== snapTarget.key;
-      if (current && snapChanged) {
-        animateTo(current, target);
-      } else {
-        setPose(target);
-      }
-      modeRef.current = "snap";
-      snapKeyRef.current = snapTarget.key;
-      return;
-    }
-
-    const fromSnap = modeRef.current === "snap";
-    if (current && fromSnap) {
-      animateTo(current, target);
-    } else {
-      setPose(target);
-    }
-    modeRef.current = "free";
-    snapKeyRef.current = null;
+    setPose(target);
   }, [showRobot, hoverWorld, snapTarget, headingRad]);
 
   if (!pose) return null;

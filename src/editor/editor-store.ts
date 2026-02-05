@@ -37,7 +37,7 @@ export const useFieldStore = create<FieldState>()(
 import type { IEditorStore, Viewport } from "./editor-store.interface";
 import type { Tool } from "../types/types";
 
-const MIN_SCALE = 10; // px per meter
+const MIN_SCALE = 5; // px per meter
 const MAX_SCALE = 500; // px per meter
 const MIN_SNAP = 1e-4; // meters
 export const SCALE_COEFF = 180; // user scale 1 (100%) = 180 px per meter
@@ -149,7 +149,30 @@ export const useEditorStore = create<IEditorStore>()(
 
       zoomBy(factor, centerScreenX, centerScreenY) {
         const { activeViewport } = get();
-        const targetScale = activeViewport.scale * factor;
+
+        const currentPct = (activeViewport.scale / SCALE_COEFF) * 100;
+        let targetScale = activeViewport.scale * factor;
+        const targetPct = (targetScale / SCALE_COEFF) * 100;
+
+        // Snap to nearest 10% if close
+        const nearest10 = Math.round(targetPct / 10) * 10;
+
+        // If within 2.5% of a 10s mark
+        if (Math.abs(targetPct - nearest10) < 2.5) {
+          // 1. Prevent sticking: Don't snap if we are already essentially at that value
+          const isAtExact = Math.abs(currentPct - nearest10) < 0.1;
+
+          // 2. Prevent regression: Don't snap "backwards" against the zoom direction
+          const isZoomIn = factor > 1;
+          const isSnapBackwards = isZoomIn
+            ? nearest10 < currentPct // Zooming in, but snap is lower/equal
+            : nearest10 > currentPct; // Zooming out, but snap is higher/equal
+
+          if (!isAtExact && !isSnapBackwards) {
+            targetScale = (nearest10 / 100) * SCALE_COEFF;
+          }
+        }
+
         get().zoomTo(targetScale, centerScreenX, centerScreenY);
       },
 
@@ -255,6 +278,10 @@ export const useEditorStore = create<IEditorStore>()(
       showRobot: false,
       setShowRobot(show) {
         set({ showRobot: show });
+      },
+      robotHeading: 0,
+      setRobotHeading(heading) {
+        set({ robotHeading: heading });
       },
     }),
     {
