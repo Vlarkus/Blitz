@@ -51,6 +51,11 @@
     &:active {
       color: $primary;
     }
+
+    &:disabled {
+      opacity: 0.3;
+      pointer-events: none;
+    }
   }
 
   .tr-icon-btn {

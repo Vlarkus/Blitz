@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Stage, Layer, Rect } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import "./canvas.scss";
@@ -10,6 +10,42 @@ import FieldImage from "./field-image/field-image";
 
 import { useCanvasCoordinates } from "./canvas-coordinate-helper";
 import { Group } from "react-konva";
+import ShowRobotOverlay from "./elements/show-robot-overlay";
+
+const SHOW_ROBOT_SCROLL_STEP_DEG = 3;
+const SNAP_ANGLES_DEG = [0, 30, 45, 60, 90]
+  .flatMap((base) => [base, base + 90, base + 180, base + 270])
+  .filter((deg, index, all) => all.indexOf(deg % 360) === index)
+  .map((deg) => ((deg % 360) + 360) % 360)
+  .sort((a, b) => a - b);
+
+function normalizeRad(rad: number) {
+  const twoPi = Math.PI * 2;
+  return ((rad % twoPi) + twoPi) % twoPi;
+}
+
+function degToRad(deg: number) {
+  return (deg * Math.PI) / 180;
+}
+
+function radToDeg(rad: number) {
+  return (rad * 180) / Math.PI;
+}
+
+function stepSnapAngle(currentRad: number, direction: 1 | -1) {
+  const currentDeg = ((radToDeg(currentRad) % 360) + 360) % 360;
+  const epsilon = 1e-6;
+  if (direction > 0) {
+    const next = SNAP_ANGLES_DEG.find((deg) => deg > currentDeg + epsilon);
+    return degToRad(next ?? SNAP_ANGLES_DEG[0]);
+  }
+  for (let i = SNAP_ANGLES_DEG.length - 1; i >= 0; i--) {
+    if (SNAP_ANGLES_DEG[i] < currentDeg - epsilon) {
+      return degToRad(SNAP_ANGLES_DEG[i]);
+    }
+  }
+  return degToRad(SNAP_ANGLES_DEG[SNAP_ANGLES_DEG.length - 1]);
+}
 
 export default function Canvas() {
   // Select store fields individually to keep selector snapshots stable
@@ -85,6 +121,7 @@ export default function Canvas() {
     y2: number;
     additive: boolean;
   } | null>(null);
+  const [showRobotHeading, setShowRobotHeading] = useState(0);
 
   // const getClickedControlPointId = (target: any): string | null => {
   //   if (!target) return null;
@@ -269,6 +306,19 @@ export default function Canvas() {
     e.evt.preventDefault();
     const pos = e.target.getStage()?.getPointerPosition();
     if (!pos) return;
+
+    if (activeTool === "show_robot") {
+      const direction: 1 | -1 = e.evt.deltaY < 0 ? 1 : -1;
+      const snapMode = e.evt.shiftKey || e.evt.ctrlKey || e.evt.metaKey;
+      setShowRobotHeading((prev) => {
+        if (snapMode) return normalizeRad(stepSnapAngle(prev, direction));
+        return normalizeRad(
+          prev + degToRad(SHOW_ROBOT_SCROLL_STEP_DEG * direction),
+        );
+      });
+      return;
+    }
+
     const factor = e.evt.deltaY > 0 ? 0.9 : 1.1; // scroll up -> zoom in
     zoomBy(factor, pos.x, pos.y);
   };
@@ -283,6 +333,15 @@ export default function Canvas() {
   // Manage mouse position while hovering over canvas.
   const setHoverWorld = useEditorStore((s) => s.setHoverWorld);
   const clearHover = useEditorStore((s) => s.clearHover);
+  const setHoveredElementName = useEditorStore((s) => s.setHoveredElementName);
+  const setHoveredCurvePoint = useEditorStore((s) => s.setHoveredCurvePoint);
+
+  useEffect(() => {
+    if (activeTool !== "show_robot") {
+      setHoveredElementName(null);
+      setHoveredCurvePoint(null);
+    }
+  }, [activeTool, setHoveredElementName, setHoveredCurvePoint]);
 
   return (
     <section
@@ -328,6 +387,7 @@ export default function Canvas() {
             scaleY={transform.groupProps.scaleY}
           >
             <TrajectoriesLayer />
+            <ShowRobotOverlay headingRad={showRobotHeading} />
           </Group>
         </Layer>
         {selectionBox && (

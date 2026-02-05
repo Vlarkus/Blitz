@@ -158,21 +158,32 @@ const buildCurvePoints = (
         p.heading = heading;
       });
     } else {
-      segmentPoints.forEach((p, idx) => {
-        const prev = idx > 0 ? segmentPoints[idx - 1] : a;
-        const next =
-          idx < segmentPoints.length - 1 ? segmentPoints[idx + 1] : b;
-        const v1x = p.x - prev.x;
-        const v1y = p.y - prev.y;
-        const v2x = next.x - p.x;
-        const v2y = next.y - p.y;
-        const n1 = Math.hypot(v1x, v1y) || 1;
-        const n2 = Math.hypot(v2x, v2y) || 1;
-        const vx = v1x / n1 + v2x / n2;
-        const vy = v1y / n1 + v2y / n2;
-        const useX = vx || v1x || v2x;
-        const useY = vy || v1y || v2y;
-        p.heading = vectorToHeadingCw(useX, useY);
+      segmentPoints.forEach((p) => {
+        let vx = 0;
+        let vy = 0;
+
+        if (isBezier) {
+          const t = p.t;
+          const u = 1 - t;
+          vx =
+            3 * u * u * (c1.x - a.x) +
+            6 * u * t * (c2.x - c1.x) +
+            3 * t * t * (b.x - c2.x);
+          vy =
+            3 * u * u * (c1.y - a.y) +
+            6 * u * t * (c2.y - c1.y) +
+            3 * t * t * (b.y - c2.y);
+        } else {
+          vx = b.x - a.x;
+          vy = b.y - a.y;
+        }
+
+        if (vx === 0 && vy === 0) {
+          vx = b.x - a.x;
+          vy = b.y - a.y;
+        }
+
+        p.heading = vectorToHeadingCw(vx, vy);
       });
     }
 
