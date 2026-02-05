@@ -13,7 +13,7 @@ function lerpAngle(a: number, b: number, t: number) {
 }
 
 export default function ShowRobotOverlay({ headingRad }: { headingRad: number }) {
-  const activeTool = useEditorStore((s) => s.activeTool);
+  const showRobot = useEditorStore((s) => s.showRobot);
   const hoverWorld = useEditorStore((s) => s.hoverWorld);
   const hoveredElementName = useEditorStore((s) => s.hoveredElementName);
   const hoveredCurvePoint = useEditorStore((s) => s.hoveredCurvePoint);
@@ -41,7 +41,7 @@ export default function ShowRobotOverlay({ headingRad }: { headingRad: number })
   }, []);
 
   const snapTarget = useMemo(() => {
-    if (activeTool !== "show_robot") return null;
+    if (!showRobot) return null;
     if (!hoveredElementName?.startsWith("curve:")) return null;
     if (!hoveredCurvePoint) return null;
     return {
@@ -49,7 +49,7 @@ export default function ShowRobotOverlay({ headingRad }: { headingRad: number })
       x: hoveredCurvePoint.x,
       y: hoveredCurvePoint.y,
     };
-  }, [activeTool, hoveredElementName, hoveredCurvePoint]);
+  }, [showRobot, hoveredElementName, hoveredCurvePoint]);
 
   useEffect(() => {
     if (animRef.current !== null) {
@@ -57,7 +57,7 @@ export default function ShowRobotOverlay({ headingRad }: { headingRad: number })
       animRef.current = null;
     }
 
-    if (activeTool !== "show_robot" || !hoverWorld) {
+    if (!showRobot || !hoverWorld) {
       setPose(null);
       modeRef.current = null;
       snapKeyRef.current = null;
@@ -108,7 +108,7 @@ export default function ShowRobotOverlay({ headingRad }: { headingRad: number })
     }
     modeRef.current = "free";
     snapKeyRef.current = null;
-  }, [activeTool, hoverWorld, snapTarget, headingRad]);
+  }, [showRobot, hoverWorld, snapTarget, headingRad]);
 
   if (!pose) return null;
 

@@ -31,7 +31,6 @@ const toolIcons: Record<Tool, IconProp> = {
   remove: faCircleMinus, // remove circle icon
   insert: faChevronCircleDown, // insert / down-turn arrow
   cut: faScissors, // cut
-  show_robot: faObjectGroup,
   pan: faHand, // pan/grab hand
 };
 
@@ -48,6 +47,8 @@ export default function ToolBar() {
   const setHandlePosition = useDataStore((s) => s.setHandlePosition);
   const execute = useDataStore((s) => s.execute);
   const canvasConfig = useEditorStore((s) => s.canvasConfig);
+  const showRobot = useEditorStore((s) => s.showRobot);
+  const setShowRobot = useEditorStore((s) => s.setShowRobot);
 
   const actionsEnabled = selectedControlPointIds.length > 1;
 
@@ -162,8 +163,8 @@ export default function ToolBar() {
         heading:
           cp.headingScreenDeg !== null
             ? coordSys.mapHeadingFromScreen(
-                transformHeading(cp.headingScreenDeg)
-              )
+              transformHeading(cp.headingScreenDeg)
+            )
             : null,
         inAbs: nextIn,
         outAbs: nextOut,
@@ -228,6 +229,14 @@ export default function ToolBar() {
         ))}
         <div className="tool-bar-spacer" />
         <div className="tool-bar-actions">
+          <button
+            className={`tool-bar-action-btn ${showRobot ? "active" : ""}`}
+            onClick={() => setShowRobot(!showRobot)}
+            title="Toggle Robot Overlay"
+          >
+            <FontAwesomeIcon icon={faObjectGroup} />
+          </button>
+
           <button
             className="tool-bar-action-btn"
             onClick={() => applyTransform("rotate-ccw")}

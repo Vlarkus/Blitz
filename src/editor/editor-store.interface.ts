@@ -99,4 +99,8 @@ export interface IEditorStore {
   setRobotConfig(config: Partial<RobotConfig>): void;
   setRobotDimensionUnits(config: Partial<{ width: DistanceUnit; height: DistanceUnit }>): void;
   setCanvasConfig(config: Partial<CanvasConfig> | ((prev: CanvasConfig) => Partial<CanvasConfig>)): void;
+
+  // Display Modes
+  showRobot: boolean;
+  setShowRobot(show: boolean): void;
 }

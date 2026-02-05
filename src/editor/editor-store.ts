@@ -250,6 +250,12 @@ export const useEditorStore = create<IEditorStore>()(
           };
         });
       },
+
+      // Display Modes
+      showRobot: false,
+      setShowRobot(show) {
+        set({ showRobot: show });
+      },
     }),
     {
       name: "blitz:settings",

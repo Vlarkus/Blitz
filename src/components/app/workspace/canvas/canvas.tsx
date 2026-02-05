@@ -58,6 +58,7 @@ export default function Canvas() {
   const zoomBy = useEditorStore((s) => s.zoomBy);
 
   const activeTool = useEditorStore((s) => s.activeTool); // ...
+  const showRobot = useEditorStore((s) => s.showRobot);
   const independentHeading = useEditorStore(
     (s) => s.robotConfig.independentHeading
   );
@@ -211,12 +212,12 @@ export default function Canvas() {
         prev
           ? { ...prev, x2: pos.x, y2: pos.y }
           : {
-              x1: selectionStart.current!.x,
-              y1: selectionStart.current!.y,
-              x2: pos.x,
-              y2: pos.y,
-              additive: selectionStart.current!.additive,
-            }
+            x1: selectionStart.current!.x,
+            y1: selectionStart.current!.y,
+            x2: pos.x,
+            y2: pos.y,
+            additive: selectionStart.current!.additive,
+          }
       );
     }
   };
@@ -307,18 +308,21 @@ export default function Canvas() {
     const pos = e.target.getStage()?.getPointerPosition();
     if (!pos) return;
 
-    if (activeTool === "show_robot") {
+    // Robot rotation: Show Robot enabled AND Shift key pressed
+    if (showRobot && e.evt.shiftKey) {
       const direction: 1 | -1 = e.evt.deltaY < 0 ? 1 : -1;
-      const snapMode = e.evt.shiftKey || e.evt.ctrlKey || e.evt.metaKey;
+      const snapMode = e.evt.ctrlKey;
+
       setShowRobotHeading((prev) => {
         if (snapMode) return normalizeRad(stepSnapAngle(prev, direction));
         return normalizeRad(
           prev + degToRad(SHOW_ROBOT_SCROLL_STEP_DEG * direction),
         );
       });
-      return;
+      return; // consume event
     }
 
+    // Default: Zoom
     const factor = e.evt.deltaY > 0 ? 0.9 : 1.1; // scroll up -> zoom in
     zoomBy(factor, pos.x, pos.y);
   };
@@ -335,13 +339,6 @@ export default function Canvas() {
   const clearHover = useEditorStore((s) => s.clearHover);
   const setHoveredElementName = useEditorStore((s) => s.setHoveredElementName);
   const setHoveredCurvePoint = useEditorStore((s) => s.setHoveredCurvePoint);
-
-  useEffect(() => {
-    if (activeTool !== "show_robot") {
-      setHoveredElementName(null);
-      setHoveredCurvePoint(null);
-    }
-  }, [activeTool, setHoveredElementName, setHoveredCurvePoint]);
 
   return (
     <section
@@ -405,6 +402,6 @@ export default function Canvas() {
           </Layer>
         )}
       </Stage>
-    </section>
+    </section >
   );
 }

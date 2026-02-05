@@ -13,7 +13,7 @@ export const SPLINE_TYPES: SplineType[] = ["LINEAR", "BEZIER"];
 export const SYMMETRY_TYPES: SymmetryType[] = ["BROKEN", "ALIGNED", "MIRRORED"];
 export const INTERPOLATION_TYPES: InterpolationType[] = [
   "EQUIDISTANT",
-  "UNIFORM",
+  "CONTINUOUS"
 ];
 
 // Tool
@@ -23,8 +23,7 @@ export type Tool =
   | "remove"
   | "insert"
   | "cut"
-  | "pan"
-  | "show_robot";
+  | "pan";
 
 export type HandlePosInput =
   | { type?: "polar"; r: number; theta: number } // default
