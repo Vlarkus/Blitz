@@ -237,6 +237,10 @@ export const useEditorStore = create<IEditorStore>()(
           zeroAngle: "RIGHT",
           rotationDirection: "CCW",
         },
+        headingRange: {
+          minRad: -Math.PI,
+          maxRad: Math.PI,
+        },
         units: {
           angle: "DEGREES",
           distance: "INCHES",

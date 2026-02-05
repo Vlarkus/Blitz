@@ -27,6 +27,10 @@ export interface CanvasConfig {
     zeroAngle: AxisDirection;
     rotationDirection: RotationDirection;
   };
+  headingRange: {
+    minRad: number;
+    maxRad: number;
+  };
   units: {
     angle: AngleUnit;
     distance: DistanceUnit;

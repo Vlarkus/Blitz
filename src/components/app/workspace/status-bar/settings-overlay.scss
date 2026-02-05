@@ -118,6 +118,8 @@
           input[type="number"],
           input[type="text"],
           select {
+            width: 100%;
+            box-sizing: border-box;
             background: #3c3c3c;
             border: 1px solid #555;
             color: #fff;
@@ -225,13 +227,8 @@
       }
 
       .settings-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr; // Two columns for options
-        gap: 2rem;
-
-        @media (max-width: 600px) {
-          grid-template-columns: 1fr;
-        }
+        display: flex;
+        flex-direction: column;
       }
     }
 

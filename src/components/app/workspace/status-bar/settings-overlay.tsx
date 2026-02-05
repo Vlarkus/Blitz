@@ -1,5 +1,5 @@
-import { useState } from "react";
-import type { MouseEvent } from "react";
+import { useState, useEffect, useRef } from "react";
+import type { MouseEvent, FocusEvent } from "react";
 import "./settings-overlay.scss";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
@@ -13,14 +13,65 @@ import type {
   RotationDirection,
 } from "../../../../editor/editor-store.interface";
 import {
+  angleToRadians,
   distanceToMeters,
   metersToDistance,
+  radiansToAngle,
 } from "../../../../utils/unit-conversion";
 
 type Section = "Defaults" | "Canvas" | "Robot" | "Keybinds";
 
 interface Props {
   onClose: () => void;
+}
+
+interface BlurInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
+  value: number;
+  onChange: (value: number) => void;
+}
+
+function BlurInput({ value, onChange, onBlur, ...props }: BlurInputProps) {
+  const [tempValue, setTempValue] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Only update from props if we are NOT currently editing (tempValue is null)
+    if (tempValue === null) {
+      // Nothing to do, component uses prop value naturally when tempValue is null
+    }
+  }, [value]);
+
+  return (
+    <input
+      {...props}
+      type="text"
+      inputMode="decimal"
+      value={tempValue ?? value}
+      onChange={(e) => {
+        const val = e.target.value;
+        if (val === "" || /^-?\d*\.?\d*$/.test(val)) {
+          setTempValue(val);
+        }
+      }}
+      onBlur={(e) => {
+        if (tempValue !== null) {
+          const num = parseFloat(tempValue);
+          if (!isNaN(num)) {
+            onChange(num);
+          } else {
+            // Revert or set to 0 for invalid inputs like ".", "-"
+            onChange(0);
+          }
+          setTempValue(null);
+        }
+        if (onBlur) onBlur(e);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.currentTarget.blur();
+        }
+      }}
+    />
+  );
 }
 
 import { CanvasCoordinateSystem } from "../canvas/canvas-coordinate-helper";
@@ -114,66 +165,68 @@ export default function SettingsOverlay({ onClose }: Props) {
               <div className="settings-section">
                 <h3>Coordinate System</h3>
                 <div className="control-group">
-                  <div className="control-item">
-                    <label>Positive X Direction</label>
-                    <select
-                      value={stagedConfig.coordinateSystem.positiveX}
-                      onChange={(e) => {
-                        const newX = e.target.value as AxisDirection;
-                        let newY = stagedConfig.coordinateSystem.positiveY;
+                  <div style={{ display: "flex", gap: "1rem", width: "100%" }}>
+                    <div className="control-item" style={{ flex: 1 }}>
+                      <label>Positive X Direction</label>
+                      <select
+                        value={stagedConfig.coordinateSystem.positiveX}
+                        onChange={(e) => {
+                          const newX = e.target.value as AxisDirection;
+                          let newY = stagedConfig.coordinateSystem.positiveY;
 
-                        // If switching to vertical/horizontal, ensure Y is opposite axis type
-                        if (["UP", "DOWN"].includes(newX)) {
-                          if (["UP", "DOWN"].includes(newY)) newY = "RIGHT";
-                        } else {
-                          if (["LEFT", "RIGHT"].includes(newY)) newY = "UP";
-                        }
+                          // If switching to vertical/horizontal, ensure Y is opposite axis type
+                          if (["UP", "DOWN"].includes(newX)) {
+                            if (["UP", "DOWN"].includes(newY)) newY = "RIGHT";
+                          } else {
+                            if (["LEFT", "RIGHT"].includes(newY)) newY = "UP";
+                          }
 
-                        setStagedConfig((prev) => ({
-                          ...prev,
-                          coordinateSystem: {
-                            ...prev.coordinateSystem,
-                            positiveX: newX,
-                            positiveY: newY,
-                          },
-                        }));
-                      }}
-                    >
-                      <option value="RIGHT">Right</option>
-                      <option value="LEFT">Left</option>
-                      <option value="UP">Up</option>
-                      <option value="DOWN">Down</option>
-                    </select>
-                  </div>
-                  <div className="control-item">
-                    <label>Positive Y Direction</label>
-                    <select
-                      value={stagedConfig.coordinateSystem.positiveY}
-                      onChange={(e) => {
-                        const newY = e.target.value as AxisDirection;
-                        let newX = stagedConfig.coordinateSystem.positiveX;
+                          setStagedConfig((prev) => ({
+                            ...prev,
+                            coordinateSystem: {
+                              ...prev.coordinateSystem,
+                              positiveX: newX,
+                              positiveY: newY,
+                            },
+                          }));
+                        }}
+                      >
+                        <option value="RIGHT">Right</option>
+                        <option value="LEFT">Left</option>
+                        <option value="UP">Up</option>
+                        <option value="DOWN">Down</option>
+                      </select>
+                    </div>
+                    <div className="control-item" style={{ flex: 1 }}>
+                      <label>Positive Y Direction</label>
+                      <select
+                        value={stagedConfig.coordinateSystem.positiveY}
+                        onChange={(e) => {
+                          const newY = e.target.value as AxisDirection;
+                          let newX = stagedConfig.coordinateSystem.positiveX;
 
-                        if (["UP", "DOWN"].includes(newY)) {
-                          if (["UP", "DOWN"].includes(newX)) newX = "RIGHT";
-                        } else {
-                          if (["LEFT", "RIGHT"].includes(newX)) newX = "UP";
-                        }
+                          if (["UP", "DOWN"].includes(newY)) {
+                            if (["UP", "DOWN"].includes(newX)) newX = "RIGHT";
+                          } else {
+                            if (["LEFT", "RIGHT"].includes(newX)) newX = "UP";
+                          }
 
-                        setStagedConfig((prev) => ({
-                          ...prev,
-                          coordinateSystem: {
-                            ...prev.coordinateSystem,
-                            positiveY: newY,
-                            positiveX: newX,
-                          },
-                        }));
-                      }}
-                    >
-                      <option value="UP">Up</option>
-                      <option value="DOWN">Down</option>
-                      <option value="RIGHT">Right</option>
-                      <option value="LEFT">Left</option>
-                    </select>
+                          setStagedConfig((prev) => ({
+                            ...prev,
+                            coordinateSystem: {
+                              ...prev.coordinateSystem,
+                              positiveY: newY,
+                              positiveX: newX,
+                            },
+                          }));
+                        }}
+                      >
+                        <option value="UP">Up</option>
+                        <option value="DOWN">Down</option>
+                        <option value="RIGHT">Right</option>
+                        <option value="LEFT">Left</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -181,44 +234,147 @@ export default function SettingsOverlay({ onClose }: Props) {
               <div className="settings-section">
                 <h3>Heading</h3>
                 <div className="control-group">
-                  <div className="control-item">
-                    <label>0 Degrees Direction</label>
-                    <select
-                      value={stagedConfig.coordinateSystem.zeroAngle}
-                      onChange={(e) =>
-                        setStagedConfig((prev) => ({
-                          ...prev,
-                          coordinateSystem: {
-                            ...prev.coordinateSystem,
-                            zeroAngle: e.target.value as AxisDirection,
-                          },
-                        }))
-                      }
-                    >
-                      <option value="RIGHT">Right</option>
-                      <option value="LEFT">Left</option>
-                      <option value="UP">Up</option>
-                      <option value="DOWN">Down</option>
-                    </select>
+                  <div style={{ display: "flex", gap: "1rem", width: "100%" }}>
+                    <div className="control-item" style={{ flex: 1 }}>
+                      <label>0 Degrees Direction</label>
+                      <select
+                        value={stagedConfig.coordinateSystem.zeroAngle}
+                        onChange={(e) =>
+                          setStagedConfig((prev) => ({
+                            ...prev,
+                            coordinateSystem: {
+                              ...prev.coordinateSystem,
+                              zeroAngle: e.target.value as AxisDirection,
+                            },
+                          }))
+                        }
+                      >
+                        <option value="RIGHT">Right</option>
+                        <option value="LEFT">Left</option>
+                        <option value="UP">Up</option>
+                        <option value="DOWN">Down</option>
+                      </select>
+                    </div>
+                    <div className="control-item" style={{ flex: 1 }}>
+                      <label>Rotation Direction</label>
+                      <select
+                        value={stagedConfig.coordinateSystem.rotationDirection}
+                        onChange={(e) =>
+                          setStagedConfig((prev) => ({
+                            ...prev,
+                            coordinateSystem: {
+                              ...prev.coordinateSystem,
+                              rotationDirection: e.target
+                                .value as RotationDirection,
+                            },
+                          }))
+                        }
+                      >
+                        <option value="CCW">Counter-Clockwise (CCW)</option>
+                        <option value="CW">Clockwise (CW)</option>
+                      </select>
+                    </div>
                   </div>
-                  <div className="control-item">
-                    <label>Rotation Direction</label>
-                    <select
-                      value={stagedConfig.coordinateSystem.rotationDirection}
-                      onChange={(e) =>
-                        setStagedConfig((prev) => ({
-                          ...prev,
-                          coordinateSystem: {
-                            ...prev.coordinateSystem,
-                            rotationDirection: e.target
-                              .value as RotationDirection,
-                          },
-                        }))
-                      }
-                    >
-                      <option value="CCW">Counter-Clockwise (CCW)</option>
-                      <option value="CW">Clockwise (CW)</option>
-                    </select>
+                </div>
+              </div>
+
+              <div className="settings-section">
+                <h3>Heading Range</h3>
+                <div className="control-group">
+                  <div style={{ display: "flex", gap: "1rem", width: "100%" }}>
+                    <div className="control-item" style={{ flex: 1, minWidth: 0 }}>
+                      <label>Min</label>
+                      <BlurInput
+                        type="number"
+                        step="any"
+                        value={radiansToAngle(
+                          stagedConfig.headingRange?.minRad ?? -Math.PI,
+                          stagedConfig.units.angle
+                        )}
+                        onChange={(val) => {
+                          const rad = angleToRadians(
+                            val,
+                            stagedConfig.units.angle
+                          );
+                          const currentMax =
+                            stagedConfig.headingRange?.maxRad ?? Math.PI;
+                          const oneRot = 2 * Math.PI;
+
+                          let newMax = currentMax;
+                          if (currentMax - rad < oneRot - 1e-6) {
+                            newMax = rad + oneRot;
+                          }
+
+                          setStagedConfig((prev) => ({
+                            ...prev,
+                            headingRange: {
+                              ...(prev.headingRange || {
+                                minRad: -Math.PI,
+                                maxRad: Math.PI,
+                              }),
+                              minRad: rad,
+                              maxRad: newMax,
+                            },
+                          }));
+                        }}
+                      />
+                    </div>
+                    <div className="control-item" style={{ flex: 1, minWidth: 0 }}>
+                      <label>Max</label>
+                      <BlurInput
+                        type="number"
+                        step="any"
+                        value={radiansToAngle(
+                          stagedConfig.headingRange?.maxRad ?? Math.PI,
+                          stagedConfig.units.angle
+                        )}
+                        onChange={(val) => {
+                          const rad = angleToRadians(
+                            val,
+                            stagedConfig.units.angle
+                          );
+                          const currentMin =
+                            stagedConfig.headingRange?.minRad ?? -Math.PI;
+                          const oneRot = 2 * Math.PI;
+
+                          let newMin = currentMin;
+                          if (rad - currentMin < oneRot - 1e-6) {
+                            newMin = rad - oneRot;
+                          }
+
+                          setStagedConfig((prev) => ({
+                            ...prev,
+                            headingRange: {
+                              ...(prev.headingRange || {
+                                minRad: -Math.PI,
+                                maxRad: Math.PI,
+                              }),
+                              maxRad: rad,
+                              minRad: newMin,
+                            },
+                          }));
+                        }}
+                      />
+                    </div>
+                    <div className="control-item" style={{ flex: 1, minWidth: 0 }}>
+                      <label>Units</label>
+                      <select
+                        value={stagedConfig.units.angle}
+                        onChange={(e) =>
+                          setStagedConfig((prev) => ({
+                            ...prev,
+                            units: {
+                              ...prev.units,
+                              angle: e.target.value as AngleUnit,
+                            },
+                          }))
+                        }
+                      >
+                        <option value="DEGREES">Degrees</option>
+                        <option value="RADIANS">Radians</option>
+                        <option value="ROTATIONS">Rotations</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -371,7 +527,7 @@ export default function SettingsOverlay({ onClose }: Props) {
                 <div className="control-item">
                   <label>Robot Width</label>
                   <div className="dimension-input-row">
-                    <input
+                    <BlurInput
                       type="number"
                       step="0.01"
                       value={metersToDistance(
@@ -379,10 +535,10 @@ export default function SettingsOverlay({ onClose }: Props) {
                         robotWidthUnit,
                         stagedConfig.units,
                       )}
-                      onChange={(e) =>
+                      onChange={(val) =>
                         setRobotConfig({
                           widthM: distanceToMeters(
-                            parseFloat(e.target.value) || 0,
+                            val || 0,
                             robotWidthUnit,
                             stagedConfig.units,
                           ),
@@ -411,7 +567,7 @@ export default function SettingsOverlay({ onClose }: Props) {
                 <div className="control-item">
                   <label>Robot Length</label>
                   <div className="dimension-input-row">
-                    <input
+                    <BlurInput
                       type="number"
                       step="0.01"
                       value={metersToDistance(
@@ -419,10 +575,10 @@ export default function SettingsOverlay({ onClose }: Props) {
                         robotHeightUnit,
                         stagedConfig.units,
                       )}
-                      onChange={(e) =>
+                      onChange={(val) =>
                         setRobotConfig({
                           heightM: distanceToMeters(
-                            parseFloat(e.target.value) || 0,
+                            val || 0,
                             robotHeightUnit,
                             stagedConfig.units,
                           ),
