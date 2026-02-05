@@ -108,12 +108,48 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       case "remove":
         e.evt.preventDefault();
         e.target.stopDrag?.();
-        removeControlPoint(trajId, cpId);
-        setSelectedTrajectoryId(trajId);
+        {
+          const store = useDataStore.getState();
+          const t = store.getTrajectoryById(trajId);
+          const cpRef = store.getControlPoint(trajId, cpId);
+          const idx = t?.controlPoints.findIndex((c) => c.id === cpId) ?? -1;
+
+          if (!t || !cpRef || idx < 0) return;
+
+          execute({
+            redo: () => {
+              removeControlPoint(trajId, cpId);
+              setSelectedTrajectoryId(trajId);
+            },
+            undo: () => {
+              useDataStore.getState().addControlPoint(trajId, cpRef, idx);
+              setSelectedControlPointId(cpId);
+            },
+          });
+        }
         return;
 
       case "cut":
-        cutTrajectoryAt(trajId, cpId);
+        {
+          const srcTraj = useDataStore.getState().getTrajectoryById(trajId);
+          if (!srcTraj) return;
+
+          let newIds: { firstId: string; secondId: string } | null = null;
+
+          execute({
+            redo: () => {
+              const res = useDataStore.getState().cutTrajectoryAt(trajId, cpId);
+              if (res) newIds = res;
+            },
+            undo: () => {
+              if (newIds) {
+                useDataStore.getState().removeTrajectory(newIds.firstId);
+                useDataStore.getState().removeTrajectory(newIds.secondId);
+              }
+              useDataStore.getState().addTrajectory(srcTraj);
+            },
+          });
+        }
         return;
     }
 

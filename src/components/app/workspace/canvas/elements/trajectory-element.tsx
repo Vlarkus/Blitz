@@ -290,8 +290,17 @@ export default function TrajectoryElement({ trajId }: Props) {
               pt.y,
               independentHeading ? robotHeading : null,
             );
-            insertControlPointAfter(trajId, afterCpId, newCp);
-            setSelectedControlPointId(newCp.id);
+
+            useDataStore.getState().execute({
+              redo: () => {
+                insertControlPointAfter(trajId, afterCpId, newCp);
+                setSelectedControlPointId(newCp.id);
+              },
+              undo: () => {
+                useDataStore.getState().removeControlPoint(trajId, newCp.id);
+                setSelectedControlPointId(afterCpId);
+              }
+            });
           }}
         />
       ))}
