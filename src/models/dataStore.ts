@@ -165,10 +165,10 @@ export const useDataStore = create<Store>((set, get) => ({
         singleId != null
           ? findTrajectoryIdByControlPointId(nextTrajectories, singleId)
           : nextSelectedIds.length === 0 && s.selectedTrajectoryId === id
-          ? null
-          : nextSelectedIds.length > 1
-          ? null
-          : s.selectedTrajectoryId;
+            ? null
+            : nextSelectedIds.length > 1
+              ? null
+              : s.selectedTrajectoryId;
 
       return {
         trajectories: nextTrajectories,
@@ -233,6 +233,15 @@ export const useDataStore = create<Store>((set, get) => ({
       const idx = findTrajIndex(s.trajectories, id);
       if (idx < 0) return {};
       s.trajectories[idx].internal.setInterpolationType(type);
+      return { trajectories: [...s.trajectories] };
+    });
+  },
+
+  setTrajectoryInterpolationDistance(id, dist) {
+    set((s) => {
+      const idx = findTrajIndex(s.trajectories, id);
+      if (idx < 0) return {};
+      s.trajectories[idx].internal.setInterpolationDistance(dist);
       return { trajectories: [...s.trajectories] };
     });
   },
@@ -316,8 +325,8 @@ export const useDataStore = create<Store>((set, get) => ({
         singleId != null
           ? findTrajectoryIdByControlPointId(s.trajectories, singleId)
           : nextSelectedIds.length > 1
-          ? null
-          : s.selectedTrajectoryId;
+            ? null
+            : s.selectedTrajectoryId;
       return {
         trajectories: [...s.trajectories],
         selectedControlPointId: singleId,
@@ -400,8 +409,8 @@ export const useDataStore = create<Store>((set, get) => ({
       const rawTrajs = Array.isArray(parsed)
         ? parsed
         : Array.isArray(parsed.trajectories)
-        ? parsed.trajectories
-        : null;
+          ? parsed.trajectories
+          : null;
 
       if (!rawTrajs) {
         console.error("Invalid trajectory file format");
@@ -668,9 +677,9 @@ function normalizeColor(color: ColorHex): ColorHex {
   const full =
     hex.length === 3
       ? hex
-          .split("")
-          .map((c) => c + c)
-          .join("")
+        .split("")
+        .map((c) => c + c)
+        .join("")
       : hex;
   const ok = /^[0-9a-fA-F]{6}$/.test(full);
   return `#${ok ? full.toUpperCase() : "3A86FF"}` as ColorHex;

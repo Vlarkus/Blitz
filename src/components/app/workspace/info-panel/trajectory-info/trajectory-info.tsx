@@ -1,17 +1,44 @@
+import { useState, useEffect } from "react";
+import { useEditorStore } from "../../../../../editor/editor-store";
 import { useDataStore } from "../../../../../models/dataStore";
 import {
   INTERPOLATION_TYPES,
   type InterpolationType,
+  type DistanceUnit,
 } from "../../../../../types/types";
+import { EditableLabel } from "../../../../common/editable-label";
 import ColorPicker from "../../../../common/color-picker/color-picker";
+import { distanceToMeters, metersToDistance } from "../../../../../utils/unit-conversion";
 import "./trajectory-info.scss";
 
+
 export default function TrajectoryInfo() {
+  const canvasConfig = useEditorStore((state) => state.canvasConfig);
+  const [displayUnit, setDisplayUnit] = useState<DistanceUnit>(canvasConfig.units.distance);
+
+  // Sync display unit if global config changes (optional, but good UX)
+  useEffect(() => {
+    setDisplayUnit(canvasConfig.units.distance);
+  }, [canvasConfig.units.distance]);
+
   const selectedTrajectoryId = useDataStore(
     (state) => state.selectedTrajectoryId
   );
 
+  const traj = useDataStore((s) =>
+    selectedTrajectoryId ? s.getTrajectoryById(selectedTrajectoryId) : undefined
+  );
+
+  const interpolationDistanceMeters = traj?.interpolationDistance ?? 0.1524;
+
   const setTrajectoryColor = useDataStore((state) => state.setTrajectoryColor);
+  const setTrajectoryInterpolation = useDataStore(
+    (state) => state.setTrajectoryInterpolation
+  );
+  const setTrajectoryInterpolationDistance = useDataStore(
+    (state) => state.setTrajectoryInterpolationDistance
+  );
+  const execute = useDataStore((state) => state.execute);
   const color = useDataStore((s) => {
     const id = s.selectedTrajectoryId;
     return id ? s.getTrajectoryById(id)?.color ?? "#000000" : "#000000";
@@ -22,10 +49,7 @@ export default function TrajectoryInfo() {
     return id ? s.getTrajectoryById(id)?.interpolationType ?? "" : "";
   });
 
-  const setTrajectoryInterpolation = useDataStore(
-    (state) => state.setTrajectoryInterpolation
-  );
-  const execute = useDataStore((state) => state.execute);
+
 
   return (
     <div className="tr-info">
@@ -87,6 +111,91 @@ export default function TrajectoryInfo() {
             );
           })}
         </select>
+      </div>
+      <div className="tr-selector-wrapper">
+        <label
+          className={
+            selectedTrajectoryId && interpolation === "equidistant"
+              ? "label-active"
+              : "label-disabled"
+          }
+        >
+          Distance:
+        </label>
+        <span className="tr-half">
+          {selectedTrajectoryId && interpolation === "equidistant" ? (
+            <EditableLabel<number>
+              value={metersToDistance(
+                interpolationDistanceMeters,
+                displayUnit,
+                canvasConfig.units
+              )}
+              maxIntegerDigits={3}
+              maxDecimalDigits={4}
+              onCommit={(val) => {
+                if (!selectedTrajectoryId) return;
+                const checked = Math.max(
+                  0,
+                  typeof val === "number" ? val : parseFloat(val as string)
+                );
+                const meters = distanceToMeters(
+                  checked,
+                  displayUnit,
+                  canvasConfig.units
+                );
+                const oldMeters = interpolationDistanceMeters;
+
+                if (Math.abs(meters - oldMeters) < 1e-6) return;
+
+                execute({
+                  redo: () =>
+                    setTrajectoryInterpolationDistance(
+                      selectedTrajectoryId,
+                      meters
+                    ),
+                  undo: () =>
+                    setTrajectoryInterpolationDistance(
+                      selectedTrajectoryId,
+                      oldMeters
+                    ),
+                });
+              }}
+              inputRules={{ type: "number", min: 0 }}
+              ariaLabel="Distance"
+            />
+          ) : (
+            <label className="label-disabled">-</label>
+          )}
+        </span>
+        <label
+          className={
+            selectedTrajectoryId && interpolation === "equidistant"
+              ? "label-active"
+              : "label-disabled"
+          }
+        >
+          Units:
+        </label>
+        <span className="tr-half">
+          <select
+            className="dropdown"
+            disabled={!selectedTrajectoryId || interpolation !== "equidistant"}
+            value={displayUnit}
+            onChange={(e) => {
+              const val = e.target.value as DistanceUnit;
+              setDisplayUnit(val);
+            }}
+          >
+            <option value="INCHES">Inches</option>
+            <option value="METERS">Meters</option>
+            <option value="FEET">Feet</option>
+            <option value="CUSTOM">
+              {canvasConfig.units.customDistance.name?.trim()
+                ? `${canvasConfig.units.customDistance.name.trim()}`
+                : "Custom"}
+            </option>
+          </select>
+        </span>
       </div>
     </div>
   );

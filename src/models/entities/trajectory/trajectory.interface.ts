@@ -14,6 +14,7 @@ export interface TrajectoryInternalAPI {
   setName(name: string): void;
   setColor(color: ColorHex): void;
   setInterpolationType(type: InterpolationType): void;
+  setInterpolationDistance(dist: number): void;
   setIsVisible(isVisible: boolean): void;
   setIsLocked(isLocked: boolean): void;
 

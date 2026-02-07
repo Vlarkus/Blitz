@@ -8,9 +8,11 @@ import ControlPointElement from "./control-point-element";
 import buildPath from "../util/build-path";
 import HandleElement from "./handle-element";
 import CurvePointElement from "./curve-point-element";
+import FollowPointElement from "./follow-point-element";
 import { CanvasCoordinateSystem } from "../canvas-coordinate-helper";
 
 const CURVE_POINT_SPACING_M = 0.1;
+const FOLLOW_POINT_SPACING = 0.1524; // ~6 inches default for now
 const BEZIER_LENGTH_STEPS = 12;
 
 type Pt = { x: number; y: number };
@@ -72,10 +74,13 @@ const buildCurvePoints = (
   ) => Pt | null,
   spacing: number,
   vectorToHeadingCw: (dx: number, dy: number) => number,
+  continuous: boolean = false
 ): CurvePoint[] => {
   const cps = traj.controlPoints ?? [];
   const points: CurvePoint[] = [];
   if (cps.length < 2) return points;
+
+  let currentOffset = continuous ? 0 : spacing;
 
   for (let i = 0; i < cps.length - 1; i++) {
     const a = cps[i];
@@ -95,7 +100,10 @@ const buildCurvePoints = (
     }
 
     const segmentPoints: CurvePoint[] = [];
-    if (length <= 0 || spacing <= 0) continue;
+    if (length <= 0 || spacing <= 0) {
+      if (!continuous) currentOffset = spacing; // Reset if skipping bad segment
+      continue;
+    }
 
     if (isBezier) {
       const samples = BEZIER_LENGTH_STEPS;
@@ -110,7 +118,10 @@ const buildCurvePoints = (
         cumLen.push(totalLen);
       }
 
-      for (let d = spacing; d < totalLen; d += spacing) {
+      let d = currentOffset;
+      // Use <= to include end point if exact, though strictly < or <= depends on "spacing" vs "count".
+      // Standard for "equidistant" often includes start, steps by space.
+      while (d <= totalLen) {
         let k = 1;
         while (k < cumLen.length && cumLen[k] < d) k++;
         const prevLen = cumLen[k - 1] ?? 0;
@@ -129,9 +140,18 @@ const buildCurvePoints = (
           t,
           s: totalLen === 0 ? 0 : d / totalLen,
         });
+        d += spacing;
       }
+
+      if (continuous) {
+        currentOffset = d - totalLen;
+      } else {
+        currentOffset = spacing;
+      }
+
     } else {
-      for (let d = spacing; d < length; d += spacing) {
+      let d = currentOffset;
+      while (d <= length) {
         const t = d / length;
         const pt = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
         segmentPoints.push({
@@ -142,6 +162,13 @@ const buildCurvePoints = (
           t,
           s: length === 0 ? 0 : d / length,
         });
+        d += spacing;
+      }
+
+      if (continuous) {
+        currentOffset = d - length;
+      } else {
+        currentOffset = spacing;
       }
     }
 
@@ -218,8 +245,34 @@ export default function TrajectoryElement({ trajId }: Props) {
   const shouldRenderCurvePoints =
     activeTool === "insert" || activeTool === "show_robot";
 
+  const followPoints = useMemo(() => {
+    if (!traj || traj.interpolationType !== "equidistant") return [];
+
+    const coordSys = new CanvasCoordinateSystem(canvasConfig);
+    const vectorToHeadingCw = (dx: number, dy: number) => {
+      if (dx === 0 && dy === 0) return 0;
+      const v = coordSys.fromUser(dx, dy);
+      const screenAngleDeg = (Math.atan2(v.y, v.x) * 180) / Math.PI;
+      const cwScreenDeg = screenAngleDeg + 90;
+      return coordSys.mapHeadingFromScreen(cwScreenDeg);
+    };
+
+    return buildCurvePoints(
+      traj,
+      getHandlePosition,
+      traj.interpolationDistance ?? FOLLOW_POINT_SPACING,
+      vectorToHeadingCw,
+      true,
+    );
+  }, [traj, traj?.controlPoints, getHandlePosition, canvasConfig]);
+
   const curvePoints = useMemo(() => {
     if (!shouldRenderCurvePoints || !traj) return [];
+
+    if (traj.interpolationType === "equidistant") {
+      return followPoints;
+    }
+
     const coordSys = new CanvasCoordinateSystem(canvasConfig);
     const vectorToHeadingCw = (dx: number, dy: number) => {
       if (dx === 0 && dy === 0) return 0;
@@ -237,8 +290,10 @@ export default function TrajectoryElement({ trajId }: Props) {
   }, [
     shouldRenderCurvePoints,
     traj,
+    traj?.controlPoints,
     getHandlePosition,
     canvasConfig,
+    followPoints,
   ]);
 
   if (!traj) return null;
@@ -259,18 +314,30 @@ export default function TrajectoryElement({ trajId }: Props) {
 
   return (
     <Group name={`traj:${traj.id}`} listening>
-      <Path
-        name={`trajectory:${traj.id}`}
-        data={d}
-        stroke={traj.color}
-        strokeWidth={2 / scale}
-        hitStrokeWidth={8 / scale}
-        listening
-        onMouseDown={onPathMouseDown} // <-- Insert handled here
-        onTouchStart={() =>
-          useDataStore.getState().setSelectedTrajectoryId(traj.id)
-        }
-      />
+      {traj.interpolationType === "equidistant" &&
+        followPoints.map((pt, idx) => (
+          <FollowPointElement
+            key={`fp-${traj.id}-${idx}`}
+            x={pt.x}
+            y={pt.y}
+            color={traj.color}
+          />
+        ))}
+
+      {traj.interpolationType !== "equidistant" && (
+        <Path
+          name={`trajectory:${traj.id}`}
+          data={d}
+          stroke={traj.color}
+          strokeWidth={2 / scale}
+          hitStrokeWidth={8 / scale}
+          listening
+          onMouseDown={onPathMouseDown}
+          onTouchStart={() =>
+            useDataStore.getState().setSelectedTrajectoryId(traj.id)
+          }
+        />
+      )}
       {curvePoints.map((pt, idx) => (
         <CurvePointElement
           key={`${traj.id}:curve:${idx}`}

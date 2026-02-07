@@ -23,6 +23,7 @@ export class Trajectory {
   private _controlPoints: ControlPoint[];
   private _color: ColorHex;
   private _interpolationType: InterpolationType;
+  private _interpolationDistance: number;
   private _isVisible: boolean;
   private _isLocked: boolean;
 
@@ -47,6 +48,7 @@ export class Trajectory {
     controlPoints?: ControlPoint[],
     color?: ColorHex,
     interpolationType?: InterpolationType,
+    interpolationDistance?: number,
     isVisible?: boolean,
     isLocked?: boolean
   );
@@ -55,6 +57,7 @@ export class Trajectory {
     _controlPoints?: ControlPoint[];
     _color?: ColorHex;
     _interpolationType?: InterpolationType;
+    _interpolationDistance?: number;
     _isVisible?: boolean;
     _isLocked?: boolean;
   });
@@ -64,16 +67,18 @@ export class Trajectory {
     arg1:
       | string
       | {
-          _name?: string;
-          _controlPoints?: ControlPoint[];
-          _color?: ColorHex;
-          _interpolationType?: InterpolationType;
-          _isVisible?: boolean;
-          _isLocked?: boolean;
-        },
+        _name?: string;
+        _controlPoints?: ControlPoint[];
+        _color?: ColorHex;
+        _interpolationType?: InterpolationType;
+        _interpolationDistance?: number;
+        _isVisible?: boolean;
+        _isLocked?: boolean;
+      },
     controlPoints: ControlPoint[] = [],
     color: ColorHex = getRandomColor(),
     interpolationType: InterpolationType = "EQUIDISTANT",
+    interpolationDistance: number = 0.1524,
     isVisible: boolean = true,
     isLocked: boolean = false
   ) {
@@ -86,6 +91,10 @@ export class Trajectory {
       this._name = sanitizeName(obj._name ?? "Trajectory Default Name");
       this._color = normalizeColor(obj._color ?? getRandomColor());
       this._interpolationType = obj._interpolationType ?? "EQUIDISTANT";
+      this._interpolationDistance =
+        obj._interpolationDistance && Number.isFinite(obj._interpolationDistance)
+          ? obj._interpolationDistance
+          : 0.1524;
       this._isVisible = obj._isVisible ?? true;
       this._isLocked = obj._isLocked ?? false;
 
@@ -118,6 +127,7 @@ export class Trajectory {
       this._name = sanitizeName(arg1);
       this._color = normalizeColor(color);
       this._interpolationType = interpolationType;
+      this._interpolationDistance = interpolationDistance;
       this._isVisible = isVisible;
       this._isLocked = isLocked;
       this._controlPoints = [...controlPoints];
@@ -130,6 +140,8 @@ export class Trajectory {
         setColor: (c: ColorHex) => this.setColor(c),
         setInterpolationType: (t: InterpolationType) =>
           this.setInterpolationType(t),
+        setInterpolationDistance: (d: number) =>
+          this.setInterpolationDistance(d),
         setIsVisible: (v: boolean) => this.setIsVisible(v),
         setIsLocked: (v: boolean) => this.setIsLocked(v),
         addControlPoint: (cp: ControlPoint) => this.addControlPoint(cp),
@@ -174,6 +186,9 @@ export class Trajectory {
   }
   get interpolationType(): InterpolationType {
     return this._interpolationType;
+  }
+  get interpolationDistance(): number {
+    return this._interpolationDistance;
   }
   get isVisible(): boolean {
     return this._isVisible;
@@ -500,6 +515,10 @@ export class Trajectory {
   private setInterpolationType(type: InterpolationType): void {
     this._interpolationType = type;
   }
+  private setInterpolationDistance(dist: number): void {
+    this._interpolationDistance = assertFinite(dist, "interpolationDistance");
+    this._dirty(); // <-- important to update store
+  }
   private setIsVisible(isVisible: boolean): void {
     this._isVisible = isVisible;
   }
@@ -522,9 +541,9 @@ function normalizeColor(color: ColorHex): ColorHex {
   const full =
     hex.length === 3
       ? hex
-          .split("")
-          .map((c) => c + c)
-          .join("")
+        .split("")
+        .map((c) => c + c)
+        .join("")
       : hex;
   const ok = /^[0-9a-fA-F]{6}$/.test(full);
   return `#${ok ? full.toUpperCase() : "FF0000"}` as ColorHex;
