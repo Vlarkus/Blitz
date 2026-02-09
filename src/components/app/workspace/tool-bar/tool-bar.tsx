@@ -22,6 +22,7 @@ import { useEditorStore } from "../../../../editor/editor-store";
 import type { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { useState } from "react";
 import SettingsOverlay from "../status-bar/settings-overlay";
+import MergeOverlay from "./merge-overlay";
 import { useDataStore } from "../../../../models/dataStore";
 import { CanvasCoordinateSystem } from "../canvas/canvas-coordinate-helper";
 
@@ -38,6 +39,7 @@ export default function ToolBar() {
   const activeTool = useEditorStore((s) => s.activeTool);
   const setActiveTool = useEditorStore((s) => s.setActiveTool);
   const [showSettings, setShowSettings] = useState(false);
+  const [showMerge, setShowMerge] = useState(false);
   const selectedControlPointIds = useDataStore(
     (s) => s.selectedControlPointIds
   );
@@ -232,6 +234,14 @@ export default function ToolBar() {
         <div className="tool-bar-spacer" />
         <div className="tool-bar-actions">
           <button
+            className={`tool-bar-action-btn ${showMerge ? "active" : ""}`}
+            onClick={() => setShowMerge(true)}
+            title="Merge Trajectories"
+            disabled={!actionsEnabled}
+          >
+            <FontAwesomeIcon icon={faObjectGroup} />
+          </button>
+          <button
             className={`tool-bar-action-btn ${showRobot ? "active" : ""}`}
             onClick={() => setShowRobot(!showRobot)}
             title="Toggle Robot Overlay"
@@ -313,6 +323,7 @@ export default function ToolBar() {
         </button>
       </div>
       {showSettings && <SettingsOverlay onClose={() => setShowSettings(false)} />}
+      {showMerge && <MergeOverlay onClose={() => setShowMerge(false)} />}
     </>
   );
 }

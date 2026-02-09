@@ -233,6 +233,12 @@ export default function TrajectoryElement({ trajId }: Props) {
   const setSelectedControlPointId = useDataStore(
     (s) => s.setSelectedControlPointId,
   );
+  const setSelectedControlPointIds = useDataStore(
+    (s) => s.setSelectedControlPointIds
+  );
+  const addSelectedControlPointIds = useDataStore(
+    (s) => s.addSelectedControlPointIds
+  );
 
   const activeTool = useEditorStore((s) => s.activeTool);
   const scale = useEditorStore((s) => s.activeViewport.scale);
@@ -309,7 +315,20 @@ export default function TrajectoryElement({ trajId }: Props) {
     if (activeTool === "insert") return;
 
     // Default behavior (e.g., Select tool): select trajectory on path click
-    useDataStore.getState().setSelectedTrajectoryId(traj.id);
+    // If shift/ctrl is held, add all CPs to selection.
+    // Otherwise, select ONLY this trajectory's CPs.
+    const allCpIds = traj.controlPoints.map((c) => c.id);
+    if (allCpIds.length === 0) {
+      // Fallback for empty paths
+      useDataStore.getState().setSelectedTrajectoryId(traj.id);
+    } else {
+      if (e.evt.shiftKey || e.evt.ctrlKey) {
+        addSelectedControlPointIds(allCpIds);
+      } else {
+        // Pass the first ID as primary to ensure selectedTrajectoryId updates correctly
+        setSelectedControlPointIds(allCpIds, allCpIds[0]);
+      }
+    }
   };
 
   return (

@@ -31,13 +31,13 @@ export default function TrCard({ trID }: TrCardProps) {
     dataStore.renameTrajectory(traj.id, next);
   };
 
-  const allCpsSelected =
+  const hasSelectedCp =
     traj.controlPoints.length > 0 &&
-    traj.controlPoints.every((cp) =>
+    traj.controlPoints.some((cp) =>
       dataStore.selectedControlPointIds.includes(cp.id)
     );
   const isSelected =
-    dataStore.selectedTrajectoryId === traj.id || allCpsSelected;
+    dataStore.selectedTrajectoryId === traj.id || hasSelectedCp;
 
   return (
     <>
@@ -89,7 +89,10 @@ export default function TrCard({ trID }: TrCardProps) {
             aria-label={
               !expanded ? "Collapse control points" : "Expand control points"
             }
-            onClick={toggleExpand}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleExpand();
+            }}
           >
             {/* Chevron icon */}
             <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">

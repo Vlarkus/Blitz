@@ -1,0 +1,184 @@
+@use "/src/styles/constants.scss" as *;
+
+.merge-overlay-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.merge-overlay {
+    position: relative;
+    width: 400px;
+    height: auto;
+    background: #1e1e1e;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    /* Changed to column since no sidebar */
+    overflow: hidden;
+    color: #eeeeee;
+    border: 1px solid #333;
+
+    .merge-main {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .merge-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #333;
+        background: #252526;
+
+        .merge-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #eeeeee;
+        }
+
+
+    }
+
+    .merge-content {
+        flex: 1 1 auto;
+        padding: 1rem;
+        overflow-y: auto;
+        color: #cccccc;
+        font-size: 0.95rem;
+        line-height: 1.4;
+
+        .merge-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .merge-list-item {
+            display: flex;
+            align-items: center;
+            background: #252526;
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            gap: 0.75rem;
+            border: 1px solid #333;
+
+            .order-number {
+                color: #569cd6;
+                font-weight: 600;
+                font-family: monospace;
+                min-width: 1.2rem;
+            }
+
+            .traj-name {
+                flex: 1 1 auto;
+                color: #eeeeee;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                font-weight: 500;
+            }
+
+            .order-actions {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+
+                .move-btn {
+                    background: transparent;
+                    border: none;
+                    color: #888;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 0;
+                    width: 20px;
+                    height: 14px;
+
+                    &:hover:not(:disabled) {
+                        color: #fff;
+                        background: rgba(255, 255, 255, 0.1);
+                        border-radius: 2px;
+                    }
+
+                    &:disabled {
+                        color: #444;
+                        cursor: not-allowed;
+                    }
+
+                    svg {
+                        font-size: 0.8rem;
+                    }
+                }
+            }
+
+            &.primary {
+                border: 1px solid #cc0077;
+                background: rgba(204, 0, 119, 0.15);
+
+                .order-number {
+                    color: #fff;
+                }
+
+                .traj-name {
+                    font-weight: 600;
+                    color: #fff;
+                }
+            }
+        }
+    }
+
+    .merge-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.3rem;
+        padding: 0.3rem;
+        background: #252526;
+        border-top: 1px solid #333;
+
+        .apply-button,
+        .cancel-button {
+            padding: 0.4rem 1rem;
+            border-radius: 4px;
+            font-weight: 500;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .apply-button {
+            background: #3a86ff;
+            color: white;
+
+            &:hover:not(:disabled) {
+                background: #2a6edb;
+            }
+        }
+
+        .cancel-button {
+            background: transparent;
+            border: 1px solid #555;
+            color: #ccc;
+
+            &:hover:not(:disabled) {
+                background: #333;
+                color: white;
+            }
+        }
+    }
+}
