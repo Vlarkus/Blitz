@@ -25,11 +25,12 @@ export default function TrajectoryInfo() {
     (state) => state.selectedTrajectoryId
   );
 
-  const traj = useDataStore((s) =>
-    selectedTrajectoryId ? s.getTrajectoryById(selectedTrajectoryId) : undefined
-  );
-
-  const interpolationDistanceMeters = traj?.interpolationDistance ?? 0.1524;
+  const interpolationDistanceMeters = useDataStore((s) => {
+    const id = s.selectedTrajectoryId;
+    return id
+      ? s.getTrajectoryById(id)?.interpolationDistance ?? 0.1524
+      : 0.1524;
+  });
 
   const setTrajectoryColor = useDataStore((state) => state.setTrajectoryColor);
   const setTrajectoryInterpolation = useDataStore(

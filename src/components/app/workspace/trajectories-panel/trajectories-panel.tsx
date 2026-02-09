@@ -83,6 +83,55 @@ export default function TrajectoriesPanel() {
 
           <button
             className="btn tr-icon-btn"
+            onClick={() => {
+              const trajsToClone = trajectories.filter((t) =>
+                trajectoryIdsToDelete.includes(t.id)
+              );
+              if (trajsToClone.length === 0) return;
+
+              const clones = trajsToClone.map((src) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const clone = new Trajectory(src as any);
+                clone.internal.setName(src.name + " (copy)");
+                return clone;
+              });
+
+              execute({
+                redo: () => {
+                  clones.forEach((t) => addTrajectory(t));
+                  if (clones.length === 1) setSelectedTrajectoryId(clones[0].id);
+                },
+                undo: () => {
+                  clones.forEach((t) => removeTrajectory(t.id));
+                },
+              });
+            }}
+            aria-label="Duplicate selected trajectories"
+            title="Duplicate selected trajectory(ies)"
+            disabled={!canDeleteTrajectories}
+          >
+            <span className="tr-icon-base" aria-hidden="true">
+              <svg
+                width="0.8em"
+                height="0.8em"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+            </span>
+            <span className="tr-icon-badge" aria-hidden="true">
+              tr
+            </span>
+          </button>
+
+          <button
+            className="btn tr-icon-btn"
             aria-label="Remove selected trajectories"
             title="Remove selected trajectory(ies)"
             disabled={!canDeleteTrajectories}
