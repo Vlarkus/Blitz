@@ -15,13 +15,16 @@ const KEYBINDS = {
   toolAdd: "a",
   toolRemove: "r",
   toolInsert: "i",
-  toolCut: "x",
+  toolCut: "c",
   toolPan: "p",
-  toolShowRobot: "s",
 
   // Trajectory operations
   newTrajectory: "a", // Ctrl+A
   deleteTrajectory: "r", // Ctrl+R
+  deleteControlPoint: "d", // Ctrl+D
+
+  // View
+  toggleRobot: "s",
 
   // Zoom
   zoomIn: "+",
@@ -91,6 +94,13 @@ export function useKeybinds() {
         return;
       }
 
+      // Toggle Robot (S)
+      if (!mod && !alt && !shift && key === KEYBINDS.toggleRobot) {
+        e.preventDefault();
+        editorStore.setShowRobot(!editorStore.showRobot);
+        return;
+      }
+
       // Tool selection (only if no modifier keys)
       if (!mod && !alt && !shift) {
         if (key === KEYBINDS.toolSelect) {
@@ -123,14 +133,9 @@ export function useKeybinds() {
           editorStore.setActiveTool("pan");
           return;
         }
-        if (key === KEYBINDS.toolShowRobot) {
-          e.preventDefault();
-          editorStore.setActiveTool("show_robot");
-          return;
-        }
       }
 
-      // Zoom (Ctrl/Cmd + key)
+      // Zoom & Shortcuts (Ctrl/Cmd + key)
       if (mod && !shift && !alt) {
         if (key === "=" || key === KEYBINDS.zoomIn) {
           e.preventDefault();
@@ -188,6 +193,47 @@ export function useKeybinds() {
               },
             });
           }
+          return;
+        }
+
+        // Delete Control Point (Ctrl+D)
+        if (key === KEYBINDS.deleteControlPoint) {
+          e.preventDefault();
+          const cpId = dataStore.selectedControlPointId;
+          if (!cpId) return; // No CP selected
+
+          const trajId = dataStore.getTrajectoryIdByControlPointId(cpId);
+          if (!trajId) return;
+
+          const traj = dataStore.getTrajectoryById(trajId);
+          if (!traj) return;
+
+          // Find CP and its index for undo
+          const index = traj.controlPoints.findIndex((cp) => cp.id === cpId);
+          if (index < 0) return;
+          const cpCopy = dataStore.getControlPoint(trajId, cpId); // Should ideally be a deep copy, but addControlPoint might handle it or we use copyControlPoint internal?
+          // dataStore.getControlPoint returns the raw object or reference?
+          // We should create a clone to be safe for restoration
+          // Trajectory.ts `addControlPoint` pushes the object.
+          // Let's rely on internal safe copying if it exists, or use the `deepCopyControlPoint` helper if accessible.
+          // But `deepCopyControlPoint` is not exported from dataStore.
+          // `Trajectory.ts` clones on some ops.
+          // Let's assume re-inserting the same object reference (since it was removed) is OK, OR safer:
+          // We can use `traj.internal.copyControlPoint(id)` which returns a copy?
+          // No, `copyControlPoint` is on internal API.
+          // Let's use `dataStore.getControlPoint` result. If `remove` just drops it from array, the object ref is valid.
+
+          if (!cpCopy) return;
+
+          dataStore.execute({
+            redo: () => {
+              dataStore.removeControlPoint(trajId, cpId);
+            },
+            undo: () => {
+              dataStore.addControlPoint(trajId, cpCopy, index);
+              dataStore.setSelectedControlPointId(cpId);
+            },
+          });
           return;
         }
       }

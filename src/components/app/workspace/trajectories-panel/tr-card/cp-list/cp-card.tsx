@@ -16,6 +16,13 @@ export default function CpCard({ trajId, cpId }: CpCardProps) {
   const setSelectedControlPointId = useDataStore(
     (s) => s.setSelectedControlPointId
   );
+  const toggleSelectedControlPointId = useDataStore(
+    (s) => s.toggleSelectedControlPointId
+  );
+  const setSelectedControlPointIds = useDataStore(
+    (s) => s.setSelectedControlPointIds
+  );
+  const primarySelectedId = useDataStore((s) => s.selectedControlPointId);
   const setControlPointLock = useDataStore((s) => s.setControlPointLock);
   const renameControlPoint = useDataStore((s) => s.renameControlPoint);
   const selectedControlPointIds = useDataStore(
@@ -39,7 +46,26 @@ export default function CpCard({ trajId, cpId }: CpCardProps) {
       className={`cp-card${selected ? " selected" : ""}`}
       role="group"
       aria-label="Control Point card"
-      onClick={() => setSelectedControlPointId(cpId)}
+      onClick={(e) => {
+        if (e.ctrlKey || e.metaKey) {
+          toggleSelectedControlPointId(cpId);
+        } else if (e.shiftKey && primarySelectedId && traj) {
+          const cps = traj.controlPoints;
+          const idxStart = cps.findIndex((c) => c.id === primarySelectedId);
+          const idxEnd = cps.findIndex((c) => c.id === cpId);
+
+          if (idxStart !== -1 && idxEnd !== -1) {
+            const min = Math.min(idxStart, idxEnd);
+            const max = Math.max(idxStart, idxEnd);
+            const rangeIds = cps.slice(min, max + 1).map((c) => c.id);
+            setSelectedControlPointIds(rangeIds, cpId);
+          } else {
+            setSelectedControlPointId(cpId);
+          }
+        } else {
+          setSelectedControlPointId(cpId);
+        }
+      }}
     >
       <div className="left-half">
         <div className="cp-card-name">

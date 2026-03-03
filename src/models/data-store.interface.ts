@@ -37,6 +37,7 @@ export interface IDataStore {
   setTrajectoryVisibility(id: TrajectoryId, visible: boolean): void;
   setTrajectoryLock(id: TrajectoryId, locked: boolean): void;
   setTrajectoryInterpolation(id: TrajectoryId, type: InterpolationType): void;
+  setTrajectoryInterpolationDistance(id: TrajectoryId, dist: number): void;
   cloneTrajectory(id: TrajectoryId): TrajectoryId | null;
   reorderTrajectory(fromIndex: number, toIndex: number): void;
 

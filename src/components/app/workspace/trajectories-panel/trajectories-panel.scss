@@ -27,12 +27,23 @@
   flex: 0 0 auto;
   display: flex;
   flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 2rem;
-  gap: 0.5rem;
+  height: 1.8rem;
+  gap: 0.3rem;
   background-color: $bg-dark;
+
+  .tr-edit-segment.side-panel-element {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    padding: 0.08rem 0.18rem;
+    gap: 0.15rem;
+  }
 
   button {
     background: transparent;
@@ -40,5 +51,36 @@
     &:active {
       color: $primary;
     }
+
+    &:disabled {
+      opacity: 0.3;
+      pointer-events: none;
+    }
+  }
+
+  .tr-icon-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.2rem;
+    line-height: 1;
+  }
+
+  .tr-icon-base {
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .tr-icon-badge {
+    position: absolute;
+    right: 0.08rem;
+    bottom: 0.08rem;
+    font-size: 0.42rem;
+    line-height: 1;
+    font-weight: 700;
+    text-transform: lowercase;
+    letter-spacing: 0.01em;
   }
 }

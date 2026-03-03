@@ -10,6 +10,49 @@ import FieldImage from "./field-image/field-image";
 
 import { useCanvasCoordinates } from "./canvas-coordinate-helper";
 import { Group } from "react-konva";
+import ShowRobotOverlay from "./elements/show-robot-overlay";
+
+const SHOW_ROBOT_SCROLL_STEP_DEG = 3;
+const SNAP_ANGLES_DEG = [0, 30, 45, 60, 90]
+  .flatMap((base) => [base, base + 90, base + 180, base + 270])
+  .filter((deg, index, all) => all.indexOf(deg % 360) === index)
+  .map((deg) => ((deg % 360) + 360) % 360)
+  .sort((a, b) => a - b);
+
+
+
+function degToRad(deg: number) {
+  return (deg * Math.PI) / 180;
+}
+
+function radToDeg(rad: number) {
+  return (rad * 180) / Math.PI;
+}
+
+function stepSnapAngle(currentRad: number, direction: 1 | -1) {
+  const currentDeg = radToDeg(currentRad);
+  // Normalize to 0-360 base for lookup, but preserve 360 offsets
+  const offset = Math.floor(currentDeg / 360) * 360;
+  const localDeg = currentDeg - offset;
+  const epsilon = 1e-6;
+
+  if (direction > 0) {
+    const next = SNAP_ANGLES_DEG.find((deg) => deg > localDeg + epsilon);
+    if (next !== undefined) {
+      return degToRad(offset + next);
+    }
+    // Wrap to next rotation
+    return degToRad(offset + 360 + SNAP_ANGLES_DEG[0]);
+  } else {
+    for (let i = SNAP_ANGLES_DEG.length - 1; i >= 0; i--) {
+      if (SNAP_ANGLES_DEG[i] < localDeg - epsilon) {
+        return degToRad(offset + SNAP_ANGLES_DEG[i]);
+      }
+    }
+    // Wrap to prev rotation
+    return degToRad(offset - 360 + SNAP_ANGLES_DEG[SNAP_ANGLES_DEG.length - 1]);
+  }
+}
 
 export default function Canvas() {
   // Select store fields individually to keep selector snapshots stable
@@ -22,6 +65,10 @@ export default function Canvas() {
   const zoomBy = useEditorStore((s) => s.zoomBy);
 
   const activeTool = useEditorStore((s) => s.activeTool); // ...
+  const showRobot = useEditorStore((s) => s.showRobot);
+  const independentHeading = useEditorStore(
+    (s) => s.robotConfig.independentHeading
+  );
 
   const selectedTrajectoryId = useDataStore((s) => s.selectedTrajectoryId);
   // const selectedControlPointId = useDataStore((s) => s.selectedControlPointId);
@@ -82,6 +129,8 @@ export default function Canvas() {
     y2: number;
     additive: boolean;
   } | null>(null);
+  const robotHeading = useEditorStore((s) => s.robotHeading);
+  const setRobotHeading = useEditorStore((s) => s.setRobotHeading);
 
   // const getClickedControlPointId = (target: any): string | null => {
   //   if (!target) return null;
@@ -122,8 +171,21 @@ export default function Canvas() {
         // screen -> world (user coords)
         const { x, y } = transform.screenToUser(pos.x, pos.y, activeViewport);
 
+        const traj = trajectories.find(t => t.id === selectedTrajectoryId);
+        const lastCp = traj?.controlPoints.length ? traj.controlPoints[traj.controlPoints.length - 1] : null;
+
+        let initialHeading = independentHeading ? robotHeading : null;
+        if (independentHeading && lastCp && lastCp.heading !== null) {
+          initialHeading = lastCp.heading;
+        }
+
         // Construct CP first so we know its id
-        const cp = new ControlPoint("Control Point", x, y);
+        const cp = new ControlPoint(
+          "Control Point",
+          x,
+          y,
+          initialHeading
+        );
         const trajId = selectedTrajectoryId;
         const cpId = cp.id;
 
@@ -166,12 +228,12 @@ export default function Canvas() {
         prev
           ? { ...prev, x2: pos.x, y2: pos.y }
           : {
-              x1: selectionStart.current!.x,
-              y1: selectionStart.current!.y,
-              x2: pos.x,
-              y2: pos.y,
-              additive: selectionStart.current!.additive,
-            }
+            x1: selectionStart.current!.x,
+            y1: selectionStart.current!.y,
+            x2: pos.x,
+            y2: pos.y,
+            additive: selectionStart.current!.additive,
+          }
       );
     }
   };
@@ -261,8 +323,31 @@ export default function Canvas() {
     e.evt.preventDefault();
     const pos = e.target.getStage()?.getPointerPosition();
     if (!pos) return;
-    const factor = e.evt.deltaY > 0 ? 0.9 : 1.1; // scroll up -> zoom in
-    zoomBy(factor, pos.x, pos.y);
+
+    // Zoom: Ctrl + Scroll
+    if (e.evt.ctrlKey) {
+      const factor = e.evt.deltaY > 0 ? 0.9 : 1.1; // scroll up -> zoom in
+      zoomBy(factor, pos.x, pos.y);
+      return;
+    }
+
+    // Robot rotation: Show Robot enabled
+    if (showRobot) {
+      const direction: 1 | -1 = e.evt.deltaY < 0 ? 1 : -1;
+      const snapMode = e.evt.shiftKey;
+
+      const prev = robotHeading;
+      let next = prev;
+      if (snapMode) {
+        next = transform.normalizeHeading(stepSnapAngle(prev, direction));
+      } else {
+        next = transform.normalizeHeading(
+          prev + degToRad(SHOW_ROBOT_SCROLL_STEP_DEG * direction)
+        );
+      }
+      setRobotHeading(next);
+      return;
+    }
   };
 
   // Compute the visible world-rect so the background Rect matches the view.
@@ -288,6 +373,15 @@ export default function Canvas() {
         onWheel={onWheel}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
+        onDragMove={(e) => {
+          // Keep hover updated even while dragging (e.g. control points)
+          const stage = e.target.getStage();
+          const pos = stage?.getPointerPosition();
+          if (pos) {
+            const hover = transform.screenToUser(pos.x, pos.y, activeViewport);
+            setHoverWorld(hover.x, hover.y);
+          }
+        }}
         onMouseUp={() => {
           endPan();
           endSelection();
@@ -320,6 +414,7 @@ export default function Canvas() {
             scaleY={transform.groupProps.scaleY}
           >
             <TrajectoriesLayer />
+            <ShowRobotOverlay headingRad={robotHeading} />
           </Group>
         </Layer>
         {selectionBox && (
@@ -337,6 +432,6 @@ export default function Canvas() {
           </Layer>
         )}
       </Stage>
-    </section>
+    </section >
   );
 }

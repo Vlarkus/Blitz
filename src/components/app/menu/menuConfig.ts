@@ -22,7 +22,7 @@ export const MENU_STRUCTURE: MenuItem[] = [
 
           const confirmed = window.confirm(
             "Are you sure you want to start a new file?\n\n" +
-              "All unsaved trajectories will be lost. Make sure to save first."
+            "All unsaved trajectories will be lost. Make sure to save first."
           );
 
           if (!confirmed) return;
@@ -58,6 +58,41 @@ export const MENU_STRUCTURE: MenuItem[] = [
 
           input.click();
         },
+      },
+      {
+        label: "Import",
+        subItems: [
+          {
+            label: "JerryIO Path (.txt)",
+            action: () => {
+              const input = document.createElement("input");
+              input.type = "file";
+              input.accept = ".txt,text/plain";
+
+              input.onchange = async (e) => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                if (!file) return;
+
+                try {
+                  const text = await file.text();
+                  const { importFromJerryIO } = await import(
+                    "../../../models/import-formats/import-from-jerryio"
+                  );
+                  const trajectories = importFromJerryIO(text);
+
+                  const store = useDataStore.getState();
+                  trajectories.forEach((t) => store.addTrajectory(t));
+
+                } catch (err) {
+                  console.error("Failed to import file:", err);
+                  alert("Failed to import file. See console for details.");
+                }
+              };
+
+              input.click();
+            },
+          },
+        ],
       },
       {
         label: "Save As",

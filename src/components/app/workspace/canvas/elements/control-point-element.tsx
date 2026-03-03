@@ -4,14 +4,9 @@ import Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { useDataStore } from "../../../../../models/dataStore";
 import { useEditorStore } from "../../../../../editor/editor-store";
-import {
-  CanvasCoordinateSystem,
-  useCanvasCoordinates,
-} from "../canvas-coordinate-helper";
+import { useCanvasCoordinates } from "../canvas-coordinate-helper";
 
 type Props = { trajId: string; cpId: string };
-
-const ROBOT_HOVER_FADE_MS = 350;
 
 export default function ControlPointElement({ trajId, cpId }: Props) {
   const cp = useDataStore((s) => s.getControlPoint(trajId, cpId));
@@ -27,26 +22,19 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
   const setSelectedTrajectoryId = useDataStore(
     (s) => s.setSelectedTrajectoryId,
   );
-  const cutTrajectoryAt = useDataStore((s) => s.cutTrajectoryAt);
   const moveControlPoint = useDataStore((s) => s.moveControlPoint);
   const execute = useDataStore((s) => s.execute);
-  const getHandlePosition = useDataStore((s) => s.getHandlePosition);
   const getTrajectoryIdByControlPointId = useDataStore(
     (s) => s.getTrajectoryIdByControlPointId,
   );
 
   const scale = useEditorStore((s) => s.activeViewport.scale);
   const activeTool = useEditorStore((s) => s.activeTool);
-  const { widthM, heightM } = useEditorStore((s) => s.robotConfig);
   const canvasConfig = useEditorStore((s) => s.canvasConfig);
-  const hoveredElementName = useEditorStore((s) => s.hoveredElementName);
   const selectedControlPointIds = useDataStore(
     (s) => s.selectedControlPointIds,
   );
-  const setHoveredElementName = useEditorStore((s) => s.setHoveredElementName);
-  const hoverClearTimer = useRef<number | null>(null);
   const transform = useCanvasCoordinates(canvasConfig);
-  const coordSys = new CanvasCoordinateSystem(canvasConfig);
 
   const dragStartPos = useRef<Record<string, { x: number; y: number }> | null>(
     null,
@@ -81,14 +69,6 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
   ];
 
   useEffect(() => {
-    return () => {
-      if (hoverClearTimer.current !== null) {
-        window.clearTimeout(hoverClearTimer.current);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
     const node = cp?.isEvent
       ? selectionRingRectRef.current
       : selectionRingCircleRef.current;
@@ -118,65 +98,6 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
     traj.controlPoints.length > 0 &&
     traj.controlPoints[traj.controlPoints.length - 1].id === cp.id;
 
-  const inferredHeading = (() => {
-    if (cp.heading !== null) return cp.heading;
-
-    const vectorToHeadingCw = (dx: number, dy: number) => {
-      if (dx === 0 && dy === 0) return 0;
-      const v = coordSys.fromUser(dx, dy);
-      const screenAngleDeg = (Math.atan2(v.y, v.x) * 180) / Math.PI;
-      const cwScreenDeg = screenAngleDeg + 90;
-      return coordSys.mapHeadingFromScreen(cwScreenDeg);
-    };
-
-    const cps = traj.controlPoints;
-    const idx = cps.findIndex((p) => p.id === cp.id);
-    if (idx < 0) return 0;
-
-    const prev = idx > 0 ? cps[idx - 1] : null;
-    const next = idx < cps.length - 1 ? cps[idx + 1] : null;
-
-    // Build local tangents from the visible path (Bezier handles when applicable).
-    const incoming = (() => {
-      if (!prev) return null as { x: number; y: number } | null;
-      if (prev.splineType === "BEZIER") {
-        const hIn = getHandlePosition(traj.id, cp.id, "in");
-        if (hIn) return { x: cp.x - hIn.x, y: cp.y - hIn.y };
-      }
-      return { x: cp.x - prev.x, y: cp.y - prev.y };
-    })();
-
-    const outgoing = (() => {
-      if (!next) return null as { x: number; y: number } | null;
-      if (cp.splineType === "BEZIER") {
-        const hOut = getHandlePosition(traj.id, cp.id, "out");
-        if (hOut) return { x: hOut.x - cp.x, y: hOut.y - cp.y };
-      }
-      return { x: next.x - cp.x, y: next.y - cp.y };
-    })();
-
-    // Middle CP: average inbound and outbound tangent directions.
-    if (prev && next) {
-      const v1x = incoming?.x ?? 0;
-      const v1y = incoming?.y ?? 0;
-      const v2x = outgoing?.x ?? 0;
-      const v2y = outgoing?.y ?? 0;
-      const n1 = Math.hypot(v1x, v1y) || 1;
-      const n2 = Math.hypot(v2x, v2y) || 1;
-      const vx = v1x / n1 + v2x / n2;
-      const vy = v1y / n1 + v2y / n2;
-      if (vx !== 0 || vy !== 0) return vectorToHeadingCw(vx, vy);
-      if (v2x !== 0 || v2y !== 0) return vectorToHeadingCw(v2x, v2y);
-      if (v1x !== 0 || v1y !== 0) return vectorToHeadingCw(v1x, v1y);
-      return 0;
-    }
-
-    // Endpoints: use the only adjacent segment direction.
-    if (outgoing) return vectorToHeadingCw(outgoing.x, outgoing.y);
-    if (incoming) return vectorToHeadingCw(incoming.x, incoming.y);
-    return 0;
-  })();
-
   const draggable = !cp.isLocked && !traj.isLocked && activeTool === "select";
 
   const onMouseDown = (e: KonvaEventObject<MouseEvent>) => {
@@ -186,12 +107,48 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       case "remove":
         e.evt.preventDefault();
         e.target.stopDrag?.();
-        removeControlPoint(trajId, cpId);
-        setSelectedTrajectoryId(trajId);
+        {
+          const store = useDataStore.getState();
+          const t = store.getTrajectoryById(trajId);
+          const cpRef = store.getControlPoint(trajId, cpId);
+          const idx = t?.controlPoints.findIndex((c) => c.id === cpId) ?? -1;
+
+          if (!t || !cpRef || idx < 0) return;
+
+          execute({
+            redo: () => {
+              removeControlPoint(trajId, cpId);
+              setSelectedTrajectoryId(trajId);
+            },
+            undo: () => {
+              useDataStore.getState().addControlPoint(trajId, cpRef, idx);
+              setSelectedControlPointId(cpId);
+            },
+          });
+        }
         return;
 
       case "cut":
-        cutTrajectoryAt(trajId, cpId);
+        {
+          const srcTraj = useDataStore.getState().getTrajectoryById(trajId);
+          if (!srcTraj) return;
+
+          let newIds: { firstId: string; secondId: string } | null = null;
+
+          execute({
+            redo: () => {
+              const res = useDataStore.getState().cutTrajectoryAt(trajId, cpId);
+              if (res) newIds = res;
+            },
+            undo: () => {
+              if (newIds) {
+                useDataStore.getState().removeTrajectory(newIds.firstId);
+                useDataStore.getState().removeTrajectory(newIds.secondId);
+              }
+              useDataStore.getState().addTrajectory(srcTraj);
+            },
+          });
+        }
         return;
     }
 
@@ -285,75 +242,6 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
     }
   };
 
-  // --- Robot hover preview (world-space) ---
-  const robotStroke = Math.min((1 / scale) * 2.5, 0.5);
-  // const INCH_TO_M = 0.0254;
-
-  const robotRadiusM = Math.sqrt(widthM * widthM + heightM * heightM) / 2;
-
-  const isRobotHover =
-    activeTool === "show_robot" &&
-    hoveredElementName === `cp:${trajId}:${cpId}`;
-
-  const robotHoverGhost = isRobotHover ? (
-      <Group
-        x={cp.x}
-        y={cp.y}
-        rotation={transform.mapHeading(inferredHeading)}
-        listening={false}
-      >
-      {/* Reach circle (circumcribed) */}
-      <Circle
-        radius={robotRadiusM}
-        stroke="#ffffff"
-        strokeWidth={robotStroke}
-        // dash={[robotRadiusM * 0.25, robotRadiusM * 0.25]}
-      />
-
-      {/* Robot footprint (Configurable) */}
-      <Rect
-        x={-widthM / 2}
-        y={-heightM / 2}
-        width={widthM}
-        height={heightM}
-        stroke="#ffffff"
-        strokeWidth={robotStroke}
-        dash={[widthM * 0.15, heightM * 0.15]}
-      />
-      {/* Front indicator - shaft + arrowhead */}
-      <Line
-        points={[
-          0,
-          0, // Start at center
-          widthM * 0.45,
-          0, // Shaft ENDPOINT like heading line
-        ]}
-        stroke="#ffffff"
-        strokeWidth={robotStroke * 1.5}
-        lineCap="round"
-        lineJoin="round"
-      />
-      {/* Arrowhead */}
-      <Line
-        points={[
-          widthM * 0.45,
-          0, // Arrow tip (matches shaft end)
-          widthM * 0.35,
-          -widthM * 0.08, // Left barb
-          widthM * 0.45,
-          0, // Back to tip
-          widthM * 0.35,
-          widthM * 0.08, // Right barb
-        ]}
-        stroke="#ffffff"
-        strokeWidth={robotStroke * 1.2}
-        lineCap="round"
-        lineJoin="round"
-        closed
-      />
-    </Group>
-  ) : null;
-
   // --- Selection ring ---
   const selectionRing = isSelected ? (
     <Group x={cp.x} y={cp.y} listening={false}>
@@ -401,28 +289,6 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       onDragEnd={onDragEnd}
       onMouseDown={onMouseDown}
       onMouseUp={onMouseUp}
-      onMouseEnter={() => {
-        if (activeTool === "show_robot") {
-          if (hoverClearTimer.current !== null) {
-            window.clearTimeout(hoverClearTimer.current);
-            hoverClearTimer.current = null;
-          }
-          setHoveredElementName(`cp:${trajId}:${cpId}`);
-        }
-      }}
-      onMouseLeave={() => {
-        if (activeTool === "show_robot") {
-          if (hoverClearTimer.current !== null) {
-            window.clearTimeout(hoverClearTimer.current);
-          }
-          const name = `cp:${trajId}:${cpId}`;
-          hoverClearTimer.current = window.setTimeout(() => {
-            if (useEditorStore.getState().hoveredElementName === name) {
-              setHoveredElementName(null);
-            }
-          }, ROBOT_HOVER_FADE_MS);
-        }
-      }}
       onTouchStart={() =>
         useDataStore.getState().setSelectedControlPointId(cpId)
       }
@@ -440,28 +306,6 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
       onDragEnd={onDragEnd}
       onMouseDown={onMouseDown}
       onMouseUp={onMouseUp}
-      onMouseEnter={() => {
-        if (activeTool === "show_robot") {
-          if (hoverClearTimer.current !== null) {
-            window.clearTimeout(hoverClearTimer.current);
-            hoverClearTimer.current = null;
-          }
-          setHoveredElementName(`cp:${trajId}:${cpId}`);
-        }
-      }}
-      onMouseLeave={() => {
-        if (activeTool === "show_robot") {
-          if (hoverClearTimer.current !== null) {
-            window.clearTimeout(hoverClearTimer.current);
-          }
-          const name = `cp:${trajId}:${cpId}`;
-          hoverClearTimer.current = window.setTimeout(() => {
-            if (useEditorStore.getState().hoveredElementName === name) {
-              setHoveredElementName(null);
-            }
-          }, ROBOT_HOVER_FADE_MS);
-        }
-      }}
       onTouchStart={() =>
         useDataStore.getState().setSelectedControlPointId(cpId)
       }
@@ -566,7 +410,6 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
 
   return (
     <>
-      {robotHoverGhost}
       {outer}
       {isLast ? innerChecker : innerSolid}
       {headingLine}

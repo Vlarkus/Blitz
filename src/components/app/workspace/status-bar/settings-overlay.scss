@@ -118,6 +118,8 @@
           input[type="number"],
           input[type="text"],
           select {
+            width: 100%;
+            box-sizing: border-box;
             background: #3c3c3c;
             border: 1px solid #555;
             color: #fff;
@@ -128,6 +130,30 @@
             &:focus {
               outline: none;
               border-color: #007acc;
+            }
+          }
+
+          &.checkbox-item {
+            flex-direction: row;
+            align-items: center;
+            gap: 0.5rem;
+
+            label {
+              flex: 0 0 auto;
+              color: #bbbbbb;
+            }
+
+            input[type="checkbox"] {
+              cursor: pointer;
+              width: 16px;
+              height: 16px;
+              accent-color: #cc0077;
+              flex-shrink: 0;
+              margin: 0;
+              vertical-align: middle;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
             }
           }
         }
@@ -201,13 +227,8 @@
       }
 
       .settings-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr; // Two columns for options
-        gap: 2rem;
-
-        @media (max-width: 600px) {
-          grid-template-columns: 1fr;
-        }
+        display: flex;
+        flex-direction: column;
       }
     }
 

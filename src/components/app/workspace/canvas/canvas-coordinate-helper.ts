@@ -8,6 +8,8 @@ interface CanvasTransform {
         scaleY: number;
     };
     mapHeading: (userHeadingRad: number) => number; // Returns degrees for Konva
+    mapHeadingFromScreen: (objectRotDeg: number) => number;
+    normalizeHeading: (rad: number) => number;
     screenToUser: (stageX: number, stageY: number, viewport: { originX: number; originY: number; scale: number }) => { x: number; y: number };
 }
 
@@ -16,9 +18,11 @@ export class CanvasCoordinateSystem {
     private groupRotation: number;
     private zeroAng: number;
     private dirMult: number;
+    private headingRange: { min: number; max: number };
 
     constructor(config: CanvasConfig) {
         const { positiveX, positiveY, zeroAngle, rotationDirection } = config.coordinateSystem;
+        const headingRange = config.headingRange || { minRad: -Math.PI, maxRad: Math.PI };
 
         // 1. Calculate Group Transform
         // We align Group +X with User +X.
@@ -48,6 +52,7 @@ export class CanvasCoordinateSystem {
         this.scaleY = scaleY;
         this.zeroAng = this.dirToAngle(zeroAngle);
         this.dirMult = rotationDirection === "CW" ? 1 : -1;
+        this.headingRange = { min: headingRange.minRad, max: headingRange.maxRad };
     }
 
     private dirToAngle(dir: string): number {
@@ -80,6 +85,26 @@ export class CanvasCoordinateSystem {
         return (targetVisualDeg - this.groupRotation) * this.scaleY;
     }
 
+    // Normalizes heading by wrapping only when boundaries are crossed.
+    // Assumes input 'rad' is the result of a small incremental change from a valid state,
+    // or that valid representations exist.
+    public normalizeHeading(rad: number): number {
+        const { min, max } = this.headingRange;
+        const twoPi = 2 * Math.PI;
+
+        // 1. Wrap down if above max
+        while (rad > max + 1e-6) {
+            rad -= twoPi;
+        }
+
+        // 2. Wrap up if below min
+        while (rad < min - 1e-6) {
+            rad += twoPi;
+        }
+
+        return rad;
+    }
+
     // Screen Heading (Degrees) -> World (User) Heading (Radians)
     public mapHeadingFromScreen(objectRotDeg: number): number {
         // Reverse:
@@ -90,7 +115,8 @@ export class CanvasCoordinateSystem {
         // UserHeading = (Visual - Zero) * Dir  (Dir is +/-1)
         const userHeadingDeg = (visualDeg - this.zeroAng) * this.dirMult;
 
-        return (userHeadingDeg * Math.PI) / 180;
+        const rad = (userHeadingDeg * Math.PI) / 180;
+        return this.normalizeHeading(rad);
     }
 
     // Screen (Stage/Pixel relative to origin/scale) -> User (Meters)
@@ -137,6 +163,8 @@ export function useCanvasCoordinates(config: CanvasConfig): CanvasTransform {
 
     const groupProps = sys.getGroupProps();
     const mapHeading = (r: number) => sys.mapHeadingToScreen(r);
+    const mapHeadingFromScreen = (d: number) => sys.mapHeadingFromScreen(d);
+    const normalizeHeading = (r: number) => sys.normalizeHeading(r);
 
     // Legacy support for the pixel-based helper
     const screenToUser = (stageX: number, stageY: number, viewport: { originX: number; originY: number; scale: number }) => {
@@ -150,6 +178,8 @@ export function useCanvasCoordinates(config: CanvasConfig): CanvasTransform {
     return {
         groupProps,
         mapHeading,
+        mapHeadingFromScreen,
+        normalizeHeading,
         screenToUser
     };
 }

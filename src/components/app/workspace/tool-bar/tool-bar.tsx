@@ -22,6 +22,7 @@ import { useEditorStore } from "../../../../editor/editor-store";
 import type { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { useState } from "react";
 import SettingsOverlay from "../status-bar/settings-overlay";
+import MergeOverlay from "./merge-overlay";
 import { useDataStore } from "../../../../models/dataStore";
 import { CanvasCoordinateSystem } from "../canvas/canvas-coordinate-helper";
 
@@ -31,7 +32,6 @@ const toolIcons: Record<Tool, IconProp> = {
   remove: faCircleMinus, // remove circle icon
   insert: faChevronCircleDown, // insert / down-turn arrow
   cut: faScissors, // cut
-  show_robot: faObjectGroup,
   pan: faHand, // pan/grab hand
 };
 
@@ -39,6 +39,7 @@ export default function ToolBar() {
   const activeTool = useEditorStore((s) => s.activeTool);
   const setActiveTool = useEditorStore((s) => s.setActiveTool);
   const [showSettings, setShowSettings] = useState(false);
+  const [showMerge, setShowMerge] = useState(false);
   const selectedControlPointIds = useDataStore(
     (s) => s.selectedControlPointIds
   );
@@ -48,6 +49,8 @@ export default function ToolBar() {
   const setHandlePosition = useDataStore((s) => s.setHandlePosition);
   const execute = useDataStore((s) => s.execute);
   const canvasConfig = useEditorStore((s) => s.canvasConfig);
+  const showRobot = useEditorStore((s) => s.showRobot);
+  const setShowRobot = useEditorStore((s) => s.setShowRobot);
 
   const actionsEnabled = selectedControlPointIds.length > 1;
 
@@ -162,8 +165,8 @@ export default function ToolBar() {
         heading:
           cp.headingScreenDeg !== null
             ? coordSys.mapHeadingFromScreen(
-                transformHeading(cp.headingScreenDeg)
-              )
+              transformHeading(cp.headingScreenDeg)
+            )
             : null,
         inAbs: nextIn,
         outAbs: nextOut,
@@ -229,6 +232,53 @@ export default function ToolBar() {
         <div className="tool-bar-spacer" />
         <div className="tool-bar-actions">
           <button
+            className={`tool-bar-action-btn ${showMerge ? "active" : ""}`}
+            onClick={() => setShowMerge(true)}
+            title="Merge Trajectories"
+            disabled={!actionsEnabled}
+          >
+            <FontAwesomeIcon icon={faObjectGroup} />
+          </button>
+          <button
+            className={`tool-bar-action-btn ${showRobot ? "active" : ""}`}
+            onClick={() => setShowRobot(!showRobot)}
+            title="Toggle Robot Overlay"
+          >
+            <svg
+              width="1.2em"
+              height="1.2em"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect
+                x="3"
+                y="3"
+                width="18"
+                height="18"
+                rx="2"
+                ry="2"
+                strokeDasharray="4 4"
+              />
+              <text
+                x="50%"
+                y="54%"
+                dominantBaseline="middle"
+                textAnchor="middle"
+                fontSize="11"
+                fontWeight="bold"
+                fill="currentColor"
+                stroke="none"
+              >
+                R
+              </text>
+            </svg>
+          </button>
+
+          <button
             className="tool-bar-action-btn"
             onClick={() => applyTransform("rotate-ccw")}
             title="Rotate 90° CCW"
@@ -271,6 +321,7 @@ export default function ToolBar() {
         </button>
       </div>
       {showSettings && <SettingsOverlay onClose={() => setShowSettings(false)} />}
+      {showMerge && <MergeOverlay onClose={() => setShowMerge(false)} />}
     </>
   );
 }

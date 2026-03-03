@@ -27,6 +27,10 @@ export interface CanvasConfig {
     zeroAngle: AxisDirection;
     rotationDirection: RotationDirection;
   };
+  headingRange: {
+    minRad: number;
+    maxRad: number;
+  };
   units: {
     angle: AngleUnit;
     distance: DistanceUnit;
@@ -42,6 +46,7 @@ export interface CanvasConfig {
 export interface RobotConfig {
   widthM: number;
   heightM: number;
+  independentHeading: boolean;
 }
 
 export interface IEditorStore {
@@ -59,8 +64,8 @@ export interface IEditorStore {
   hoverWorld: { xM: number; yM: number } | null;
   hoveredElementName: string | null;
   hoveredCurvePoint:
-    | { trajId: string; index: number; x: number; y: number; heading: number }
-    | null;
+  | { trajId: string; index: number; x: number; y: number; heading: number }
+  | null;
 
   // Hover helpers
   setHoverWorld(xM: number, yM: number): void;
@@ -98,4 +103,10 @@ export interface IEditorStore {
   setRobotConfig(config: Partial<RobotConfig>): void;
   setRobotDimensionUnits(config: Partial<{ width: DistanceUnit; height: DistanceUnit }>): void;
   setCanvasConfig(config: Partial<CanvasConfig> | ((prev: CanvasConfig) => Partial<CanvasConfig>)): void;
+
+  // Display Modes
+  showRobot: boolean;
+  setShowRobot(show: boolean): void;
+  robotHeading: number;
+  setRobotHeading(heading: number): void;
 }

@@ -1,0 +1,36 @@
+﻿
+> Blitz@0.9.0 lint
+> eslint .
+
+
+C:\Users\valer\Documents\GitHub\blitz\src\components\app\workspace\canvas\canvas.tsx
+    1:10  error  'useEffect' is defined but never used                       @typescript-eslint/no-unused-vars
+  363:9   error  'setHoveredElementName' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  364:9   error  'setHoveredCurvePoint' is assigned a value but never used   @typescript-eslint/no-unused-vars
+
+C:\Users\valer\Documents\GitHub\blitz\src\components\app\workspace\canvas\elements\control-point-element.tsx
+  25:9  error  'cutTrajectoryAt' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\valer\Documents\GitHub\blitz\src\components\app\workspace\canvas\elements\trajectory-element.tsx
+  273:6  warning  React Hook useMemo has an unnecessary dependency: 'traj.controlPoints'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+  296:6  warning  React Hook useMemo has an unnecessary dependency: 'traj.controlPoints'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\valer\Documents\GitHub\blitz\src\components\app\workspace\status-bar\settings-overlay.tsx
+   1:31  error    'useRef' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+   2:27  error    'FocusEvent' is defined but never used                                                                        @typescript-eslint/no-unused-vars
+  41:6   warning  React Hook useEffect has a missing dependency: 'tempValue'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\valer\Documents\GitHub\blitz\src\components\app\workspace\status-bar\status-bar.tsx
+  7:27  error  'FaSearch' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\valer\Documents\GitHub\blitz\src\components\app\workspace\tool-bar\merge-overlay.tsx
+   1:10  error    'useRef' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+   6:15  error    'TrajectoryId' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  46:8   warning  React Hook useEffect has a missing dependency: 'selectedListId'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\valer\Documents\GitHub\blitz\src\models\import-formats\import-from-jerryio.ts
+   4:10  error  'HelperPoint' is defined but never used  @typescript-eslint/no-unused-vars
+  45:14  error  'e' is defined but never used            @typescript-eslint/no-unused-vars
+
+Γ£û 15 problems (11 errors, 4 warnings)
+

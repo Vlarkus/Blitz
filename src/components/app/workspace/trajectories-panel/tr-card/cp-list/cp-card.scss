@@ -25,6 +25,7 @@
     min-width: 0;
     display: inline-block;
     white-space: nowrap;
+    user-select: none;
 
     .el-label,
     .el-input {
@@ -34,7 +35,8 @@
     }
 
     .el-input {
-      min-width: 0; /* important in flex context */
+      min-width: 0;
+      /* important in flex context */
       overflow: hidden !important;
     }
   }
@@ -54,6 +56,7 @@
     &.is-on {
       color: $light;
     }
+
     &.is-off {
       color: $default;
     }

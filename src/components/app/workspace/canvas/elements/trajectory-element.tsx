@@ -8,9 +8,11 @@ import ControlPointElement from "./control-point-element";
 import buildPath from "../util/build-path";
 import HandleElement from "./handle-element";
 import CurvePointElement from "./curve-point-element";
+import FollowPointElement from "./follow-point-element";
 import { CanvasCoordinateSystem } from "../canvas-coordinate-helper";
 
 const CURVE_POINT_SPACING_M = 0.1;
+const FOLLOW_POINT_SPACING = 0.1524; // ~6 inches default for now
 const BEZIER_LENGTH_STEPS = 12;
 
 type Pt = { x: number; y: number };
@@ -72,10 +74,13 @@ const buildCurvePoints = (
   ) => Pt | null,
   spacing: number,
   vectorToHeadingCw: (dx: number, dy: number) => number,
+  continuous: boolean = false
 ): CurvePoint[] => {
   const cps = traj.controlPoints ?? [];
   const points: CurvePoint[] = [];
   if (cps.length < 2) return points;
+
+  let currentOffset = continuous ? 0 : spacing;
 
   for (let i = 0; i < cps.length - 1; i++) {
     const a = cps[i];
@@ -95,7 +100,10 @@ const buildCurvePoints = (
     }
 
     const segmentPoints: CurvePoint[] = [];
-    if (length <= 0 || spacing <= 0) continue;
+    if (length <= 0 || spacing <= 0) {
+      if (!continuous) currentOffset = spacing; // Reset if skipping bad segment
+      continue;
+    }
 
     if (isBezier) {
       const samples = BEZIER_LENGTH_STEPS;
@@ -110,7 +118,10 @@ const buildCurvePoints = (
         cumLen.push(totalLen);
       }
 
-      for (let d = spacing; d < totalLen; d += spacing) {
+      let d = currentOffset;
+      // Use <= to include end point if exact, though strictly < or <= depends on "spacing" vs "count".
+      // Standard for "equidistant" often includes start, steps by space.
+      while (d <= totalLen) {
         let k = 1;
         while (k < cumLen.length && cumLen[k] < d) k++;
         const prevLen = cumLen[k - 1] ?? 0;
@@ -129,9 +140,18 @@ const buildCurvePoints = (
           t,
           s: totalLen === 0 ? 0 : d / totalLen,
         });
+        d += spacing;
       }
+
+      if (continuous) {
+        currentOffset = d - totalLen;
+      } else {
+        currentOffset = spacing;
+      }
+
     } else {
-      for (let d = spacing; d < length; d += spacing) {
+      let d = currentOffset;
+      while (d <= length) {
         const t = d / length;
         const pt = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
         segmentPoints.push({
@@ -142,6 +162,13 @@ const buildCurvePoints = (
           t,
           s: length === 0 ? 0 : d / length,
         });
+        d += spacing;
+      }
+
+      if (continuous) {
+        currentOffset = d - length;
+      } else {
+        currentOffset = spacing;
       }
     }
 
@@ -158,21 +185,32 @@ const buildCurvePoints = (
         p.heading = heading;
       });
     } else {
-      segmentPoints.forEach((p, idx) => {
-        const prev = idx > 0 ? segmentPoints[idx - 1] : a;
-        const next =
-          idx < segmentPoints.length - 1 ? segmentPoints[idx + 1] : b;
-        const v1x = p.x - prev.x;
-        const v1y = p.y - prev.y;
-        const v2x = next.x - p.x;
-        const v2y = next.y - p.y;
-        const n1 = Math.hypot(v1x, v1y) || 1;
-        const n2 = Math.hypot(v2x, v2y) || 1;
-        const vx = v1x / n1 + v2x / n2;
-        const vy = v1y / n1 + v2y / n2;
-        const useX = vx || v1x || v2x;
-        const useY = vy || v1y || v2y;
-        p.heading = vectorToHeadingCw(useX, useY);
+      segmentPoints.forEach((p) => {
+        let vx = 0;
+        let vy = 0;
+
+        if (isBezier) {
+          const t = p.t;
+          const u = 1 - t;
+          vx =
+            3 * u * u * (c1.x - a.x) +
+            6 * u * t * (c2.x - c1.x) +
+            3 * t * t * (b.x - c2.x);
+          vy =
+            3 * u * u * (c1.y - a.y) +
+            6 * u * t * (c2.y - c1.y) +
+            3 * t * t * (b.y - c2.y);
+        } else {
+          vx = b.x - a.x;
+          vy = b.y - a.y;
+        }
+
+        if (vx === 0 && vy === 0) {
+          vx = b.x - a.x;
+          vy = b.y - a.y;
+        }
+
+        p.heading = vectorToHeadingCw(vx, vy);
       });
     }
 
@@ -195,16 +233,53 @@ export default function TrajectoryElement({ trajId }: Props) {
   const setSelectedControlPointId = useDataStore(
     (s) => s.setSelectedControlPointId,
   );
+  const setSelectedControlPointIds = useDataStore(
+    (s) => s.setSelectedControlPointIds
+  );
+  const addSelectedControlPointIds = useDataStore(
+    (s) => s.addSelectedControlPointIds
+  );
 
   const activeTool = useEditorStore((s) => s.activeTool);
   const scale = useEditorStore((s) => s.activeViewport.scale);
   const canvasConfig = useEditorStore((s) => s.canvasConfig);
+  const independentHeading = useEditorStore(
+    (s) => s.robotConfig.independentHeading,
+  );
+  const robotHeading = useEditorStore((s) => s.robotHeading);
+  const showRobot = useEditorStore((s) => s.showRobot);
 
   const shouldRenderCurvePoints =
-    activeTool === "insert" || activeTool === "show_robot";
+    activeTool === "insert" || showRobot;
+
+  const followPoints = useMemo(() => {
+    if (!traj || traj.interpolationType !== "EQUIDISTANT") return [];
+
+    const coordSys = new CanvasCoordinateSystem(canvasConfig);
+    const vectorToHeadingCw = (dx: number, dy: number) => {
+      if (dx === 0 && dy === 0) return 0;
+      const v = coordSys.fromUser(dx, dy);
+      const screenAngleDeg = (Math.atan2(v.y, v.x) * 180) / Math.PI;
+      const cwScreenDeg = screenAngleDeg + 90;
+      return coordSys.mapHeadingFromScreen(cwScreenDeg);
+    };
+
+    return buildCurvePoints(
+      traj,
+      getHandlePosition,
+      traj.interpolationDistance ?? FOLLOW_POINT_SPACING,
+      vectorToHeadingCw,
+      true,
+    );
+  }, [traj, getHandlePosition, canvasConfig]);
 
   const curvePoints = useMemo(() => {
     if (!shouldRenderCurvePoints || !traj) return [];
+
+    if (traj.interpolationType === "EQUIDISTANT") {
+      return followPoints;
+    }
+
     const coordSys = new CanvasCoordinateSystem(canvasConfig);
     const vectorToHeadingCw = (dx: number, dy: number) => {
       if (dx === 0 && dy === 0) return 0;
@@ -224,6 +299,7 @@ export default function TrajectoryElement({ trajId }: Props) {
     traj,
     getHandlePosition,
     canvasConfig,
+    followPoints,
   ]);
 
   if (!traj) return null;
@@ -239,23 +315,48 @@ export default function TrajectoryElement({ trajId }: Props) {
     if (activeTool === "insert") return;
 
     // Default behavior (e.g., Select tool): select trajectory on path click
-    useDataStore.getState().setSelectedTrajectoryId(traj.id);
+    // If shift/ctrl is held, add all CPs to selection.
+    // Otherwise, select ONLY this trajectory's CPs.
+    const allCpIds = traj.controlPoints.map((c) => c.id);
+    if (allCpIds.length === 0) {
+      // Fallback for empty paths
+      useDataStore.getState().setSelectedTrajectoryId(traj.id);
+    } else {
+      if (e.evt.shiftKey || e.evt.ctrlKey) {
+        addSelectedControlPointIds(allCpIds);
+      } else {
+        // Pass the first ID as primary to ensure selectedTrajectoryId updates correctly
+        setSelectedControlPointIds(allCpIds, allCpIds[0]);
+      }
+    }
   };
 
   return (
     <Group name={`traj:${traj.id}`} listening>
-      <Path
-        name={`trajectory:${traj.id}`}
-        data={d}
-        stroke={traj.color}
-        strokeWidth={2 / scale}
-        hitStrokeWidth={8 / scale}
-        listening
-        onMouseDown={onPathMouseDown} // <-- Insert handled here
-        onTouchStart={() =>
-          useDataStore.getState().setSelectedTrajectoryId(traj.id)
-        }
-      />
+      {traj.interpolationType === "EQUIDISTANT" &&
+        followPoints.map((pt, idx) => (
+          <FollowPointElement
+            key={`fp-${traj.id}-${idx}`}
+            x={pt.x}
+            y={pt.y}
+            color={traj.color}
+          />
+        ))}
+
+      {traj.interpolationType !== "EQUIDISTANT" && (
+        <Path
+          name={`trajectory:${traj.id}`}
+          data={d}
+          stroke={traj.color}
+          strokeWidth={2 / scale}
+          hitStrokeWidth={8 / scale}
+          listening
+          onMouseDown={onPathMouseDown}
+          onTouchStart={() =>
+            useDataStore.getState().setSelectedTrajectoryId(traj.id)
+          }
+        />
+      )}
       {curvePoints.map((pt, idx) => (
         <CurvePointElement
           key={`${traj.id}:curve:${idx}`}
@@ -269,9 +370,30 @@ export default function TrajectoryElement({ trajId }: Props) {
             if (traj.controlPoints.length < 2) return;
             const cps = traj.controlPoints;
             const afterCpId = cps[pt.segIndex].id;
-            const newCp = new ControlPoint("", pt.x, pt.y);
-            insertControlPointAfter(trajId, afterCpId, newCp);
-            setSelectedControlPointId(newCp.id);
+            const prevCp = cps[pt.segIndex];
+
+            let initialHeading = independentHeading ? robotHeading : null;
+            if (independentHeading && prevCp && prevCp.heading !== null) {
+              initialHeading = prevCp.heading;
+            }
+
+            const newCp = new ControlPoint(
+              "",
+              pt.x,
+              pt.y,
+              initialHeading,
+            );
+
+            useDataStore.getState().execute({
+              redo: () => {
+                insertControlPointAfter(trajId, afterCpId, newCp);
+                setSelectedControlPointId(newCp.id);
+              },
+              undo: () => {
+                useDataStore.getState().removeControlPoint(trajId, newCp.id);
+                setSelectedControlPointId(afterCpId);
+              }
+            });
           }}
         />
       ))}

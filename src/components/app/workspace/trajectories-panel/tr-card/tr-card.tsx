@@ -31,15 +31,56 @@ export default function TrCard({ trID }: TrCardProps) {
     dataStore.renameTrajectory(traj.id, next);
   };
 
+  const hasSelectedCp =
+    traj.controlPoints.length > 0 &&
+    traj.controlPoints.some((cp) =>
+      dataStore.selectedControlPointIds.includes(cp.id)
+    );
+  const isSelected =
+    dataStore.selectedTrajectoryId === traj.id || hasSelectedCp;
+
   return (
     <>
       <div
-        className={`tr-card${
-          dataStore.selectedTrajectoryId === traj.id ? " selected" : ""
-        }`}
+        className={`tr-card${isSelected ? " selected" : ""}`}
         role="group"
         aria-label="Trajectory card"
-        onClick={() => dataStore.setSelectedTrajectoryId(traj.id)}
+        onClick={(e) => {
+          if (e.ctrlKey || e.metaKey || e.shiftKey) {
+            const cpIds = traj.controlPoints.map((c) => c.id);
+            if (cpIds.length === 0) {
+              dataStore.setSelectedTrajectoryId(traj.id);
+              return;
+            }
+
+            // Start with currently selected CPs
+            const baseSelection = [...dataStore.selectedControlPointIds];
+
+            // If a trajectory is explicitly selected, include its CPs too
+            if (dataStore.selectedTrajectoryId) {
+              const currentTraj = dataStore.getTrajectoryById(
+                dataStore.selectedTrajectoryId
+              );
+              if (currentTraj) {
+                const ids = currentTraj.controlPoints.map((c) => c.id);
+                baseSelection.push(...ids);
+              }
+            }
+
+            const allSelected = cpIds.every((id) => baseSelection.includes(id));
+            let newIds: string[];
+
+            if (allSelected) {
+              newIds = baseSelection.filter((id) => !cpIds.includes(id));
+            } else {
+              newIds = [...baseSelection, ...cpIds];
+            }
+
+            dataStore.setSelectedControlPointIds(Array.from(new Set(newIds)));
+          } else {
+            dataStore.setSelectedTrajectoryId(traj.id);
+          }
+        }}
       >
         <div className="left-half">
           <button
@@ -48,7 +89,10 @@ export default function TrCard({ trID }: TrCardProps) {
             aria-label={
               !expanded ? "Collapse control points" : "Expand control points"
             }
-            onClick={toggleExpand}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleExpand();
+            }}
           >
             {/* Chevron icon */}
             <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
