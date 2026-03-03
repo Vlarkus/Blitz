@@ -1,9 +1,8 @@
-import { useRef, useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import "./merge-overlay.scss";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCaretUp, faCaretDown } from "@fortawesome/free-solid-svg-icons";
 import { useDataStore } from "../../../../models/dataStore";
-import type { TrajectoryId } from "../../../../types/types";
 import { Trajectory } from "../../../../models/entities/trajectory/trajectory";
 import { ControlPoint } from "../../../../models/entities/control-point/controlPoint";
 import { HelperPoint } from "../../../../models/entities/helper-point/helperPoint";
@@ -43,7 +42,7 @@ export default function MergeOverlay({ onClose }: Props) {
         if (ids.length > 0 && (!selectedListId || !ids.includes(selectedListId))) {
             setSelectedListId(ids[0]);
         }
-    }, [relevantTrajectories]);
+    }, [relevantTrajectories, selectedListId]);
 
 
     const handleBackdropClick = (e: React.MouseEvent) => {

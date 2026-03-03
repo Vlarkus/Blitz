@@ -28,10 +28,11 @@ export default function CurvePointElement({
   const activeTool = useEditorStore((s) => s.activeTool);
   const setHoveredElementName = useEditorStore((s) => s.setHoveredElementName);
   const setHoveredCurvePoint = useEditorStore((s) => s.setHoveredCurvePoint);
+  const showRobot = useEditorStore((s) => s.showRobot);
 
   const baseRadius = Math.min((1 / scale) * 7, CURVE_POINT_RADIUS);
   const radius =
-    activeTool === "show_robot"
+    showRobot
       ? baseRadius * (CURVE_POINT_RADIUS_SHOW_ROBOT / CURVE_POINT_RADIUS)
       : baseRadius;
   const stroke = Math.min((1 / scale) * 2, 0.5);
@@ -47,7 +48,7 @@ export default function CurvePointElement({
         strokeWidth={stroke}
         opacity={SHOW_CURVE_POINTS ? 1 : 0}
         fill="rgba(0,0,0,0)"
-        listening={activeTool === "show_robot" || activeTool === "insert"}
+        listening={showRobot || activeTool === "insert"}
         hitStrokeWidth={12}
         onMouseDown={(e) => {
           if (activeTool !== "insert") return;
@@ -56,13 +57,13 @@ export default function CurvePointElement({
           onInsert?.();
         }}
         onMouseEnter={() => {
-          if (activeTool === "show_robot") {
+          if (showRobot) {
             setHoveredElementName(name);
             setHoveredCurvePoint({ trajId, index, x, y, heading: _heading });
           }
         }}
         onMouseLeave={() => {
-          if (activeTool === "show_robot") {
+          if (showRobot) {
             if (useEditorStore.getState().hoveredElementName === name) {
               setHoveredElementName(null);
               setHoveredCurvePoint(null);

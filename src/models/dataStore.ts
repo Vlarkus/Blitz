@@ -257,6 +257,7 @@ export const useDataStore = create<Store>((set, get) => ({
       src.controlPoints.map((cp) => deepCopyControlPoint(cp)),
       src.color,
       src.interpolationType,
+      src.interpolationDistance,
       src.isVisible,
       src.isLocked
     );
@@ -535,6 +536,7 @@ export const useDataStore = create<Store>((set, get) => ({
       src.controlPoints.slice(0, splitIndex + 1).map(deepCopyControlPoint),
       src.color,
       src.interpolationType,
+      src.interpolationDistance,
       src.isVisible,
       src.isLocked
     );
@@ -544,6 +546,7 @@ export const useDataStore = create<Store>((set, get) => ({
       src.controlPoints.slice(splitIndex).map(deepCopyControlPoint),
       src.color,
       src.interpolationType,
+      src.interpolationDistance,
       src.isVisible,
       src.isLocked
     );
@@ -594,6 +597,7 @@ export const useDataStore = create<Store>((set, get) => ({
       mergedCPs,
       a.color,
       a.interpolationType,
+      a.interpolationDistance,
       a.isVisible && b.isVisible,
       a.isLocked || b.isLocked
     );

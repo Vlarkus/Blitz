@@ -1,0 +1,26 @@
+﻿
+> Blitz@0.9.0 build
+> tsc -b && vite build
+
+src/components/app/workspace/canvas/elements/curve-point-element.tsx(34,5): error TS2367: This comparison appears to be unintentional because the types 'Tool' and '"show_robot"' have no overlap.
+src/components/app/workspace/canvas/elements/curve-point-element.tsx(50,20): error TS2367: This comparison appears to be unintentional because the types 'Tool' and '"show_robot"' have no overlap.
+src/components/app/workspace/canvas/elements/curve-point-element.tsx(59,15): error TS2367: This comparison appears to be unintentional because the types 'Tool' and '"show_robot"' have no overlap.
+src/components/app/workspace/canvas/elements/curve-point-element.tsx(65,15): error TS2367: This comparison appears to be unintentional because the types 'Tool' and '"show_robot"' have no overlap.
+src/components/app/workspace/canvas/elements/trajectory-element.tsx(252,32): error TS2367: This comparison appears to be unintentional because the types '"select" | "add" | "remove" | "cut" | "pan"' and '"show_robot"' have no overlap.
+src/components/app/workspace/canvas/elements/trajectory-element.tsx(255,18): error TS2367: This comparison appears to be unintentional because the types 'InterpolationType' and '"equidistant"' have no overlap.
+src/components/app/workspace/canvas/elements/trajectory-element.tsx(278,9): error TS2367: This comparison appears to be unintentional because the types 'InterpolationType' and '"equidistant"' have no overlap.
+src/components/app/workspace/canvas/elements/trajectory-element.tsx(335,8): error TS2367: This comparison appears to be unintentional because the types 'InterpolationType' and '"equidistant"' have no overlap.
+src/components/app/workspace/canvas/elements/trajectory-element.tsx(345,8): error TS2367: This comparison appears to be unintentional because the types 'InterpolationType' and '"equidistant"' have no overlap.
+src/components/app/workspace/info-panel/trajectory-info/trajectory-info.tsx(7,8): error TS2305: Module '"../../../../../types/types"' has no exported member 'DistanceUnit'.
+src/components/app/workspace/info-panel/trajectory-info/trajectory-info.tsx(119,37): error TS2367: This comparison appears to be unintentional because the types 'InterpolationType | ""' and '"equidistant"' have no overlap.
+src/components/app/workspace/info-panel/trajectory-info/trajectory-info.tsx(127,36): error TS2367: This comparison appears to be unintentional because the types 'InterpolationType | ""' and '"equidistant"' have no overlap.
+src/components/app/workspace/info-panel/trajectory-info/trajectory-info.tsx(173,37): error TS2367: This comparison appears to be unintentional because the types 'InterpolationType | ""' and '"equidistant"' have no overlap.
+src/components/app/workspace/info-panel/trajectory-info/trajectory-info.tsx(183,48): error TS2367: This comparison appears to be unintentional because the types 'InterpolationType | ""' and '"equidistant"' have no overlap.
+src/components/app/workspace/tool-bar/tool-bar.tsx(104,13): error TS1117: An object literal cannot have multiple properties with the same name.
+src/components/app/workspace/tool-bar/tool-bar.tsx(105,13): error TS1117: An object literal cannot have multiple properties with the same name.
+src/models/dataStore.ts(260,7): error TS2345: Argument of type 'boolean' is not assignable to parameter of type 'number'.
+src/models/dataStore.ts(538,7): error TS2345: Argument of type 'boolean' is not assignable to parameter of type 'number'.
+src/models/dataStore.ts(547,7): error TS2345: Argument of type 'boolean' is not assignable to parameter of type 'number'.
+src/models/dataStore.ts(597,7): error TS2345: Argument of type 'boolean' is not assignable to parameter of type 'number'.
+src/models/import-formats/import-from-jerryio.ts(177,17): error TS2345: Argument of type '"CUBIC"' is not assignable to parameter of type 'InterpolationType | undefined'.
+src/types/types.ts(16,3): error TS2322: Type '"CONTINUOUS"' is not assignable to type 'InterpolationType'.

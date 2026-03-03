@@ -7,7 +7,7 @@ export type ColorHex = `#${string}`; // Expect normalized #RRGGBB
 
 export type SplineType = "LINEAR" | "BEZIER";
 export type SymmetryType = "BROKEN" | "ALIGNED" | "MIRRORED";
-export type InterpolationType = "EQUIDISTANT" | "UNIFORM";
+export type InterpolationType = "EQUIDISTANT" | "CONTINUOUS";
 
 export const SPLINE_TYPES: SplineType[] = ["LINEAR", "BEZIER"];
 export const SYMMETRY_TYPES: SymmetryType[] = ["BROKEN", "ALIGNED", "MIRRORED"];

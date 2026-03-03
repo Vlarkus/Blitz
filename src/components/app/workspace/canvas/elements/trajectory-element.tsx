@@ -247,12 +247,13 @@ export default function TrajectoryElement({ trajId }: Props) {
     (s) => s.robotConfig.independentHeading,
   );
   const robotHeading = useEditorStore((s) => s.robotHeading);
+  const showRobot = useEditorStore((s) => s.showRobot);
 
   const shouldRenderCurvePoints =
-    activeTool === "insert" || activeTool === "show_robot";
+    activeTool === "insert" || showRobot;
 
   const followPoints = useMemo(() => {
-    if (!traj || traj.interpolationType !== "equidistant") return [];
+    if (!traj || traj.interpolationType !== "EQUIDISTANT") return [];
 
     const coordSys = new CanvasCoordinateSystem(canvasConfig);
     const vectorToHeadingCw = (dx: number, dy: number) => {
@@ -270,12 +271,12 @@ export default function TrajectoryElement({ trajId }: Props) {
       vectorToHeadingCw,
       true,
     );
-  }, [traj, traj?.controlPoints, getHandlePosition, canvasConfig]);
+  }, [traj, getHandlePosition, canvasConfig]);
 
   const curvePoints = useMemo(() => {
     if (!shouldRenderCurvePoints || !traj) return [];
 
-    if (traj.interpolationType === "equidistant") {
+    if (traj.interpolationType === "EQUIDISTANT") {
       return followPoints;
     }
 
@@ -296,7 +297,6 @@ export default function TrajectoryElement({ trajId }: Props) {
   }, [
     shouldRenderCurvePoints,
     traj,
-    traj?.controlPoints,
     getHandlePosition,
     canvasConfig,
     followPoints,
@@ -333,7 +333,7 @@ export default function TrajectoryElement({ trajId }: Props) {
 
   return (
     <Group name={`traj:${traj.id}`} listening>
-      {traj.interpolationType === "equidistant" &&
+      {traj.interpolationType === "EQUIDISTANT" &&
         followPoints.map((pt, idx) => (
           <FollowPointElement
             key={`fp-${traj.id}-${idx}`}
@@ -343,7 +343,7 @@ export default function TrajectoryElement({ trajId }: Props) {
           />
         ))}
 
-      {traj.interpolationType !== "equidistant" && (
+      {traj.interpolationType !== "EQUIDISTANT" && (
         <Path
           name={`trajectory:${traj.id}`}
           data={d}
@@ -370,11 +370,18 @@ export default function TrajectoryElement({ trajId }: Props) {
             if (traj.controlPoints.length < 2) return;
             const cps = traj.controlPoints;
             const afterCpId = cps[pt.segIndex].id;
+            const prevCp = cps[pt.segIndex];
+
+            let initialHeading = independentHeading ? robotHeading : null;
+            if (independentHeading && prevCp && prevCp.heading !== null) {
+              initialHeading = prevCp.heading;
+            }
+
             const newCp = new ControlPoint(
               "",
               pt.x,
               pt.y,
-              independentHeading ? robotHeading : null,
+              initialHeading,
             );
 
             useDataStore.getState().execute({

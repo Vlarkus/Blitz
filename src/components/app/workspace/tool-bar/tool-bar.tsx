@@ -101,8 +101,6 @@ export default function ToolBar() {
             canvasPos,
             canvasIn,
             canvasOut,
-            canvasIn,
-            canvasOut,
             headingScreenDeg:
               cp.heading !== null ? coordSys.mapHeadingToScreen(cp.heading) : null,
           });

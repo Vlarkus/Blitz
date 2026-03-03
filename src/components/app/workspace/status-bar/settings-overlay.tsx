@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import type { MouseEvent, FocusEvent } from "react";
+import { useState, useEffect } from "react";
+import type { MouseEvent } from "react";
 import "./settings-overlay.scss";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
@@ -38,7 +38,7 @@ function BlurInput({ value, onChange, onBlur, ...props }: BlurInputProps) {
     if (tempValue === null) {
       // Nothing to do, component uses prop value naturally when tempValue is null
     }
-  }, [value]);
+  }, [value, tempValue]);
 
   return (
     <input

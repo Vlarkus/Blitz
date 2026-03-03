@@ -22,7 +22,6 @@ export default function ControlPointElement({ trajId, cpId }: Props) {
   const setSelectedTrajectoryId = useDataStore(
     (s) => s.setSelectedTrajectoryId,
   );
-  const cutTrajectoryAt = useDataStore((s) => s.cutTrajectoryAt);
   const moveControlPoint = useDataStore((s) => s.moveControlPoint);
   const execute = useDataStore((s) => s.execute);
   const getTrajectoryIdByControlPointId = useDataStore(

@@ -4,7 +4,7 @@ import {
   metersToDistance,
   radiansToAngle,
 } from "../../../../utils/unit-conversion";
-import { FaPlus, FaMinus, FaSearch } from "react-icons/fa";
+import { FaPlus, FaMinus } from "react-icons/fa";
 import "./status-bar.scss";
 
 const COORD_PRECISION = 2; // change to control digits after the decimal

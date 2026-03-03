@@ -1,7 +1,6 @@
 
 import { Trajectory } from "../entities/trajectory/trajectory";
 import { ControlPoint } from "../entities/control-point/controlPoint";
-import { HelperPoint } from "../entities/helper-point/helperPoint";
 import { cartesianToPolar, normRad, getRandomColor } from "../../utils/utils";
 
 // Inches to Meters
@@ -42,7 +41,7 @@ export function importFromJerryIO(content: string): Trajectory[] {
 
     try {
         data = JSON.parse(jsonStr);
-    } catch (e) {
+    } catch {
         throw new Error("Invalid JerryIO file: Failed to parse JSON data.");
     }
 
@@ -175,7 +174,8 @@ export function importFromJerryIO(content: string): Trajectory[] {
                 p.name || "Imported Path",
                 controlPoints,
                 getRandomColor(),
-                "CUBIC",
+                "EQUIDISTANT",
+                0.1524,
                 true,
                 false
             );

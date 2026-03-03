@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Stage, Layer, Rect } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import "./canvas.scss";
@@ -171,12 +171,20 @@ export default function Canvas() {
         // screen -> world (user coords)
         const { x, y } = transform.screenToUser(pos.x, pos.y, activeViewport);
 
+        const traj = trajectories.find(t => t.id === selectedTrajectoryId);
+        const lastCp = traj?.controlPoints.length ? traj.controlPoints[traj.controlPoints.length - 1] : null;
+
+        let initialHeading = independentHeading ? robotHeading : null;
+        if (independentHeading && lastCp && lastCp.heading !== null) {
+          initialHeading = lastCp.heading;
+        }
+
         // Construct CP first so we know its id
         const cp = new ControlPoint(
           "Control Point",
           x,
           y,
-          independentHeading ? robotHeading : null
+          initialHeading
         );
         const trajId = selectedTrajectoryId;
         const cpId = cp.id;
@@ -352,8 +360,6 @@ export default function Canvas() {
   // Manage mouse position while hovering over canvas.
   const setHoverWorld = useEditorStore((s) => s.setHoverWorld);
   const clearHover = useEditorStore((s) => s.clearHover);
-  const setHoveredElementName = useEditorStore((s) => s.setHoveredElementName);
-  const setHoveredCurvePoint = useEditorStore((s) => s.setHoveredCurvePoint);
 
   return (
     <section

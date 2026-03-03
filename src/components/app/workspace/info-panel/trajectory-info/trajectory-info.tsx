@@ -4,8 +4,8 @@ import { useDataStore } from "../../../../../models/dataStore";
 import {
   INTERPOLATION_TYPES,
   type InterpolationType,
-  type DistanceUnit,
 } from "../../../../../types/types";
+import type { DistanceUnit } from "../../../../../editor/editor-store.interface";
 import { EditableLabel } from "../../../../common/editable-label";
 import ColorPicker from "../../../../common/color-picker/color-picker";
 import { distanceToMeters, metersToDistance } from "../../../../../utils/unit-conversion";
@@ -106,7 +106,7 @@ export default function TrajectoryInfo() {
           {INTERPOLATION_TYPES.map((option) => {
             const label = option.charAt(0) + option.slice(1).toLowerCase();
             return (
-              <option key={option.toLowerCase()} value={option.toLowerCase()}>
+              <option key={option} value={option}>
                 {label}
               </option>
             );
@@ -116,7 +116,7 @@ export default function TrajectoryInfo() {
       <div className="tr-selector-wrapper">
         <label
           className={
-            selectedTrajectoryId && interpolation === "equidistant"
+            selectedTrajectoryId && interpolation === "EQUIDISTANT"
               ? "label-active"
               : "label-disabled"
           }
@@ -124,7 +124,7 @@ export default function TrajectoryInfo() {
           Distance:
         </label>
         <span className="tr-half">
-          {selectedTrajectoryId && interpolation === "equidistant" ? (
+          {selectedTrajectoryId && interpolation === "EQUIDISTANT" ? (
             <EditableLabel<number>
               value={metersToDistance(
                 interpolationDistanceMeters,
@@ -170,7 +170,7 @@ export default function TrajectoryInfo() {
         </span>
         <label
           className={
-            selectedTrajectoryId && interpolation === "equidistant"
+            selectedTrajectoryId && interpolation === "EQUIDISTANT"
               ? "label-active"
               : "label-disabled"
           }
@@ -180,7 +180,7 @@ export default function TrajectoryInfo() {
         <span className="tr-half">
           <select
             className="dropdown"
-            disabled={!selectedTrajectoryId || interpolation !== "equidistant"}
+            disabled={!selectedTrajectoryId || interpolation !== "EQUIDISTANT"}
             value={displayUnit}
             onChange={(e) => {
               const val = e.target.value as DistanceUnit;
