@@ -77,7 +77,7 @@ export class Trajectory {
       },
     controlPoints: ControlPoint[] = [],
     color: ColorHex = getRandomColor(),
-    interpolationType: InterpolationType = "EQUIDISTANT",
+    interpolationType: InterpolationType = "CONTINUOUS",
     interpolationDistance: number = 0.1524,
     isVisible: boolean = true,
     isLocked: boolean = false
@@ -90,7 +90,7 @@ export class Trajectory {
       // --- Only use underscored JSON fields ---
       this._name = sanitizeName(obj._name ?? "Trajectory Default Name");
       this._color = normalizeColor(obj._color ?? getRandomColor());
-      this._interpolationType = obj._interpolationType ?? "EQUIDISTANT";
+      this._interpolationType = obj._interpolationType ?? "CONTINUOUS";
       this._interpolationDistance =
         obj._interpolationDistance && Number.isFinite(obj._interpolationDistance)
           ? obj._interpolationDistance

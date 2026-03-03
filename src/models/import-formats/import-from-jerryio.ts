@@ -174,7 +174,7 @@ export function importFromJerryIO(content: string): Trajectory[] {
                 p.name || "Imported Path",
                 controlPoints,
                 getRandomColor(),
-                "EQUIDISTANT",
+                "CONTINUOUS",
                 0.1524,
                 true,
                 false

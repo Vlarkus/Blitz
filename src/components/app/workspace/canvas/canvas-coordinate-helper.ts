@@ -126,33 +126,40 @@ export class CanvasCoordinateSystem {
     // This class should handle mapping from "Standard Canvas Space (Meters, Right/Down)" to "User Space".
 
     public toUser(canvasX: number, canvasY: number): { x: number, y: number } {
-        // canvasX/Y are in the "Group" parent space (Standard definition).
+        // canvasX/Y are in the "Group" parent space (Standard canvas definition).
+        // Konva Group applies transforms as: scale -> rotate (for children).
+        // So to invert: first undo rotation, then undo scale.
 
-        // Inverse Group Transform:
-        // 1. ScaleY
-        const cy = canvasY * this.scaleY;
-
-        // 2. Rotation (-groupRotation)
+        // 1. Undo Rotation (-groupRotation)
         const rad = (-this.groupRotation * Math.PI) / 180;
         const cos = Math.cos(rad);
         const sin = Math.sin(rad);
 
-        const ux = canvasX * cos - cy * sin;
-        const uy = canvasX * sin + cy * cos;
+        const rx = canvasX * cos - canvasY * sin;
+        const ry = canvasX * sin + canvasY * cos;
+
+        // 2. Undo ScaleY (scaleX is always 1)
+        const ux = rx;
+        const uy = ry * this.scaleY;
 
         return { x: ux, y: uy };
     }
 
     public fromUser(userX: number, userY: number): { x: number, y: number } {
         // User -> standard canvas
+        // Konva Group applies: scale -> rotate.
+        // So to convert user -> canvas: first apply scale, then rotation.
 
-        // 1. Rotation (+groupRotation)
+        // 1. Apply ScaleY (scaleX is always 1)
+        const sy = userY * this.scaleY;
+
+        // 2. Apply Rotation (+groupRotation)
         const rad = (this.groupRotation * Math.PI) / 180;
         const cos = Math.cos(rad);
         const sin = Math.sin(rad);
 
-        const cx = userX * cos - userY * sin;
-        const cy = (userX * sin + userY * cos) * this.scaleY;
+        const cx = userX * cos - sy * sin;
+        const cy = userX * sin + sy * cos;
 
         return { x: cx, y: cy };
     }
